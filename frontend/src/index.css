@@ -1,0 +1,274 @@
+/* Global Reset and Typography */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Cairo', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--accent-blue);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-red-gold);
+}
+
+/* Theme Design Tokens */
+:root {
+  /* LIGHT THEME: White, Blue, Red */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7f9fc;
+  --bg-tertiary: #edf2f7;
+  
+  --text-primary: #1a202c;
+  --text-secondary: #4a5568;
+  --text-light: #718096;
+  
+  --accent-blue: #0056b3;
+  --accent-blue-hover: #004085;
+  --accent-red-gold: #d9383a; /* Red in Light mode */
+  --accent-red-gold-hover: #b52a2b;
+  
+  --border-color: #e2e8f0;
+  --input-bg: #ffffff;
+  --input-text: #1a202c;
+  --input-focus-border: #0056b3;
+  
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+
+  --font-family-ar: 'Cairo', sans-serif;
+  --font-family-en: 'Inter', sans-serif;
+}
+
+:root.dark {
+  /* NIGHT THEME: Black, Blue, Gold */
+  --bg-primary: #0a0e17; /* Deep Pitch Black */
+  --bg-secondary: #121824; /* Dark grey-blue */
+  --bg-tertiary: #1b2336;
+  
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-light: #94a3b8;
+  
+  --accent-blue: #3b82f6; /* Electric Blue */
+  --accent-blue-hover: #2563eb;
+  --accent-red-gold: #d97706; /* Gold/Amber in Dark mode */
+  --accent-red-gold-hover: #b45309;
+  
+  --border-color: #1e293b;
+  --input-bg: #1e293b;
+  --input-text: #f8fafc;
+  --input-focus-border: #3b82f6;
+  
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.5);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.4), 0 2px 4px -1px rgba(0,0,0,0.24);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.5), 0 4px 6px -2px rgba(0,0,0,0.3);
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* RTL Support utility class */
+.rtl {
+  direction: rtl;
+  font-family: var(--font-family-ar);
+}
+.ltr {
+  direction: ltr;
+  font-family: var(--font-family-en);
+}
+
+/* Button & interactive components */
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+/* Keyframe animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulseBorder {
+  0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+  70% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+}
+
+.animate-fade {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.animate-scale {
+  animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Clear inputs and custom form elements */
+.input-field {
+  width: 100%;
+  padding: 10px 14px;
+  background-color: var(--input-bg);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--input-text);
+  font-size: 0.95rem;
+  outline: none;
+  font-weight: 500;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-field:focus {
+  border-color: var(--input-focus-border);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.input-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* Crossout old price */
+.old-price {
+  text-decoration: line-through;
+  color: var(--text-light);
+  font-size: 0.85em;
+  margin-inline-end: 8px;
+}
+
+/* New price styling */
+.new-price {
+  color: #ef4444; /* Standard red for discounts across both modes */
+  font-weight: bold;
+}
+
+/* App Containers */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* Dashboard Cards Grid */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.dashboard-card {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Printing styling layout */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .invoice-box {
+    max-width: 800px;
+    margin: auto;
+    padding: 30px;
+    border: 1px solid #eee;
+    box-shadow: none;
+    font-size: 14px;
+    line-height: 24px;
+    color: #555;
+  }
+
+  /* Specific rule for printing orders without price */
+  .hide-price-on-print .price-col,
+  .hide-price-on-print .total-col {
+    display: none !important;
+  }
+}
+
+/* Responsive queries */
+/* 1. Large Screen TVs */
+@media (min-width: 1920px) {
+  .container {
+    max-width: 1600px;
+  }
+}
+
+/* 2. Tablets and Smaller Laptops */
+@media (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
+/* 3. Mobile Phones */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 12px;
+  }
+  
+  .mobile-hide {
+    display: none !important;
+  }
+}
+
+/* 4. Very Small Screens */
+@media (max-width: 480px) {
+  .input-field {
+    padding: 8px 10px;
+  }
+}

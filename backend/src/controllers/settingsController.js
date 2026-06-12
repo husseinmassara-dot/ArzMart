@@ -1,0 +1,120 @@
+const db = require('../config/db');
+
+exports.getSettings = async (req, res) => {
+  try {
+    const settings = await db.getAsync('SELECT * FROM settings ORDER BY id DESC LIMIT 1');
+    if (!settings) {
+      return res.status(404).json({ error_ar: 'الإعدادات غير متوفرة', error_en: 'Settings not available' });
+    }
+    res.json({
+      ...settings,
+      hero_banners: JSON.parse(settings.hero_banners || '[]')
+    });
+  } catch (err) {
+    console.error('Get settings error:', err);
+    res.status(500).json({ error_ar: 'خطأ في جلب الإعدادات', error_en: 'Error fetching settings' });
+  }
+};
+
+exports.updateSettings = async (req, res) => {
+  const { app_name, exchange_rate, free_delivery_threshold, delivery_fee, online_payment_enabled } = req.body;
+
+  try {
+    const settings = await db.getAsync('SELECT * FROM settings ORDER BY id DESC LIMIT 1');
+    const id = settings ? settings.id : 1;
+
+    let logoUrl = settings ? settings.logo_url : '';
+    if (req.file) {
+      logoUrl = `/uploads/${req.file.filename}`;
+    }
+
+    const appName = app_name || (settings ? settings.app_name : 'Arz-Mart');
+    const exRate = exchange_rate ? parseFloat(exchange_rate) : (settings ? settings.exchange_rate : 89500);
+    const freeThreshold = free_delivery_threshold !== undefined ? parseFloat(free_delivery_threshold) : (settings ? settings.free_delivery_threshold : 50);
+    const delFee = delivery_fee !== undefined ? parseFloat(delivery_fee) : (settings ? settings.delivery_fee : 4);
+    const payEnabled = online_payment_enabled !== undefined ? parseInt(online_payment_enabled) : (settings ? settings.online_payment_enabled : 0);
+
+    if (settings) {
+      await db.runAsync(`
+        UPDATE settings 
+        SET app_name = ?, logo_url = ?, exchange_rate = ?, free_delivery_threshold = ?, delivery_fee = ?, online_payment_enabled = ?
+        WHERE id = ?
+      `, [appName, logoUrl, exRate, freeThreshold, delFee, payEnabled, id]);
+    } else {
+      await db.runAsync(`
+        INSERT INTO settings (app_name, logo_url, exchange_rate, free_delivery_threshold, delivery_fee, online_payment_enabled, hero_banners)
+        VALUES (?, ?, ?, ?, ?, ?, '[]')
+      `, [appName, logoUrl, exRate, freeThreshold, delFee, payEnabled]);
+    }
+
+    res.json({
+      message_ar: 'تم تحديث الإعدادات بنجاح',
+      message_en: 'Settings updated successfully',
+      settings: {
+        app_name: appName,
+        logo_url: logoUrl,
+        exchange_rate: exRate,
+        free_delivery_threshold: freeThreshold,
+        delivery_fee: delFee,
+        online_payment_enabled: payEnabled
+      }
+    });
+  } catch (err) {
+    console.error('Update settings error:', err);
+    res.status(500).json({ error_ar: 'خطأ أثناء تحديث الإعدادات', error_en: 'Error updating settings' });
+  }
+};
+
+exports.updateBanners = async (req, res) => {
+  const { banners } = req.body; // Expect JSON array of banner configurations
+
+  try {
+    const settings = await db.getAsync('SELECT * FROM settings ORDER BY id DESC LIMIT 1');
+    if (!settings) {
+      return res.status(404).json({ error_ar: 'الإعدادات غير موجودة', error_en: 'Settings not found' });
+    }
+
+    let bannerArray = [];
+    try {
+      bannerArray = typeof banners === 'string' ? JSON.parse(banners) : banners;
+    } catch (e) {
+      return res.status(400).json({ error_ar: 'صيغة البانرات غير صالحة', error_en: 'Invalid banners format' });
+    }
+
+    // If new files are uploaded, map them to respective banner configurations
+    if (req.files && req.files.length > 0) {
+      req.files.forEach(file => {
+        // e.g., fieldname could specify ID or index like banner_image_someid or banner_image_0
+        const match = file.fieldname.match(/banner_image_(.+)/);
+        if (match) {
+          const key = match[1];
+          // Try to find by unique banner ID first
+          let banner = bannerArray.find(b => b.id === key);
+          if (banner) {
+            banner.image = `/uploads/banners/${file.filename}`;
+          } else {
+            // Fallback: try to match by index if key is numeric
+            const index = parseInt(key, 10);
+            if (!isNaN(index) && bannerArray[index]) {
+              bannerArray[index].image = `/uploads/banners/${file.filename}`;
+            }
+          }
+        }
+      });
+    }
+
+    await db.runAsync(
+      'UPDATE settings SET hero_banners = ? WHERE id = ?',
+      [JSON.stringify(bannerArray), settings.id]
+    );
+
+    res.json({
+      message_ar: 'تم تحديث البانرات الإعلانية بنجاح',
+      message_en: 'Hero banners updated successfully',
+      banners: bannerArray
+    });
+  } catch (err) {
+    console.error('Update banners error:', err);
+    res.status(500).json({ error_ar: 'خطأ أثناء تحديث البانرات الإعلانية', error_en: 'Error updating banners' });
+  }
+};
