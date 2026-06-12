@@ -3,6 +3,7 @@ const cors = require('cors');
 const path = require('path');
 const http = require('http');
 const WebSocket = require('ws');
+const fs = require('fs');
 require('./config/db'); // Initialize DB and Seed Admin/Settings
 
 const app = express();
@@ -27,7 +28,12 @@ app.get('*', (req, res) => {
   if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
     return res.status(404).json({ error: 'Endpoint not found' });
   }
-  res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
+  const spaPath = path.join(__dirname, '../../frontend/dist/index.html');
+  if (fs.existsSync(spaPath)) {
+    res.sendFile(spaPath);
+  } else {
+    res.json({ message: 'Arz-Mart API server running' });
+  }
 });
 
 // Create HTTP and WebSocket Server
