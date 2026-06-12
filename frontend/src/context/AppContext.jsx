@@ -200,11 +200,11 @@ export const AppProvider = ({ children }) => {
   });
 
   const apiHost = import.meta.env.VITE_API_URL || (
-    window.location.hostname === 'localhost' 
-      ? 'http://localhost:5000' 
-      : (window.location.port === '3000' 
-          ? `http://${window.location.hostname}:5000` 
-          : window.location.origin)
+    (window.location.hostname === 'localhost' || 
+     window.location.hostname === '127.0.0.1' || 
+     window.location.hostname.startsWith('192.168.'))
+      ? `http://${window.location.hostname}:5000`
+      : 'https://arz-mart.onrender.com'
   );
 
   const apiBase = `${apiHost}/api`;
