@@ -1080,6 +1080,14 @@ export default function App() {
           <div>
             &copy; {new Date().getFullYear()} {settings?.app_name || 'Arz-Mart'}. All Rights Reserved. Lebanese Market COD Store.
           </div>
+          {settings?.contact_email && (
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-primary)', display: 'flex', gap: '4px', alignItems: 'center' }}>
+              <span>{lang === 'ar' ? 'للتواصل والدعم الفني:' : 'Contact & Support:'}</span>
+              <a href={`mailto:${settings.contact_email}`} style={{ color: 'var(--accent-blue)', textDecoration: 'none', fontWeight: 'bold' }}>
+                {settings.contact_email}
+              </a>
+            </div>
+          )}
           <div>
             <button
               onClick={() => {

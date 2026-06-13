@@ -196,7 +196,8 @@ export const AppProvider = ({ children }) => {
     free_delivery_threshold: 50,
     delivery_fee: 4,
     hero_banners: [],
-    online_payment_enabled: 0
+    online_payment_enabled: 0,
+    contact_email: 'info@arz-mart.com'
   });
 
   const apiHost = import.meta.env.VITE_API_URL || (

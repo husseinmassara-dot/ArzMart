@@ -13,6 +13,7 @@ export default function AdminSettings() {
   const [freeThreshold, setFreeThreshold] = useState('');
   const [deliveryFee, setDeliveryFee] = useState('');
   const [onlinePayEnabled, setOnlinePayEnabled] = useState(0);
+  const [contactEmail, setContactEmail] = useState('');
   const [logoFile, setLogoFile] = useState(null);
 
   // Banners states
@@ -26,6 +27,7 @@ export default function AdminSettings() {
       setFreeThreshold(settings.free_delivery_threshold || 50);
       setDeliveryFee(settings.delivery_fee || 4);
       setOnlinePayEnabled(settings.online_payment_enabled || 0);
+      setContactEmail(settings.contact_email || 'info@arz-mart.com');
       
       // Ensure all loaded banners have unique IDs for stable editing key
       const bannersWithIds = (settings.hero_banners || []).map((b, idx) => ({
@@ -49,6 +51,7 @@ export default function AdminSettings() {
     formData.append('free_delivery_threshold', freeThreshold);
     formData.append('delivery_fee', deliveryFee);
     formData.append('online_payment_enabled', onlinePayEnabled);
+    formData.append('contact_email', contactEmail);
     if (logoFile) {
       formData.append('logo', logoFile);
     }
@@ -178,6 +181,10 @@ export default function AdminSettings() {
               <option value={0}>إيقاف - نقدي فقط (Cash Only)</option>
               <option value={1}>تفعيل خيار الدفع الإلكتروني (Allow Online Payment)</option>
             </select>
+          </div>
+          <div>
+            <label className="input-label">إيميل التواصل (Contact Email)</label>
+            <input type="email" className="input-field" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} />
           </div>
           <div>
             <label className="input-label">شعار المتجر (Store Logo)</label>

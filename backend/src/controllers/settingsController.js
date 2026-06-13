@@ -17,7 +17,7 @@ exports.getSettings = async (req, res) => {
 };
 
 exports.updateSettings = async (req, res) => {
-  const { app_name, exchange_rate, free_delivery_threshold, delivery_fee, online_payment_enabled } = req.body;
+  const { app_name, exchange_rate, free_delivery_threshold, delivery_fee, online_payment_enabled, contact_email } = req.body;
 
   try {
     const settings = await db.getAsync('SELECT * FROM settings ORDER BY id DESC LIMIT 1');
@@ -33,18 +33,19 @@ exports.updateSettings = async (req, res) => {
     const freeThreshold = free_delivery_threshold !== undefined ? parseFloat(free_delivery_threshold) : (settings ? settings.free_delivery_threshold : 50);
     const delFee = delivery_fee !== undefined ? parseFloat(delivery_fee) : (settings ? settings.delivery_fee : 4);
     const payEnabled = online_payment_enabled !== undefined ? parseInt(online_payment_enabled) : (settings ? settings.online_payment_enabled : 0);
+    const contactEmail = contact_email !== undefined ? contact_email : (settings ? settings.contact_email : 'info@arz-mart.com');
 
     if (settings) {
       await db.runAsync(`
         UPDATE settings 
-        SET app_name = ?, logo_url = ?, exchange_rate = ?, free_delivery_threshold = ?, delivery_fee = ?, online_payment_enabled = ?
+        SET app_name = ?, logo_url = ?, exchange_rate = ?, free_delivery_threshold = ?, delivery_fee = ?, online_payment_enabled = ?, contact_email = ?
         WHERE id = ?
-      `, [appName, logoUrl, exRate, freeThreshold, delFee, payEnabled, id]);
+      `, [appName, logoUrl, exRate, freeThreshold, delFee, payEnabled, contactEmail, id]);
     } else {
       await db.runAsync(`
-        INSERT INTO settings (app_name, logo_url, exchange_rate, free_delivery_threshold, delivery_fee, online_payment_enabled, hero_banners)
-        VALUES (?, ?, ?, ?, ?, ?, '[]')
-      `, [appName, logoUrl, exRate, freeThreshold, delFee, payEnabled]);
+        INSERT INTO settings (app_name, logo_url, exchange_rate, free_delivery_threshold, delivery_fee, online_payment_enabled, contact_email, hero_banners)
+        VALUES (?, ?, ?, ?, ?, ?, ?, '[]')
+      `, [appName, logoUrl, exRate, freeThreshold, delFee, payEnabled, contactEmail]);
     }
 
     res.json({
@@ -56,7 +57,8 @@ exports.updateSettings = async (req, res) => {
         exchange_rate: exRate,
         free_delivery_threshold: freeThreshold,
         delivery_fee: delFee,
-        online_payment_enabled: payEnabled
+        online_payment_enabled: payEnabled,
+        contact_email: contactEmail
       }
     });
   } catch (err) {

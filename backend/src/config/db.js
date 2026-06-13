@@ -231,9 +231,17 @@ function initializeDatabase() {
         free_delivery_threshold REAL DEFAULT 50,
         delivery_fee REAL DEFAULT 4,
         hero_banners TEXT DEFAULT '[]',
-        online_payment_enabled INTEGER DEFAULT 0
+        online_payment_enabled INTEGER DEFAULT 0,
+        contact_email TEXT DEFAULT 'info@arz-mart.com'
       )
-    `);
+    `, [], () => {
+      const alterQuery = isPostgres 
+        ? "ALTER TABLE settings ADD COLUMN IF NOT EXISTS contact_email TEXT DEFAULT 'info@arz-mart.com'" 
+        : "ALTER TABLE settings ADD COLUMN contact_email TEXT DEFAULT 'info@arz-mart.com'";
+      db.run(alterQuery, [], (err) => {
+        // Ignore errors for SQLite if column already exists
+      });
+    });
 
     // 2. Users Table
     runInit(`
