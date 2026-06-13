@@ -26,7 +26,7 @@ export default function AdminProducts() {
   const [stock, setStock] = useState('10');
   const [selectedFile, setSelectedFile] = useState(null);
   const [colorsInput, setColorsInput] = useState('');
-  const [sizesInput, setSizesInput] = useState('');
+  const [sizesList, setSizesList] = useState([{ name: '', price: '', type: 'absolute' }]);
 
   const fetchProducts = async () => {
     try {
@@ -95,7 +95,13 @@ export default function AdminProducts() {
       formData.append('product_image', selectedFile);
     }
     const colorsArray = colorsInput ? colorsInput.split(',').map(c => c.trim()).filter(Boolean) : [];
-    const sizesArray = sizesInput ? sizesInput.split(',').map(s => s.trim()).filter(Boolean) : [];
+    const sizesArray = sizesList.map(opt => {
+      if (!opt.name) return null;
+      if (!opt.price) return opt.name;
+      if (opt.type === 'relative') return `${opt.name} (+${opt.price})`;
+      if (opt.type === 'negative') return `${opt.name} (-${opt.price})`;
+      return `${opt.name} ($${opt.price})`;
+    }).filter(Boolean);
     formData.append('colors', JSON.stringify(colorsArray));
     formData.append('sizes', JSON.stringify(sizesArray));
 
@@ -136,7 +142,23 @@ export default function AdminProducts() {
     setStock(product.stock);
     setSelectedFile(null);
     setColorsInput((product.colors || []).join(', '));
-    setSizesInput((product.sizes || []).join(', '));
+    let parsedSizes = [];
+    if (product.sizes && Array.isArray(product.sizes)) {
+      parsedSizes = product.sizes.map(s => {
+        const priceRegex = /\(\s*([+-]?\s*\$?\s*[0-9.]+)\s*\$?_?\)/;
+        const match = s.match(priceRegex);
+        if (match) {
+          const name = s.replace(/\s*\(\s*[+-]?\s*\$?\s*[0-9.]+\s*\$?_?\)/g, '').trim();
+          const priceVal = match[1].replace(/[+\-$]/g, '').trim();
+          let type = 'absolute';
+          if (s.includes('+')) type = 'relative';
+          else if (s.includes('-')) type = 'negative';
+          return { name, price: priceVal, type };
+        }
+        return { name: s, price: '', type: 'absolute' };
+      });
+    }
+    setSizesList(parsedSizes.length > 0 ? parsedSizes : [{ name: '', price: '', type: 'absolute' }]);
   };
 
   const handleDelete = async (id) => {
@@ -169,7 +191,7 @@ export default function AdminProducts() {
     setStock('10');
     setSelectedFile(null);
     setColorsInput('');
-    setSizesInput('');
+    setSizesList([{ name: '', price: '', type: 'absolute' }]);
   };
 
   return (
@@ -242,17 +264,106 @@ export default function AdminProducts() {
             <label className="input-label">{lang === 'ar' ? 'الألوان المتاحة (مفصولة بفاصلة)' : 'Available Colors (comma-separated)'}</label>
             <input type="text" className="input-field" placeholder={lang === 'ar' ? 'مثال: أحمر, أزرق, أسود' : 'e.g. Red, Blue, Black'} value={colorsInput} onChange={(e) => setColorsInput(e.target.value)} />
           </div>
-          <div>
-            <label className="input-label">
-              {lang === 'ar' ? 'الخيارات/القياسات المتاحة (مفصولة بفاصلة)' : 'Available Options/Sizes (comma-separated)'}
-            </label>
-            <input 
-              type="text" 
-              className="input-field" 
-              placeholder={lang === 'ar' ? 'مثال: 128GB, 256GB (+$100), 512GB (+$250)' : 'e.g. 128GB, 256GB (+$100), 512GB (+$250)'} 
-              value={sizesInput} 
-              onChange={(e) => setSizesInput(e.target.value)} 
-            />
+          <div style={{ gridColumn: '1 / -1', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '16px', backgroundColor: 'var(--bg-secondary)', marginTop: '8px' }}>
+            <span className="input-label" style={{ display: 'block', fontWeight: '700', fontSize: '0.95rem', marginBottom: '12px', color: 'var(--text-primary)' }}>
+              {lang === 'ar' ? 'خيارات المنتج وتحديد الأسعار يدوياً (مثل الأحجام أو السعات)' : 'Product Options & Price Details (e.g. Sizes or Storage)'}
+            </span>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {sizesList.map((item, index) => (
+                <div key={index} style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  {/* Option Name */}
+                  <div style={{ flex: '1', minWidth: '150px' }}>
+                    <input 
+                      type="text" 
+                      placeholder={lang === 'ar' ? 'اسم الخيار (مثال: 512GB أو 5L)' : 'Option Name (e.g. 512GB or 5L)'} 
+                      className="input-field" 
+                      style={{ margin: 0 }}
+                      value={item.name} 
+                      onChange={(e) => {
+                        const newList = [...sizesList];
+                        newList[index].name = e.target.value;
+                        setSizesList(newList);
+                      }} 
+                    />
+                  </div>
+
+                  {/* Price Type */}
+                  <div style={{ width: '160px' }}>
+                    <select 
+                      className="input-field" 
+                      style={{ margin: 0, padding: '8px' }}
+                      value={item.type} 
+                      onChange={(e) => {
+                        const newList = [...sizesList];
+                        newList[index].type = e.target.value;
+                        setSizesList(newList);
+                      }}
+                    >
+                      <option value="absolute">{lang === 'ar' ? 'سعر يدوي مباشر ($)' : 'Absolute Price ($)'}</option>
+                      <option value="relative">{lang === 'ar' ? 'زيادة نسبية (+)' : 'Price Increase (+)'}</option>
+                      <option value="negative">{lang === 'ar' ? 'خصم نسبي (-)' : 'Price Decrease (-)'}</option>
+                    </select>
+                  </div>
+
+                  {/* Price Value */}
+                  <div style={{ width: '120px' }}>
+                    <input 
+                      type="number" 
+                      step="0.01" 
+                      placeholder={lang === 'ar' ? 'السعر/الفارق' : 'Price/Offset'} 
+                      className="input-field" 
+                      style={{ margin: 0 }}
+                      value={item.price} 
+                      onChange={(e) => {
+                        const newList = [...sizesList];
+                        newList[index].price = e.target.value;
+                        setSizesList(newList);
+                      }} 
+                    />
+                  </div>
+
+                  {/* Delete Button */}
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      const newList = sizesList.filter((_, i) => i !== index);
+                      setSizesList(newList.length > 0 ? newList : [{ name: '', price: '', type: 'absolute' }]);
+                    }}
+                    style={{
+                      border: 'none',
+                      backgroundColor: '#fee2e2',
+                      color: '#ef4444',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      fontWeight: '600',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {lang === 'ar' ? 'حذف' : 'Delete'}
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Add Option Button */}
+            <button 
+              type="button" 
+              onClick={() => setSizesList([...sizesList, { name: '', price: '', type: 'absolute' }])}
+              style={{
+                marginTop: '12px',
+                padding: '6px 16px',
+                borderRadius: '6px',
+                backgroundColor: 'var(--accent-blue)',
+                color: 'white',
+                border: 'none',
+                fontWeight: '600',
+                cursor: 'pointer',
+                fontSize: '0.85rem'
+              }}
+            >
+              {lang === 'ar' ? '+ إضافة خيار جديد' : '+ Add New Option'}
+            </button>
           </div>
           <div style={{ gridColumn: 'span 1' }}>
             <label className="input-label">صورة المنتج (Product Image)</label>
