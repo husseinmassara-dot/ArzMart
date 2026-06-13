@@ -204,7 +204,7 @@ export const AppProvider = ({ children }) => {
      window.location.hostname === '127.0.0.1' || 
      window.location.hostname.startsWith('192.168.'))
       ? `http://${window.location.hostname}:5000`
-      : 'https://arz-mart.onrender.com'
+      : 'https://arz-mart-96co.onrender.com'
   );
 
   const apiBase = `${apiHost}/api`;
