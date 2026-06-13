@@ -208,7 +208,378 @@ db.close = function(cb) {
 };
 
 // Initialize database schema and seed data
-initializeDatabase();
+if (isPostgres) {
+  initializeDatabasePostgres();
+} else {
+  initializeDatabase();
+}
+
+async function initializeDatabasePostgres() {
+  try {
+    console.log('[Database] Initializing PostgreSQL schema sequentially...');
+    
+    // 1. Settings Table
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS settings (
+        id SERIAL PRIMARY KEY,
+        app_name TEXT DEFAULT 'Arz-Mart',
+        logo_url TEXT DEFAULT '',
+        exchange_rate DOUBLE PRECISION DEFAULT 89500,
+        free_delivery_threshold DOUBLE PRECISION DEFAULT 50,
+        delivery_fee DOUBLE PRECISION DEFAULT 4,
+        hero_banners TEXT DEFAULT '[]',
+        online_payment_enabled INTEGER DEFAULT 0,
+        contact_email TEXT DEFAULT 'info@arz-mart.com'
+      )
+    `);
+    
+    try {
+      await pgPool.query("ALTER TABLE settings ADD COLUMN IF NOT EXISTS contact_email TEXT DEFAULT 'info@arz-mart.com'");
+    } catch (e) {}
+
+    // 2. Users Table
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        role TEXT DEFAULT 'user',
+        permissions TEXT DEFAULT '[]',
+        discount_used INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // 3. Categories Table
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS categories (
+        id SERIAL PRIMARY KEY,
+        name_ar TEXT NOT NULL,
+        name_en TEXT NOT NULL,
+        parent_id INTEGER DEFAULT NULL,
+        image_url TEXT DEFAULT '',
+        FOREIGN KEY (parent_id) REFERENCES categories (id) ON DELETE CASCADE
+      )
+    `);
+
+    // 4. Merchants Table
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS merchants (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        phone TEXT,
+        email TEXT,
+        company TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // 5. Products Table
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS products (
+        id SERIAL PRIMARY KEY,
+        name_ar TEXT NOT NULL,
+        name_en TEXT NOT NULL,
+        description_ar TEXT,
+        description_en TEXT,
+        price_usd DOUBLE PRECISION NOT NULL,
+        cost_price_usd DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+        old_price_usd DOUBLE PRECISION DEFAULT NULL,
+        category_id INTEGER,
+        merchant_id INTEGER DEFAULT NULL,
+        image_url TEXT DEFAULT '',
+        stock INTEGER DEFAULT 10,
+        rating_sum DOUBLE PRECISION DEFAULT 0,
+        rating_count INTEGER DEFAULT 0,
+        colors TEXT DEFAULT '[]',
+        sizes TEXT DEFAULT '[]',
+        FOREIGN KEY (category_id) REFERENCES categories (id) ON DELETE SET NULL,
+        FOREIGN KEY (merchant_id) REFERENCES merchants (id) ON DELETE SET NULL
+      )
+    `);
+
+    try {
+      await pgPool.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS colors TEXT DEFAULT '[]'");
+    } catch (e) {}
+    try {
+      await pgPool.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS sizes TEXT DEFAULT '[]'");
+    } catch (e) {}
+
+    // 6. Orders Table
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS orders (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER,
+        user_name TEXT,
+        phone TEXT NOT NULL,
+        address TEXT NOT NULL,
+        items TEXT NOT NULL,
+        total_usd DOUBLE PRECISION NOT NULL,
+        total_lbp DOUBLE PRECISION NOT NULL,
+        total_cost_usd DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+        delivery_fee_usd DOUBLE PRECISION NOT NULL,
+        delivery_fee_lbp DOUBLE PRECISION NOT NULL,
+        status TEXT DEFAULT 'pending',
+        tracking_number TEXT,
+        payment_method TEXT DEFAULT 'COD',
+        show_price_on_print INTEGER DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL
+      )
+    `);
+
+    // 7. Chats Table
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS chats (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        sender TEXT NOT NULL,
+        message TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // 8. Coupons Table
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS coupons (
+        id SERIAL PRIMARY KEY,
+        code TEXT UNIQUE NOT NULL,
+        discount_percent DOUBLE PRECISION NOT NULL,
+        active INTEGER DEFAULT 1
+      )
+    `);
+
+    // 9. Notifications Table
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS notifications (
+        id SERIAL PRIMARY KEY,
+        title_ar TEXT NOT NULL,
+        title_en TEXT NOT NULL,
+        message_ar TEXT NOT NULL,
+        message_en TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    console.log('[Database] PostgreSQL tables created successfully. Checking seeding...');
+
+    // Seed settings
+    const settingsCount = await pgPool.query('SELECT COUNT(*) FROM settings');
+    if (parseInt(settingsCount.rows[0].count) === 0) {
+      const defaultBanners = JSON.stringify([
+        {
+          id: 'banner_init_1',
+          image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=1200&q=80',
+          title_ar: 'عروض الصيف الكبرى في أرز مارت',
+          title_en: 'Summer Mega Sales at Arz-Mart',
+          desc_ar: 'خصومات حصرية تصل إلى ٥٠٪ على كافة السلع الغذائية والمحلية اللبنانية',
+          desc_en: 'Exclusive discounts up to 50% on all grocery and local Lebanese goods'
+        },
+        {
+          id: 'banner_init_2',
+          image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&q=80',
+          title_ar: 'المنتجات الطازجة والبلدية',
+          title_en: 'Fresh & Authentic Local Products',
+          desc_ar: 'توصيل سريع وبأسعار مناسبة إلى كافة المناطق اللبنانية',
+          desc_en: 'Fast and affordable delivery to all Lebanese regions'
+        }
+      ]);
+      await pgPool.query(`
+        INSERT INTO settings (app_name, logo_url, exchange_rate, free_delivery_threshold, delivery_fee, hero_banners, online_payment_enabled)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `, ['Arz-Mart', '/uploads/logo.png', 89500, 100, 5, defaultBanners, 0]);
+      console.log('[Database] Seeded settings table.');
+    }
+
+    // Seed default admin users
+    const adminsCount = await pgPool.query("SELECT COUNT(*) FROM users WHERE role = 'admin'");
+    if (parseInt(adminsCount.rows[0].count) === 0) {
+      const admins = [
+        { username: 'husseinmassara', password: '0214786395' },
+        { username: 'city-hunter', password: '4786395' }
+      ];
+      for (const admin of admins) {
+        const hashedPassword = bcrypt.hashSync(admin.password, 10);
+        const permissions = JSON.stringify(['products', 'categories', 'orders', 'users', 'settings', 'employees', 'reports', 'inventory', 'coupons', 'chat', 'merchants']);
+        await pgPool.query(`
+          INSERT INTO users (username, password, role, permissions)
+          VALUES ($1, $2, $3, $4)
+          ON CONFLICT (username) DO NOTHING
+        `, [admin.username, hashedPassword, 'admin', permissions]);
+      }
+      console.log('[Database] Seeded admin users.');
+    }
+
+    // Seed Merchants
+    const merchantsCount = await pgPool.query('SELECT COUNT(*) FROM merchants');
+    if (parseInt(merchantsCount.rows[0].count) === 0) {
+      const merchants = [
+        { name: 'مزارع البقاع الحديثة', phone: '+961 08 543 210', email: 'bekaa-farms@gmail.com', company: 'Bekaa Farms Co.' },
+        { name: 'شركة ضيافة للتموين', phone: '+961 01 254 789', email: 'info@diyafa-group.com', company: 'Diyafa Foods' },
+        { name: 'معامل صابون طرابلس التقليدي', phone: '+961 06 432 109', email: 'tripoli-soaps@soaps.com', company: 'Tripoli Traditional Soaps' }
+      ];
+      for (const m of merchants) {
+        await pgPool.query('INSERT INTO merchants (name, phone, email, company) VALUES ($1, $2, $3, $4)', [m.name, m.phone, m.email, m.company]);
+      }
+      console.log('[Database] Seeded merchants.');
+    }
+
+    // Seed Categories & Sub-Categories & Products
+    const categoriesCount = await pgPool.query('SELECT COUNT(*) FROM categories');
+    if (parseInt(categoriesCount.rows[0].count) === 0) {
+      // 1. Groceries & Provisions
+      const groceriesRes = await pgPool.query(`
+        INSERT INTO categories (name_ar, name_en, parent_id, image_url) 
+        VALUES ($1, $2, $3, $4) RETURNING id
+      `, ['المواد الغذائية والتموينية', 'Groceries & Provisions', null, '']);
+      const groceriesId = groceriesRes.rows[0].id;
+
+      // 1a. Traditional Oils & Fats
+      const oilsRes = await pgPool.query(`
+        INSERT INTO categories (name_ar, name_en, parent_id, image_url) 
+        VALUES ($1, $2, $3, $4) RETURNING id
+      `, ['الزيوت والدهون البلدية', 'Traditional Oils & Fats', groceriesId, '']);
+      const oilsId = oilsRes.rows[0].id;
+
+      // Product: Olive oil
+      await pgPool.query(`
+        INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      `, [
+        'زيت زيتون لبناني بكر ممتاز ١ ليتر',
+        'Extra Virgin Lebanese Olive Oil 1L',
+        'زيت زيتون معصور على البارد من حقول الكورة الشمالية، طبيعي ١٠٠٪ وبجودة ممتازة.',
+        'Cold-pressed olive oil from the fields of Koura, North Lebanon. 100% natural and high quality.',
+        9.50, 6.00, 12.00, oilsId, 1,
+        'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=300&q=80',
+        25, 18, 4,
+        '[]', '["١ ليتر (1L)", "٤ ليتر (4L)"]'
+      ]);
+
+      // 1b. Local Honey & Jams
+      const honeyRes = await pgPool.query(`
+        INSERT INTO categories (name_ar, name_en, parent_id, image_url) 
+        VALUES ($1, $2, $3, $4) RETURNING id
+      `, ['العسل والمربيات البلدية', 'Local Honey & Jams', groceriesId, '']);
+      const honeyId = honeyRes.rows[0].id;
+
+      // Product: Oak Honey
+      await pgPool.query(`
+        INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      `, [
+        'عسل السنديان اللبناني الطبيعي ٥٠٠غ',
+        'Natural Lebanese Oak Honey 500g',
+        'عسل جبلي أسود طبيعي ١٠٠٪ غني بالفوائد، من مناحل جبال الشوف.',
+        '100% natural dark oak mountain honey, harvested from the beehives of Shouf mountains.',
+        14.00, 9.50, null, honeyId, 1,
+        'https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&w=300&q=80',
+        15, 23, 5,
+        '[]', '["٥٠٠غ (500g)", "١كغ (1kg)"]'
+      ]);
+
+      // Product: Fig Jam
+      await pgPool.query(`
+        INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      `, [
+        'مربى التين اللبناني التقليدي ٦٠0غ',
+        'Traditional Lebanese Fig Jam 600g',
+        'مربى تين بلدي مصنوع على الطريقة التقليدية بالسمسم وجوز الهند من البقاع.',
+        'Homemade traditional Lebanese fig jam made with sesame and walnuts from Bekaa.',
+        4.50, 2.80, 5.50, honeyId, 2,
+        'https://images.unsplash.com/photo-1622484211148-716bdf2c4b7e?auto=format&fit=crop&w=300&q=80',
+        30, 9, 2,
+        '[]', '["٣٠٠غ (300g)", "٦٠٠غ (600g)"]'
+      ]);
+
+      // 1c. Lebanese Coffee & Spices
+      const spicesRes = await pgPool.query(`
+        INSERT INTO categories (name_ar, name_en, parent_id, image_url) 
+        VALUES ($1, $2, $3, $4) RETURNING id
+      `, ['القهوة والبهارات اللبنانية', 'Lebanese Coffee & Spices', groceriesId, '']);
+      const spicesId = spicesRes.rows[0].id;
+
+      // Product: Wild Zaatar
+      await pgPool.query(`
+        INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      `, [
+        'زعتر بلدي ممتاز محوج ٤50غ',
+        'Premium Lebanese Wild Zaatar 450g',
+        'خلطة الزعتر البلدي اللبناني مع السمسم المحمص والسماق البلدي النقي.',
+        'Traditional Lebanese zaatar blend with toasted sesame seeds and pure sumac.',
+        3.80, 2.00, null, spicesId, 2,
+        'https://images.unsplash.com/photo-1532634922-8fe0b757fb13?auto=format&fit=crop&w=300&q=80',
+        40, 5, 1,
+        '[]', '["٢٠٠غ (200g)", "٤٥٠غ (450g)"]'
+      ]);
+
+      // Product: Ground Coffee
+      await pgPool.query(`
+        INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      `, [
+        'قهوة لبنانية مطحونة مع هال ٢٥0غ',
+        'Lebanese Ground Coffee with Cardamom 250g',
+        'بن أشقر برازيلي مطحون ومحمص بنكهة الهال الغنية بخلطة لبنانية مميزة.',
+        'Traditional golden roasted and finely ground coffee with rich cardamom flavor.',
+        3.20, 1.80, 4.00, spicesId, 2,
+        'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=300&q=80',
+        50, 10, 2,
+        '[]', '["٢٥٠غ (250g)", "٥٠٠غ (500g)", "١كغ (1kg)"]'
+      ]);
+
+      // 2. Personal Care & Traditional Soaps
+      const careRes = await pgPool.query(`
+        INSERT INTO categories (name_ar, name_en, parent_id, image_url) 
+        VALUES ($1, $2, $3, $4) RETURNING id
+      `, ['العناية بالبشرة والصابون البلدي', 'Personal Care & Traditional Soaps', null, '']);
+      const careId = careRes.rows[0].id;
+
+      // 2a. Olive Oil & Laurel Soaps
+      const soapRes = await pgPool.query(`
+        INSERT INTO categories (name_ar, name_en, parent_id, image_url) 
+        VALUES ($1, $2, $3, $4) RETURNING id
+      `, ['صابون زيت الزيتون والغار', 'Olive Oil & Laurel Soaps', careId, '']);
+      const soapId = soapRes.rows[0].id;
+
+      // Product: Laurel Soap
+      await pgPool.query(`
+        INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      `, [
+        'صابون غار طرابلسي طبيعي حبة كبيرة',
+        'Natural Tripoli Laurel Soap Large Bar',
+        'صابون مصنوع يدوياً من زيت الغار وزيت الزيتون النقي، ممتاز للبشرة الحساسة.',
+        'Handcrafted traditional soap bar made with pure laurel oil and olive oil, ideal for sensitive skin.',
+        2.50, 1.20, null, soapId, 3,
+        'https://images.unsplash.com/photo-1607006342466-4aa8d8d32be5?auto=format&fit=crop&w=300&q=80',
+        60, 14, 3,
+        '["غار طبيعي (Natural)", "غار أخضر (Green)"]', '["حبة وسط (Medium)", "حبة كبيرة (Large)"]'
+      ]);
+
+      // Product: Olive oil soap with rose
+      await pgPool.query(`
+        INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      `, [
+        'صابون زيت الزيتون بماء الورد البلدي',
+        'Olive Oil Soap with Natural Rose Water',
+        'صابون معطر بماء الورد الجوري اللبناني الطبيعي لتنظيف وترطيب البشرة.',
+        'Traditional olive oil soap bar infused with organic Lebanese rose water for gentle skin moisturizing.',
+        2.20, 1.00, 3.00, soapId, 3,
+        'https://images.unsplash.com/photo-1546554137-f86b9593a222?auto=format&fit=crop&w=300&q=80',
+        45, 10, 2,
+        '["وردي (Pink Rose)", "أبيض (White)"]', '["حبة وسط (Medium)", "حبة كبيرة (Large)"]'
+      ]);
+
+      console.log('[Database] Seeded categories, sub-categories, and products successfully.');
+    }
+  } catch (err) {
+    console.error('[Database] Sequential PostgreSQL initialization failed:', err);
+  }
+}
 
 function initializeDatabase() {
   db.serialize(() => {
