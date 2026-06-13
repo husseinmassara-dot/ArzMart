@@ -136,6 +136,12 @@ export const ChatProvider = ({ children }) => {
     }
   }, [activeChatUserId]);
 
+  useEffect(() => {
+    if (token && user && user.role !== 'user') {
+      fetchChatUsers();
+    }
+  }, [token, user]);
+
   const sendMessage = async (text) => {
     if (!token || !text.trim()) return;
 
