@@ -266,7 +266,7 @@ export default function AdminProducts() {
           <tbody>
             {products.map((p) => {
               const imageUrl = p.image_url 
-                ? (p.image_url.startsWith('http') ? p.image_url : `${apiHost}${p.image_url}`)
+                ? (p.image_url.startsWith('http') || p.image_url.startsWith('data:') ? p.image_url : `${apiHost}${p.image_url}`)
                 : 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=50&q=80';
               
               return (

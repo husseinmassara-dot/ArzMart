@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { fileToBase64 } = require('../utils/fileHelper');
 
 exports.getSettings = async (req, res) => {
   try {
@@ -25,7 +26,7 @@ exports.updateSettings = async (req, res) => {
 
     let logoUrl = settings ? settings.logo_url : '';
     if (req.file) {
-      logoUrl = `/uploads/${req.file.filename}`;
+      logoUrl = fileToBase64(req.file) || (settings ? settings.logo_url : '');
     }
 
     const appName = app_name || (settings ? settings.app_name : 'Arz-Mart');
@@ -93,12 +94,15 @@ exports.updateBanners = async (req, res) => {
           // Try to find by unique banner ID first
           let banner = bannerArray.find(b => b.id === key);
           if (banner) {
-            banner.image = `/uploads/banners/${file.filename}`;
+            banner.image = fileToBase64(file) || banner.image;
           } else {
             // Fallback: try to match by index if key is numeric
             const index = parseInt(key, 10);
             if (!isNaN(index) && bannerArray[index]) {
-              bannerArray[index].image = `/uploads/banners/${file.filename}`;
+              bannerArray[index].image = fileToBase64(file) || bannerArray[index].image;
+            } else {
+              // Delete unused uploaded files
+              fileToBase64(file);
             }
           }
         }

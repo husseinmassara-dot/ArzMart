@@ -43,7 +43,7 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
         {/* Brand / Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => setCurrentView('store')}>
           {settings?.logo_url ? (
-            <img src={`${apiHost}${settings.logo_url}`} alt="Logo" style={{ height: '40px', objectFit: 'contain' }} />
+            <img src={settings.logo_url.startsWith('http') || settings.logo_url.startsWith('data:') ? settings.logo_url : `${apiHost}${settings.logo_url}`} alt="Logo" style={{ height: '40px', objectFit: 'contain' }} />
           ) : (
             <div style={{
               width: '40px',

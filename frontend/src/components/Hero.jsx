@@ -46,7 +46,7 @@ export default function Hero() {
   if (slides.length === 0) return null;
 
   const activeSlide = slides[currentSlide];
-  const imageSource = activeSlide.image.startsWith('http') 
+  const imageSource = activeSlide.image.startsWith('http') || activeSlide.image.startsWith('data:')
     ? activeSlide.image 
     : `${apiHost}${activeSlide.image}`;
 

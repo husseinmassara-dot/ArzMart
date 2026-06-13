@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { fileToBase64 } = require('../utils/fileHelper');
 
 exports.getProducts = async (req, res) => {
   const { category_id, search, min_price, max_price, min_rating } = req.query;
@@ -92,7 +93,7 @@ exports.getProductById = async (req, res) => {
 
 exports.createProduct = async (req, res) => {
   const { name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, stock } = req.body;
-  const imageUrl = req.file ? `/uploads/products/${req.file.filename}` : '';
+  const imageUrl = req.file ? fileToBase64(req.file) : '';
 
   if (!name_ar || !name_en || !price_usd) {
     return res.status(400).json({ error_ar: 'الرجاء إدخال الحقول المطلوبة (الاسم والسعر)', error_en: 'Please enter required fields (name and price)' });
@@ -146,7 +147,7 @@ exports.updateProduct = async (req, res) => {
 
     let imageUrl = product.image_url;
     if (req.file) {
-      imageUrl = `/uploads/products/${req.file.filename}`;
+      imageUrl = fileToBase64(req.file) || product.image_url;
     }
 
     const cid = category_id && category_id !== 'null' ? parseInt(category_id) : null;

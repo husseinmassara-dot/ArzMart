@@ -886,7 +886,7 @@ export default function App() {
                     }
 
                     const imageUrl = cat.image_url 
-                      ? (cat.image_url.startsWith('http') ? cat.image_url : `${apiHost}${cat.image_url}`)
+                      ? (cat.image_url.startsWith('http') || cat.image_url.startsWith('data:') ? cat.image_url : `${apiHost}${cat.image_url}`)
                       : bgImg;
 
                     return (

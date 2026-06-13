@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { fileToBase64 } = require('../utils/fileHelper');
 
 exports.getCategories = async (req, res) => {
   try {
@@ -17,7 +18,7 @@ exports.getCategories = async (req, res) => {
 
 exports.createCategory = async (req, res) => {
   const { name_ar, name_en, parent_id } = req.body;
-  const imageUrl = req.file ? `/uploads/categories/${req.file.filename}` : '';
+  const imageUrl = req.file ? fileToBase64(req.file) : '';
 
   if (!name_ar || !name_en) {
     return res.status(400).json({ error_ar: 'الرجاء إدخال اسم التصنيف باللغتين', error_en: 'Please enter category name in both languages' });
@@ -66,7 +67,7 @@ exports.updateCategory = async (req, res) => {
 
     let imageUrl = category.image_url;
     if (req.file) {
-      imageUrl = `/uploads/categories/${req.file.filename}`;
+      imageUrl = fileToBase64(req.file) || category.image_url;
     }
 
     await db.runAsync(

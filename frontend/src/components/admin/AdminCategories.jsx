@@ -176,7 +176,7 @@ export default function AdminCategories() {
           <tbody>
             {categories.map((c) => {
               const imageUrl = c.image_url 
-                ? (c.image_url.startsWith('http') ? c.image_url : `${apiHost}${c.image_url}`)
+                ? (c.image_url.startsWith('http') || c.image_url.startsWith('data:') ? c.image_url : `${apiHost}${c.image_url}`)
                 : 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=50&q=80';
               
               return (

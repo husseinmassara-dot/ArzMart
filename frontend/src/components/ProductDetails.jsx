@@ -20,7 +20,7 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
   const hasDiscount = product.old_price_usd && product.old_price_usd > product.price_usd;
 
   const imageUrl = product.image_url 
-    ? (product.image_url.startsWith('http') ? product.image_url : `${apiHost}${product.image_url}`)
+    ? (product.image_url.startsWith('http') || product.image_url.startsWith('data:') ? product.image_url : `${apiHost}${product.image_url}`)
     : 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80';
 
   const handleRatingSubmit = async () => {
