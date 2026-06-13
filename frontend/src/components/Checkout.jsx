@@ -34,7 +34,7 @@ export default function Checkout({ onClose }) {
     if (!couponCode.trim()) return;
 
     try {
-      const code = couponCode.toUpperCase().trim();
+      const code = couponCode.toUpperCase().replace(/\s+/g, '');
       
       if (code === 'WELCOME10') {
         if (!token) {

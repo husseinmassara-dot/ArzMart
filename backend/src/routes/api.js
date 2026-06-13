@@ -53,7 +53,7 @@ router.put('/orders/:id/status', authenticateToken, requirePermission('orders'),
 router.delete('/orders/:id', authenticateToken, requireAdmin, orderController.deleteOrder);
 
 // --- Coupon Routes ---
-router.get('/coupons', authenticateToken, requirePermission('coupons'), couponController.getCoupons);
+router.get('/coupons', authenticateToken, couponController.getCoupons);
 router.post('/coupons', authenticateToken, requirePermission('coupons'), couponController.createCoupon);
 router.delete('/coupons/:id', authenticateToken, requirePermission('coupons'), couponController.deleteCoupon);
 
