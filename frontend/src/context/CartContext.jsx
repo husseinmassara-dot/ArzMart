@@ -3,6 +3,23 @@ import { useApp } from './AppContext';
 
 const CartContext = createContext();
 
+export function getOptionPrice(optionString, basePrice) {
+  if (!optionString) return basePrice;
+  const priceRegex = /\(\s*[+-]?\s*\$?\s*([0-9.]+)\s*\$?_?\)/;
+  const match = optionString.match(priceRegex);
+  if (match) {
+    const val = parseFloat(match[1]);
+    const relativeMatch = optionString.match(/\(\s*([+-])\s*\$?\s*([0-9.]+)\s*\$?_?\)/);
+    if (relativeMatch) {
+      const sign = relativeMatch[1];
+      const offset = parseFloat(relativeMatch[2]);
+      return sign === '-' ? (basePrice - offset) : (basePrice + offset);
+    }
+    return val;
+  }
+  return basePrice;
+}
+
 export const CartProvider = ({ children }) => {
   const { settings } = useApp();
   const [cartItems, setCartItems] = useState(() => {
@@ -73,7 +90,10 @@ export const CartProvider = ({ children }) => {
   };
 
   // Subtotal in USD
-  const subtotal = cartItems.reduce((sum, item) => sum + item.product.price_usd * item.quantity, 0);
+  const subtotal = cartItems.reduce((sum, item) => {
+    const itemPrice = getOptionPrice(item.selectedSize, item.product.price_usd);
+    return sum + itemPrice * item.quantity;
+  }, 0);
 
   // Delivery calculations
   const freeThreshold = settings ? settings.free_delivery_threshold : 50;

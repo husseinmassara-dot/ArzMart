@@ -36,7 +36,36 @@ exports.createOrder = async (req, res) => {
         });
       }
 
-      const itemCost = product.price_usd * item.quantity;
+      // Resolve size-specific price
+      let itemPrice = product.price_usd;
+      if (item.selectedSize && product.sizes) {
+        try {
+          const parsedSizes = JSON.parse(product.sizes || '[]');
+          const matchingSizeOption = parsedSizes.find(s => {
+            const cleanS = s.replace(/\s+/g, '').toUpperCase();
+            const cleanSelected = item.selectedSize.replace(/\s+/g, '').toUpperCase();
+            return cleanS.startsWith(cleanSelected) || cleanSelected.startsWith(cleanS);
+          });
+          if (matchingSizeOption) {
+            const priceRegex = /\(\s*[+-]?\s*\$?\s*([0-9.]+)\s*\$?_?\)/;
+            const match = matchingSizeOption.match(priceRegex);
+            if (match) {
+              const val = parseFloat(match[1]);
+              const isRelative = matchingSizeOption.includes('+') || matchingSizeOption.includes('-');
+              if (isRelative) {
+                const isNegative = matchingSizeOption.includes('-');
+                itemPrice = isNegative ? (product.price_usd - val) : (product.price_usd + val);
+              } else {
+                itemPrice = val;
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Error parsing size price offset on backend:', e);
+        }
+      }
+
+      const itemCost = itemPrice * item.quantity;
       const itemCostPrice = product.cost_price_usd * item.quantity;
 
       subtotalUsd += itemCost;
@@ -47,7 +76,7 @@ exports.createOrder = async (req, res) => {
         name_ar: product.name_ar,
         name_en: product.name_en,
         image_url: product.image_url,
-        price_usd: product.price_usd,
+        price_usd: itemPrice,
         cost_price_usd: product.cost_price_usd,
         quantity: item.quantity,
         merchant_name: product.merchant_name || '',

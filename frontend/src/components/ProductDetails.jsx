@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { useCart } from '../context/CartContext';
+import { useCart, getOptionPrice } from '../context/CartContext';
 import { Star, ShoppingCart, X } from 'lucide-react';
+
+function getOptionName(optionString) {
+  if (!optionString) return '';
+  return optionString.replace(/\s*\(\s*[+-]?\s*\$?\s*[0-9.]+\s*\$?_?\)/g, '').trim();
+}
 
 export default function ProductDetails({ product, onClose, onRefresh }) {
   const { lang, formatPrice, t, apiBase, apiHost } = useApp();
@@ -23,7 +28,21 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
   const categoryName = lang === 'ar' ? product.category_name_ar : product.category_name_en;
   
   const rating = product.rating || 0;
-  const hasDiscount = product.old_price_usd && product.old_price_usd > product.price_usd;
+  
+  const currentPrice = getOptionPrice(selectedSize, product.price_usd);
+  let adjustedOldPrice = product.old_price_usd;
+  if (product.old_price_usd && selectedSize) {
+    const relativeMatch = selectedSize.match(/\(\s*([+-])\s*\$?\s*([0-9.]+)\s*\$?_?\)/);
+    if (relativeMatch) {
+      const sign = relativeMatch[1];
+      const offset = parseFloat(relativeMatch[2]);
+      adjustedOldPrice = sign === '-' ? (product.old_price_usd - offset) : (product.old_price_usd + offset);
+    } else {
+      const priceDifference = currentPrice - product.price_usd;
+      adjustedOldPrice = product.old_price_usd + priceDifference;
+    }
+  }
+  const hasDiscount = adjustedOldPrice && adjustedOldPrice > currentPrice;
 
   const imageUrl = product.image_url 
     ? (product.image_url.startsWith('http') || product.image_url.startsWith('data:') ? product.image_url : `${apiHost}${product.image_url}`)
@@ -165,11 +184,11 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', margin: '8px 0' }}>
               {hasDiscount && (
                 <span className="old-price" style={{ fontSize: '1rem' }}>
-                  {formatPrice(product.old_price_usd)}
+                  {formatPrice(adjustedOldPrice)}
                 </span>
               )}
               <span className="new-price" style={{ fontSize: '1.6rem' }}>
-                {formatPrice(product.price_usd)}
+                {formatPrice(currentPrice)}
               </span>
             </div>
 
@@ -243,7 +262,7 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
                         transition: 'all 0.2s'
                       }}
                     >
-                      {size}
+                      {getOptionName(size)}
                     </button>
                   ))}
                 </div>

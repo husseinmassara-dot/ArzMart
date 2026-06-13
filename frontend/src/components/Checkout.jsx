@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { useCart } from '../context/CartContext';
+import { useCart, getOptionPrice } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { X, CheckCircle } from 'lucide-react';
 
@@ -403,7 +403,7 @@ export default function Checkout({ onClose }) {
                       {item.quantity}x {lang === 'ar' ? item.product.name_ar : item.product.name_en}
                     </span>
                     <span style={{ fontWeight: '600' }}>
-                      {formatPrice(item.product.price_usd * item.quantity)}
+                      {formatPrice(getOptionPrice(item.selectedSize, item.product.price_usd) * item.quantity)}
                     </span>
                   </div>
                   {(item.selectedColor || item.selectedSize) && (

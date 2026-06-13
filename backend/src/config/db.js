@@ -453,7 +453,7 @@ async function initializeDatabasePostgres() {
         9.50, 6.00, 12.00, oilsId, 1,
         'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=300&q=80',
         25, 18, 4,
-        '[]', '["١ ليتر (1L)", "٤ ليتر (4L)"]'
+        '[]', '["١ ليتر (1L)", "٢ ليتر (2L) (+$8.50)", "٥ ليتر (5L) (+$35.50)"]'
       ]);
 
       // 1b. Local Honey & Jams
@@ -572,6 +572,28 @@ async function initializeDatabasePostgres() {
         'https://images.unsplash.com/photo-1546554137-f86b9593a222?auto=format&fit=crop&w=300&q=80',
         45, 10, 2,
         '["وردي (Pink Rose)", "أبيض (White)"]', '["حبة وسط (Medium)", "حبة كبيرة (Large)"]'
+      ]);
+
+      // 3. Electronics & Phones
+      const electronicsRes = await pgPool.query(`
+        INSERT INTO categories (name_ar, name_en, parent_id, image_url) 
+        VALUES ($1, $2, $3, $4) RETURNING id
+      `, ['الأجهزة الإلكترونية والهواتف', 'Electronics & Phones', null, '']);
+      const electronicsId = electronicsRes.rows[0].id;
+
+      // Product: Smartphone
+      await pgPool.query(`
+        INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      `, [
+        'هاتف ذكي متطور',
+        'Advanced Smartphone',
+        'شاشة مذهلة، كاميرات احترافية، وبطارية تدوم طويلاً.',
+        'Stunning display, pro cameras, and all-day battery life.',
+        799.00, 500.00, 899.00, electronicsId, 1,
+        'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=300&q=80',
+        10, 24, 5,
+        '["أسود (Black)", "ذهبي (Gold)"]', '["128GB", "256GB (+$100)", "512GB (+$250)"]'
       ]);
 
       console.log('[Database] Seeded categories, sub-categories, and products successfully.');
@@ -834,7 +856,7 @@ function initializeDatabase() {
                 9.50, 6.00, 12.00, ?, 1,
                 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=300&q=80',
                 25, 18, 4,
-                '[]', '["١ ليتر (1L)", "٤ ليتر (4L)"]'
+                '[]', '["١ ليتر (1L)", "٢ ليتر (2L) (+$8.50)", "٥ ليتر (5L) (+$35.50)"]'
               )
             `, [oilsId]);
           });
@@ -942,6 +964,23 @@ function initializeDatabase() {
               )
             `, [soapId]);
           });
+        });
+
+        db.run("INSERT INTO categories (name_ar, name_en, parent_id, image_url) VALUES ('الأجهزة الإلكترونية والهواتف', 'Electronics & Phones', NULL, '')", function(err) {
+          if (err) return;
+          const electronicsId = this.lastID;
+          db.run(`
+            INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
+            VALUES (
+              'هاتف ذكي متطور', 'Advanced Smartphone',
+              'شاشة مذهلة، كاميرات احترافية، وبطارية تدوم طويلاً.',
+              'Stunning display, pro cameras, and all-day battery life.',
+              799.00, 500.00, 899.00, ?, 1,
+              'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=300&q=80',
+              10, 24, 5,
+              '["أسود (Black)", "ذهبي (Gold)"]', '["128GB", "256GB (+$100)", "512GB (+$250)"]'
+            )
+          `, [electronicsId]);
         });
       }
     });
