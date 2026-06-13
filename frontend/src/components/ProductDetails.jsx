@@ -242,30 +242,66 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
             {product.sizes && product.sizes.length > 0 && (
               <div style={{ margin: '12px 0' }}>
                 <span className="input-label" style={{ display: 'block', marginBottom: '6px' }}>
-                  {lang === 'ar' ? 'القياس المتاح:' : 'Available Size:'}
+                  {lang === 'ar' ? 'الخيار المتاح:' : 'Available Option:'}
                 </span>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {product.sizes.map(size => (
-                    <button
-                      key={size}
-                      type="button"
-                      onClick={() => setSelectedSize(size)}
-                      style={{
-                        padding: '6px 16px',
-                        borderRadius: '20px',
-                        border: selectedSize === size ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)',
-                        backgroundColor: selectedSize === size ? 'var(--accent-blue)' : 'var(--bg-secondary)',
-                        color: selectedSize === size ? 'white' : 'var(--text-primary)',
-                        fontSize: '0.85rem',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      {getOptionName(size)}
-                    </button>
-                  ))}
-                </div>
+                {product.sizes.length >= 4 ? (
+                  <select
+                    value={selectedSize}
+                    onChange={(e) => setSelectedSize(e.target.value)}
+                    className="input-field"
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      backgroundColor: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--border-color)',
+                      fontSize: '0.9rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      outline: 'none'
+                    }}
+                  >
+                    {product.sizes.map(size => {
+                      const optPrice = getOptionPrice(size, product.price_usd);
+                      const priceDiff = optPrice - product.price_usd;
+                      let priceLabel = '';
+                      if (priceDiff > 0) {
+                        priceLabel = ` (+${formatPrice(priceDiff)})`;
+                      } else if (priceDiff < 0) {
+                        priceLabel = ` (-${formatPrice(Math.abs(priceDiff))})`;
+                      }
+                      return (
+                        <option key={size} value={size}>
+                          {getOptionName(size)}{priceLabel}
+                        </option>
+                      );
+                    })}
+                  </select>
+                ) : (
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {product.sizes.map(size => (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => setSelectedSize(size)}
+                        style={{
+                          padding: '6px 16px',
+                          borderRadius: '20px',
+                          border: selectedSize === size ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)',
+                          backgroundColor: selectedSize === size ? 'var(--accent-blue)' : 'var(--bg-secondary)',
+                          color: selectedSize === size ? 'white' : 'var(--text-primary)',
+                          fontSize: '0.85rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        {getOptionName(size)}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

@@ -243,8 +243,16 @@ export default function AdminProducts() {
             <input type="text" className="input-field" placeholder={lang === 'ar' ? 'مثال: أحمر, أزرق, أسود' : 'e.g. Red, Blue, Black'} value={colorsInput} onChange={(e) => setColorsInput(e.target.value)} />
           </div>
           <div>
-            <label className="input-label">{lang === 'ar' ? 'القياسات المتاحة (مفصولة بفاصلة)' : 'Available Sizes (comma-separated)'}</label>
-            <input type="text" className="input-field" placeholder={lang === 'ar' ? 'مثال: S, M, L, XL' : 'e.g. S, M, L, XL, 39, 40'} value={sizesInput} onChange={(e) => setSizesInput(e.target.value)} />
+            <label className="input-label">
+              {lang === 'ar' ? 'الخيارات/القياسات المتاحة (مفصولة بفاصلة)' : 'Available Options/Sizes (comma-separated)'}
+            </label>
+            <input 
+              type="text" 
+              className="input-field" 
+              placeholder={lang === 'ar' ? 'مثال: 128GB, 256GB (+$100), 512GB (+$250)' : 'e.g. 128GB, 256GB (+$100), 512GB (+$250)'} 
+              value={sizesInput} 
+              onChange={(e) => setSizesInput(e.target.value)} 
+            />
           </div>
           <div style={{ gridColumn: 'span 1' }}>
             <label className="input-label">صورة المنتج (Product Image)</label>
