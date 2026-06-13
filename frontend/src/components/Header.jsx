@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useChat } from '../context/ChatContext';
-import { ShoppingCart, Moon, Sun, Globe, DollarSign, LogOut, User, Shield, MessageSquare, Fingerprint } from 'lucide-react';
+import { ShoppingCart, Moon, Sun, Globe, DollarSign, LogOut, User, Shield, MessageSquare, Fingerprint, Smartphone } from 'lucide-react';
 
 export default function Header({ currentView, setCurrentView, searchVal, setSearchVal }) {
   const { lang, setLang, theme, setTheme, currency, toggleCurrency, settings, t, apiHost } = useApp();
@@ -170,6 +170,33 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
           >
             {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
           </button>
+
+          {/* Download App Button */}
+          <a
+            href="/app.apk"
+            download
+            className="input-field"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              padding: '6px 10px',
+              cursor: 'pointer',
+              fontWeight: '600',
+              border: '1px solid var(--border-color)',
+              borderRadius: '6px',
+              width: 'auto',
+              backgroundColor: 'var(--bg-primary)',
+              color: 'var(--text-primary)',
+              textDecoration: 'none',
+              fontSize: '0.85rem'
+            }}
+            title={lang === 'ar' ? 'تحميل تطبيق الأندرويد' : 'Download Android App'}
+          >
+            <Smartphone size={14} />
+            <span>{lang === 'ar' ? 'التطبيق' : 'App'}</span>
+          </a>
 
           {/* Chat Icon */}
           {user && (
