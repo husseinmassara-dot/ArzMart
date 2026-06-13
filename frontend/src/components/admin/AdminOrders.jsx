@@ -248,6 +248,16 @@ export default function AdminOrders() {
                       <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '0.85rem' }}>
                         <td style={{ padding: '8px 0' }}>
                           <div>{lang === 'ar' ? item.name_ar : item.name_en}</div>
+                          {(item.selectedColor || item.selectedSize) && (
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-light)', display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '2px' }}>
+                              {item.selectedColor && (
+                                <span>{lang === 'ar' ? `اللون: ${item.selectedColor}` : `Color: ${item.selectedColor}`}</span>
+                              )}
+                              {item.selectedSize && (
+                                <span>{lang === 'ar' ? `القياس: ${item.selectedSize}` : `Size: ${item.selectedSize}`}</span>
+                              )}
+                            </div>
+                          )}
                           {hidePricesInPrint && item.merchant_name && (
                             <div style={{ fontSize: '0.75rem', color: 'gray', marginTop: '2px' }}>
                               {lang === 'ar' ? `التاجر: ${item.merchant_name}` : `Merchant: ${item.merchant_name}`}

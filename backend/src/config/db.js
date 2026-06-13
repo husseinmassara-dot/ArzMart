@@ -297,10 +297,25 @@ function initializeDatabase() {
         stock INTEGER DEFAULT 10,
         rating_sum REAL DEFAULT 0,
         rating_count INTEGER DEFAULT 0,
+        colors TEXT DEFAULT '[]',
+        sizes TEXT DEFAULT '[]',
         FOREIGN KEY (category_id) REFERENCES categories (id) ON DELETE SET NULL,
         FOREIGN KEY (merchant_id) REFERENCES merchants (id) ON DELETE SET NULL
       )
-    `);
+    `, [], () => {
+      const alterColors = isPostgres 
+        ? "ALTER TABLE products ADD COLUMN IF NOT EXISTS colors TEXT DEFAULT '[]'" 
+        : "ALTER TABLE products ADD COLUMN colors TEXT DEFAULT '[]'";
+      db.run(alterColors, [], (err) => {
+        // Ignore error
+      });
+      const alterSizes = isPostgres 
+        ? "ALTER TABLE products ADD COLUMN IF NOT EXISTS sizes TEXT DEFAULT '[]'" 
+        : "ALTER TABLE products ADD COLUMN sizes TEXT DEFAULT '[]'";
+      db.run(alterSizes, [], (err) => {
+        // Ignore error
+      });
+    });
 
     // 6. Orders Table
     runInit(`

@@ -50,7 +50,9 @@ exports.createOrder = async (req, res) => {
         price_usd: product.price_usd,
         cost_price_usd: product.cost_price_usd,
         quantity: item.quantity,
-        merchant_name: product.merchant_name || ''
+        merchant_name: product.merchant_name || '',
+        selectedColor: item.selectedColor || null,
+        selectedSize: item.selectedSize || null
       });
 
       // Deduct stock

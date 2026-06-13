@@ -9,6 +9,12 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
   const [qty, setQty] = useState(1);
   const [userRating, setUserRating] = useState(5);
   const [ratingSubmitted, setRatingSubmitted] = useState(false);
+  const [selectedColor, setSelectedColor] = useState(() => {
+    return (product && product.colors && product.colors.length > 0) ? product.colors[0] : null;
+  });
+  const [selectedSize, setSelectedSize] = useState(() => {
+    return (product && product.sizes && product.sizes.length > 0) ? product.sizes[0] : null;
+  });
 
   if (!product) return null;
 
@@ -182,6 +188,68 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
               {desc || <span style={{ fontStyle: 'italic', color: 'var(--text-light)' }}>No description available.</span>}
             </div>
 
+            {/* Color Selector */}
+            {product.colors && product.colors.length > 0 && (
+              <div style={{ margin: '12px 0' }}>
+                <span className="input-label" style={{ display: 'block', marginBottom: '6px' }}>
+                  {lang === 'ar' ? 'اللون المتاح:' : 'Available Color:'}
+                </span>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {product.colors.map(color => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => setSelectedColor(color)}
+                      style={{
+                        padding: '6px 16px',
+                        borderRadius: '20px',
+                        border: selectedColor === color ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)',
+                        backgroundColor: selectedColor === color ? 'var(--accent-blue)' : 'var(--bg-secondary)',
+                        color: selectedColor === color ? 'white' : 'var(--text-primary)',
+                        fontSize: '0.85rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {color}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Size Selector */}
+            {product.sizes && product.sizes.length > 0 && (
+              <div style={{ margin: '12px 0' }}>
+                <span className="input-label" style={{ display: 'block', marginBottom: '6px' }}>
+                  {lang === 'ar' ? 'القياس المتاح:' : 'Available Size:'}
+                </span>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {product.sizes.map(size => (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => setSelectedSize(size)}
+                      style={{
+                        padding: '6px 16px',
+                        borderRadius: '20px',
+                        border: selectedSize === size ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)',
+                        backgroundColor: selectedSize === size ? 'var(--accent-blue)' : 'var(--bg-secondary)',
+                        color: selectedSize === size ? 'white' : 'var(--text-primary)',
+                        fontSize: '0.85rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Quantity Selector & Add to Cart */}
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '10px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -210,7 +278,7 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
                 <span className="input-label" style={{ margin: 0, opacity: 0 }}>Action</span>
                 <button
                   onClick={() => {
-                    addToCart(product, qty);
+                    addToCart(product, qty, selectedColor, selectedSize);
                     onClose();
                   }}
                   disabled={product.stock <= 0}

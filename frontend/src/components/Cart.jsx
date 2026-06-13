@@ -107,7 +107,7 @@ export default function Cart({ onCheckoutClick }) {
                 : 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=100&q=80';
 
               return (
-                <div key={item.product.id} style={{
+                <div key={`${item.product.id}_${item.selectedColor || ''}_${item.selectedSize || ''}`} style={{
                   display: 'flex',
                   gap: '12px',
                   borderBottom: '1px solid var(--border-color)',
@@ -143,6 +143,25 @@ export default function Cart({ onCheckoutClick }) {
                     }}>
                       {name}
                     </h4>
+
+                    {/* Selected Color / Size */}
+                    {(item.selectedColor || item.selectedSize) && (
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '2px' }}>
+                        {item.selectedColor && (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span>{lang === 'ar' ? 'اللون:' : 'Color:'}</span>
+                            <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{item.selectedColor}</span>
+                          </span>
+                        )}
+                        {item.selectedSize && (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span>{lang === 'ar' ? 'القياس:' : 'Size:'}</span>
+                            <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{item.selectedSize}</span>
+                          </span>
+                        )}
+                      </div>
+                    )}
+
                     <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--accent-red-gold)' }}>
                       {formatPrice(item.product.price_usd)}
                     </span>
@@ -150,7 +169,7 @@ export default function Cart({ onCheckoutClick }) {
                     {/* Quantity Selector */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
                       <button
-                        onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                        onClick={() => updateQuantity(item.product.id, item.quantity - 1, item.selectedColor, item.selectedSize)}
                         className="input-field"
                         style={{ width: '24px', height: '24px', padding: 0, display: 'flex', alignItems: 'center', justifyCenter: 'center', cursor: 'pointer' }}
                       >
@@ -158,7 +177,7 @@ export default function Cart({ onCheckoutClick }) {
                       </button>
                       <span style={{ fontSize: '0.85rem', fontWeight: '700' }}>{item.quantity}</span>
                       <button
-                        onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                        onClick={() => updateQuantity(item.product.id, item.quantity + 1, item.selectedColor, item.selectedSize)}
                         disabled={item.quantity >= item.product.stock}
                         className="input-field"
                         style={{ width: '24px', height: '24px', padding: 0, display: 'flex', alignItems: 'center', justifyCenter: 'center', cursor: item.quantity >= item.product.stock ? 'not-allowed' : 'pointer' }}
@@ -170,7 +189,7 @@ export default function Cart({ onCheckoutClick }) {
 
                   {/* Remove Button */}
                   <button
-                    onClick={() => removeFromCart(item.product.id)}
+                    onClick={() => removeFromCart(item.product.id, item.selectedColor, item.selectedSize)}
                     style={{
                       border: 'none',
                       backgroundColor: 'transparent',

@@ -25,6 +25,8 @@ export default function AdminProducts() {
   const [merchantId, setMerchantId] = useState('');
   const [stock, setStock] = useState('10');
   const [selectedFile, setSelectedFile] = useState(null);
+  const [colorsInput, setColorsInput] = useState('');
+  const [sizesInput, setSizesInput] = useState('');
 
   const fetchProducts = async () => {
     try {
@@ -92,6 +94,10 @@ export default function AdminProducts() {
     if (selectedFile) {
       formData.append('product_image', selectedFile);
     }
+    const colorsArray = colorsInput ? colorsInput.split(',').map(c => c.trim()).filter(Boolean) : [];
+    const sizesArray = sizesInput ? sizesInput.split(',').map(s => s.trim()).filter(Boolean) : [];
+    formData.append('colors', JSON.stringify(colorsArray));
+    formData.append('sizes', JSON.stringify(sizesArray));
 
     const url = isEditing 
       ? `${apiBase}/products/${editingId}`
@@ -129,6 +135,8 @@ export default function AdminProducts() {
     setMerchantId(product.merchant_id || '');
     setStock(product.stock);
     setSelectedFile(null);
+    setColorsInput((product.colors || []).join(', '));
+    setSizesInput((product.sizes || []).join(', '));
   };
 
   const handleDelete = async (id) => {
@@ -160,6 +168,8 @@ export default function AdminProducts() {
     setMerchantId('');
     setStock('10');
     setSelectedFile(null);
+    setColorsInput('');
+    setSizesInput('');
   };
 
   return (
@@ -227,6 +237,14 @@ export default function AdminProducts() {
           <div>
             <label className="input-label">المخزون المتوفر (Stock)</label>
             <input type="number" required className="input-field" value={stock} onChange={(e) => setStock(e.target.value)} />
+          </div>
+          <div>
+            <label className="input-label">{lang === 'ar' ? 'الألوان المتاحة (مفصولة بفاصلة)' : 'Available Colors (comma-separated)'}</label>
+            <input type="text" className="input-field" placeholder={lang === 'ar' ? 'مثال: أحمر, أزرق, أسود' : 'e.g. Red, Blue, Black'} value={colorsInput} onChange={(e) => setColorsInput(e.target.value)} />
+          </div>
+          <div>
+            <label className="input-label">{lang === 'ar' ? 'القياسات المتاحة (مفصولة بفاصلة)' : 'Available Sizes (comma-separated)'}</label>
+            <input type="text" className="input-field" placeholder={lang === 'ar' ? 'مثال: S, M, L, XL' : 'e.g. S, M, L, XL, 39, 40'} value={sizesInput} onChange={(e) => setSizesInput(e.target.value)} />
           </div>
           <div style={{ gridColumn: 'span 1' }}>
             <label className="input-label">صورة المنتج (Product Image)</label>

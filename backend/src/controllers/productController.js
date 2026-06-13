@@ -52,7 +52,11 @@ exports.getProducts = async (req, res) => {
     
     let filteredProducts = products.map(p => {
       const rating = p.rating_count > 0 ? (p.rating_sum / p.rating_count) : 0;
-      return { ...p, rating };
+      let parsedColors = [];
+      let parsedSizes = [];
+      try { parsedColors = JSON.parse(p.colors || '[]'); } catch (e) { parsedColors = []; }
+      try { parsedSizes = JSON.parse(p.sizes || '[]'); } catch (e) { parsedSizes = []; }
+      return { ...p, rating, colors: parsedColors, sizes: parsedSizes };
     });
 
     if (min_rating) {
@@ -84,7 +88,11 @@ exports.getProductById = async (req, res) => {
     }
 
     const rating = product.rating_count > 0 ? (product.rating_sum / product.rating_count) : 0;
-    res.json({ ...product, rating });
+    let parsedColors = [];
+    let parsedSizes = [];
+    try { parsedColors = JSON.parse(product.colors || '[]'); } catch (e) { parsedColors = []; }
+    try { parsedSizes = JSON.parse(product.sizes || '[]'); } catch (e) { parsedSizes = []; }
+    res.json({ ...product, rating, colors: parsedColors, sizes: parsedSizes });
   } catch (err) {
     console.error('Get product by ID error:', err);
     res.status(500).json({ error_ar: 'خطأ في جلب تفاصيل المنتج', error_en: 'Error fetching product details' });
@@ -92,7 +100,7 @@ exports.getProductById = async (req, res) => {
 };
 
 exports.createProduct = async (req, res) => {
-  const { name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, stock } = req.body;
+  const { name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, stock, colors, sizes } = req.body;
   const imageUrl = req.file ? fileToBase64(req.file) : '';
 
   if (!name_ar || !name_en || !price_usd) {
@@ -104,12 +112,14 @@ exports.createProduct = async (req, res) => {
   const oldPrice = old_price_usd && old_price_usd !== 'null' ? parseFloat(old_price_usd) : null;
   const costPrice = cost_price_usd ? parseFloat(cost_price_usd) : 0.0;
   const productStock = stock ? parseInt(stock) : 10;
+  const colorsStr = typeof colors === 'string' ? colors : JSON.stringify(colors || []);
+  const sizesStr = typeof sizes === 'string' ? sizes : JSON.stringify(sizes || []);
 
   try {
     const result = await db.runAsync(`
-      INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [name_ar, name_en, description_ar, description_en, parseFloat(price_usd), costPrice, oldPrice, cid, mid, imageUrl, productStock]);
+      INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, colors, sizes)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [name_ar, name_en, description_ar, description_en, parseFloat(price_usd), costPrice, oldPrice, cid, mid, imageUrl, productStock, colorsStr, sizesStr]);
 
     res.status(201).json({
       message_ar: 'تم إضافة المنتج بنجاح',
@@ -126,7 +136,9 @@ exports.createProduct = async (req, res) => {
         category_id: cid,
         merchant_id: mid,
         image_url: imageUrl,
-        stock: productStock
+        stock: productStock,
+        colors: JSON.parse(colorsStr),
+        sizes: JSON.parse(sizesStr)
       }
     });
   } catch (err) {
@@ -137,7 +149,7 @@ exports.createProduct = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
   const { id } = req.params;
-  const { name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, stock } = req.body;
+  const { name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, stock, colors, sizes } = req.body;
 
   try {
     const product = await db.getAsync('SELECT * FROM products WHERE id = ?', [id]);
@@ -155,12 +167,14 @@ exports.updateProduct = async (req, res) => {
     const oldPrice = old_price_usd && old_price_usd !== 'null' ? parseFloat(old_price_usd) : null;
     const costPrice = cost_price_usd ? parseFloat(cost_price_usd) : product.cost_price_usd;
     const productStock = stock ? parseInt(stock) : product.stock;
+    const colorsStr = typeof colors === 'string' ? colors : JSON.stringify(colors || []);
+    const sizesStr = typeof sizes === 'string' ? sizes : JSON.stringify(sizes || []);
 
     await db.runAsync(`
       UPDATE products 
-      SET name_ar = ?, name_en = ?, description_ar = ?, description_en = ?, price_usd = ?, cost_price_usd = ?, old_price_usd = ?, category_id = ?, merchant_id = ?, image_url = ?, stock = ?
+      SET name_ar = ?, name_en = ?, description_ar = ?, description_en = ?, price_usd = ?, cost_price_usd = ?, old_price_usd = ?, category_id = ?, merchant_id = ?, image_url = ?, stock = ?, colors = ?, sizes = ?
       WHERE id = ?
-    `, [name_ar, name_en, description_ar, description_en, parseFloat(price_usd), costPrice, oldPrice, cid, mid, imageUrl, productStock, id]);
+    `, [name_ar, name_en, description_ar, description_en, parseFloat(price_usd), costPrice, oldPrice, cid, mid, imageUrl, productStock, colorsStr, sizesStr, id]);
 
     res.json({
       message_ar: 'تم تحديث المنتج بنجاح',
@@ -177,7 +191,9 @@ exports.updateProduct = async (req, res) => {
         category_id: cid,
         merchant_id: mid,
         image_url: imageUrl,
-        stock: productStock
+        stock: productStock,
+        colors: JSON.parse(colorsStr),
+        sizes: JSON.parse(sizesStr)
       }
     });
   } catch (err) {

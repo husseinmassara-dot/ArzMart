@@ -97,7 +97,9 @@ export default function Checkout({ onClose }) {
       address,
       items: cartItems.map(item => ({
         product_id: item.product.id,
-        quantity: item.quantity
+        quantity: item.quantity,
+        selectedColor: item.selectedColor || null,
+        selectedSize: item.selectedSize || null
       })),
       coupon_code: appliedCode || null,
       payment_method: paymentMethod
@@ -393,13 +395,25 @@ export default function Checkout({ onClose }) {
             {/* Cart list preview */}
             <div style={{ maxHeight: '120px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {cartItems.map(item => (
-                <div key={item.product.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>
-                    {item.quantity}x {lang === 'ar' ? item.product.name_ar : item.product.name_en}
-                  </span>
-                  <span style={{ fontWeight: '600' }}>
-                    {formatPrice(item.product.price_usd * item.quantity)}
-                  </span>
+                <div key={`${item.product.id}_${item.selectedColor || ''}_${item.selectedSize || ''}`} style={{ display: 'flex', flexDirection: 'column', fontSize: '0.85rem', borderBottom: '1px dashed var(--border-color)', paddingBottom: '4px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>
+                      {item.quantity}x {lang === 'ar' ? item.product.name_ar : item.product.name_en}
+                    </span>
+                    <span style={{ fontWeight: '600' }}>
+                      {formatPrice(item.product.price_usd * item.quantity)}
+                    </span>
+                  </div>
+                  {(item.selectedColor || item.selectedSize) && (
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-light)', display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '1px' }}>
+                      {item.selectedColor && (
+                        <span>{lang === 'ar' ? `اللون: ${item.selectedColor}` : `Color: ${item.selectedColor}`}</span>
+                      )}
+                      {item.selectedSize && (
+                        <span>{lang === 'ar' ? `القياس: ${item.selectedSize}` : `Size: ${item.selectedSize}`}</span>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
