@@ -20,7 +20,12 @@ exports.createOrder = async (req, res) => {
     const orderItemsDetails = [];
 
     for (const item of items) {
-      const product = await db.getAsync('SELECT * FROM products WHERE id = ?', [item.product_id]);
+      const product = await db.getAsync(`
+        SELECT p.*, m.name as merchant_name 
+        FROM products p 
+        LEFT JOIN merchants m ON p.merchant_id = m.id 
+        WHERE p.id = ?
+      `, [item.product_id]);
       if (!product) {
         return res.status(400).json({ error_ar: `المنتج غير موجود`, error_en: `Product not found` });
       }
@@ -44,7 +49,8 @@ exports.createOrder = async (req, res) => {
         image_url: product.image_url,
         price_usd: product.price_usd,
         cost_price_usd: product.cost_price_usd,
-        quantity: item.quantity
+        quantity: item.quantity,
+        merchant_name: product.merchant_name || ''
       });
 
       // Deduct stock

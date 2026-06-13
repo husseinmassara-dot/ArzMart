@@ -247,7 +247,12 @@ export default function AdminOrders() {
                     {selectedOrder.items.map((item, idx) => (
                       <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '0.85rem' }}>
                         <td style={{ padding: '8px 0' }}>
-                          {lang === 'ar' ? item.name_ar : item.name_en}
+                          <div>{lang === 'ar' ? item.name_ar : item.name_en}</div>
+                          {hidePricesInPrint && item.merchant_name && (
+                            <div style={{ fontSize: '0.75rem', color: 'gray', marginTop: '2px' }}>
+                              {lang === 'ar' ? `التاجر: ${item.merchant_name}` : `Merchant: ${item.merchant_name}`}
+                            </div>
+                          )}
                         </td>
                         <td style={{ padding: '8px 0', textAlign: 'center' }}>
                           {item.quantity}

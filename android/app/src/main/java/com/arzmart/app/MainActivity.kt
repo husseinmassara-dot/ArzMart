@@ -15,7 +15,7 @@ import java.util.concurrent.Executor
 class MainActivity : AppCompatActivity() {
 
     companion object {
-        private const val IS_PRODUCTION = false // اجعلها true عند رفع التطبيق للإنتاج ومشاركة الرابط
+        private const val IS_PRODUCTION = true // اجعلها true عند رفع التطبيق للإنتاج ومشاركة الرابط
         private const val PRODUCTION_URL = "https://arz-mart.vercel.app" // ضع رابط الاستضافة الجديد هنا
     }
 
