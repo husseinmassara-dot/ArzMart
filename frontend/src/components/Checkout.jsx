@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { X, CheckCircle } from 'lucide-react';
 
 export default function Checkout({ onClose }) {
-  const { lang, formatPrice, settings, t, token, apiBase } = useApp();
+  const { lang, formatPrice, settings, t, apiBase } = useApp();
+  const { token } = useAuth();
   const { cartItems, subtotal, deliveryFee, total, clearCart } = useCart();
 
   const [phone, setPhone] = useState('');
