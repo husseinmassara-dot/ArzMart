@@ -1485,6 +1485,70 @@ async function seedDemoData() {
       }
     }
     console.log('[Database] Additional demo categories and products check/seeding finished.');
+
+    // Update Settings Hero Banners to include tech/cosmetics/clothing banners
+    const settings = await db.getAsync('SELECT id, hero_banners FROM settings LIMIT 1');
+    if (settings) {
+      let banners = [];
+      try {
+        banners = JSON.parse(settings.hero_banners || '[]');
+      } catch (e) {
+        banners = [];
+      }
+
+      // Check if our new banners are already added
+      const hasNewBanners = banners.some(b => b.id === 'banner_init_3');
+      if (!hasNewBanners) {
+        const updatedBanners = [
+          {
+            id: 'banner_init_1',
+            image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=1200&q=80',
+            title_ar: 'عروض الصيف الكبرى في أرز مارت',
+            title_en: 'Summer Mega Sales at Arz-Mart',
+            desc_ar: 'خصومات حصرية تصل إلى ٥٠٪ على كافة السلع الغذائية والمحلية اللبنانية',
+            desc_en: 'Exclusive discounts up to 50% on all grocery and local Lebanese goods'
+          },
+          {
+            id: 'banner_init_2',
+            image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&q=80',
+            title_ar: 'المنتجات الطازجة والبلدية',
+            title_en: 'Fresh & Authentic Local Products',
+            desc_ar: 'توصيل سريع وبأسعار مناسبة إلى كافة المناطق اللبنانية',
+            desc_en: 'Fast and affordable delivery to all Lebanese regions'
+          },
+          {
+            id: 'banner_init_3',
+            image: 'https://images.unsplash.com/photo-1468495244123-6c6c332eeece?auto=format&fit=crop&w=1200&q=80',
+            title_ar: 'عالم الإلكترونيات والأجهزة الذكية',
+            title_en: 'Smart Devices & Tech World',
+            desc_ar: 'اكتشف أحدث سماعات الرأس، الساعات الذكية، وإكسسوارات الهواتف بأسعار منافسة',
+            desc_en: 'Explore the latest headphones, smartwatches, and phone accessories at competitive prices'
+          },
+          {
+            id: 'banner_init_4',
+            image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=1200&q=80',
+            title_ar: 'جمالك والعناية الفائقة بالبشرة',
+            title_en: 'Beauty & Premium Face Care',
+            desc_ar: 'مجموعة فاخرة من أدوات التجميل، مرطبات الشفاه، والصابون الطبيعي الأصيل',
+            desc_en: 'A premium selection of cosmetics, lip balms, and authentic natural soaps'
+          },
+          {
+            id: 'banner_init_5',
+            image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1200&q=80',
+            title_ar: 'أحدث الموديلات والملابس الراقية',
+            title_en: 'Latest Trends & High-End Clothing',
+            desc_ar: 'تشكيلة واسعة من الملابس الصيفية، الأحذية الرياضية، والإكسسوارات الأنيقة',
+            desc_en: 'A wide range of summer clothing, athletic shoes, and stylish accessories'
+          }
+        ];
+
+        await db.runAsync(
+          'UPDATE settings SET hero_banners = ? WHERE id = ?',
+          [JSON.stringify(updatedBanners), settings.id]
+        );
+        console.log('[Database] Updated hero banners successfully.');
+      }
+    }
   } catch (err) {
     console.error('[Database] Failed to seed additional demo products:', err);
   }
