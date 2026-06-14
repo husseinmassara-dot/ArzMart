@@ -10,6 +10,18 @@ let sqliteDb = null;
 
 const db = {};
 
+const newSupermarketCategories = [
+  { name_ar: 'المواد الغذائية والتموينية', name_en: 'Groceries & Provisions', image_url: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'الخضار والفواكه الطازجة', name_en: 'Fresh Fruits & Vegetables', image_url: 'https://images.unsplash.com/photo-1579613832125-5d34a13ff2a8?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'اللحوم والدواجن والأسماك', name_en: 'Meats, Poultry & Fish', image_url: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'الألبان والأجبان', name_en: 'Dairy & Cheese', image_url: 'https://images.unsplash.com/photo-1528750901443-e986c70264aa?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'المشروبات والعصائر', name_en: 'Beverages & Juices', image_url: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'المخبوزات والحلويات', name_en: 'Bakery & Sweets', image_url: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'المنظفات والعناية بالمنزل', name_en: 'Detergents & Home Care', image_url: 'https://images.unsplash.com/photo-1583947215259-38e31be8751f?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'العناية الشخصية والجمال', name_en: 'Personal Care & Beauty', image_url: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'مستلزمات منزلية', name_en: 'Household Goods', image_url: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=300&q=80' }
+];
+
 // Helper to convert SQLite SQL placeholders (?) to PostgreSQL ($1, $2...)
 function convertSql(sql) {
   let index = 1;
@@ -443,179 +455,31 @@ async function initializeDatabasePostgres() {
       console.log('[Database] Seeded merchants.');
     }
 
-    // Seed Categories & Sub-Categories & Products
+    // Seed Categories
     const categoriesCount = await pgPool.query('SELECT COUNT(*) FROM categories');
     if (parseInt(categoriesCount.rows[0].count) === 0) {
-      // 1. Groceries & Provisions
-      const groceriesRes = await pgPool.query(`
-        INSERT INTO categories (name_ar, name_en, parent_id, image_url) 
-        VALUES ($1, $2, $3, $4) RETURNING id
-      `, ['المواد الغذائية والتموينية', 'Groceries & Provisions', null, '']);
-      const groceriesId = groceriesRes.rows[0].id;
+      for (const cat of newSupermarketCategories) {
+        await pgPool.query(
+          'INSERT INTO categories (name_ar, name_en, parent_id, image_url) VALUES ($1, $2, null, $3)',
+          [cat.name_ar, cat.name_en, cat.image_url]
+        );
+      }
+      console.log('[Database] Seeded new supermarket categories.');
+    }
 
-      // 1a. Traditional Oils & Fats
-      const oilsRes = await pgPool.query(`
-        INSERT INTO categories (name_ar, name_en, parent_id, image_url) 
-        VALUES ($1, $2, $3, $4) RETURNING id
-      `, ['الزيوت والدهون البلدية', 'Traditional Oils & Fats', groceriesId, '']);
-      const oilsId = oilsRes.rows[0].id;
-
-      // Product: Olive oil
-      await pgPool.query(`
-        INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-      `, [
-        'زيت زيتون لبناني بكر ممتاز ١ ليتر',
-        'Extra Virgin Lebanese Olive Oil 1L',
-        'زيت زيتون معصور على البارد من حقول الكورة الشمالية، طبيعي ١٠٠٪ وبجودة ممتازة.',
-        'Cold-pressed olive oil from the fields of Koura, North Lebanon. 100% natural and high quality.',
-        9.50, 6.00, 12.00, oilsId, 1,
-        'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=300&q=80',
-        25, 18, 4,
-        '[]', '["١ ليتر (1L)", "٢ ليتر (2L) (+$8.50)", "٥ ليتر (5L) (+$35.50)"]'
-      ]);
-
-      // 1b. Local Honey & Jams
-      const honeyRes = await pgPool.query(`
-        INSERT INTO categories (name_ar, name_en, parent_id, image_url) 
-        VALUES ($1, $2, $3, $4) RETURNING id
-      `, ['العسل والمربيات البلدية', 'Local Honey & Jams', groceriesId, '']);
-      const honeyId = honeyRes.rows[0].id;
-
-      // Product: Oak Honey
-      await pgPool.query(`
-        INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-      `, [
-        'عسل السنديان اللبناني الطبيعي ٥٠٠غ',
-        'Natural Lebanese Oak Honey 500g',
-        'عسل جبلي أسود طبيعي ١٠٠٪ غني بالفوائد، من مناحل جبال الشوف.',
-        '100% natural dark oak mountain honey, harvested from the beehives of Shouf mountains.',
-        14.00, 9.50, null, honeyId, 1,
-        'https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&w=300&q=80',
-        15, 23, 5,
-        '[]', '["٥٠٠غ (500g)", "١كغ (1kg)"]'
-      ]);
-
-      // Product: Fig Jam
-      await pgPool.query(`
-        INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-      `, [
-        'مربى التين اللبناني التقليدي ٦٠0غ',
-        'Traditional Lebanese Fig Jam 600g',
-        'مربى تين بلدي مصنوع على الطريقة التقليدية بالسمسم وجوز الهند من البقاع.',
-        'Homemade traditional Lebanese fig jam made with sesame and walnuts from Bekaa.',
-        4.50, 2.80, 5.50, honeyId, 2,
-        'https://images.unsplash.com/photo-1622484211148-716bdf2c4b7e?auto=format&fit=crop&w=300&q=80',
-        30, 9, 2,
-        '[]', '["٣٠٠غ (300g)", "٦٠٠غ (600g)"]'
-      ]);
-
-      // 1c. Lebanese Coffee & Spices
-      const spicesRes = await pgPool.query(`
-        INSERT INTO categories (name_ar, name_en, parent_id, image_url) 
-        VALUES ($1, $2, $3, $4) RETURNING id
-      `, ['القهوة والبهارات اللبنانية', 'Lebanese Coffee & Spices', groceriesId, '']);
-      const spicesId = spicesRes.rows[0].id;
-
-      // Product: Wild Zaatar
-      await pgPool.query(`
-        INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-      `, [
-        'زعتر بلدي ممتاز محوج ٤50غ',
-        'Premium Lebanese Wild Zaatar 450g',
-        'خلطة الزعتر البلدي اللبناني مع السمسم المحمص والسماق البلدي النقي.',
-        'Traditional Lebanese zaatar blend with toasted sesame seeds and pure sumac.',
-        3.80, 2.00, null, spicesId, 2,
-        'https://images.unsplash.com/photo-1532634922-8fe0b757fb13?auto=format&fit=crop&w=300&q=80',
-        40, 5, 1,
-        '[]', '["٢٠٠غ (200g)", "٤٥٠غ (450g)"]'
-      ]);
-
-      // Product: Ground Coffee
-      await pgPool.query(`
-        INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-      `, [
-        'قهوة لبنانية مطحونة مع هال ٢٥0غ',
-        'Lebanese Ground Coffee with Cardamom 250g',
-        'بن أشقر برازيلي مطحون ومحمص بنكهة الهال الغنية بخلطة لبنانية مميزة.',
-        'Traditional golden roasted and finely ground coffee with rich cardamom flavor.',
-        3.20, 1.80, 4.00, spicesId, 2,
-        'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=300&q=80',
-        50, 10, 2,
-        '[]', '["٢٥٠غ (250g)", "٥٠٠غ (500g)", "١كغ (1kg)"]'
-      ]);
-
-      // 2. Personal Care & Traditional Soaps
-      const careRes = await pgPool.query(`
-        INSERT INTO categories (name_ar, name_en, parent_id, image_url) 
-        VALUES ($1, $2, $3, $4) RETURNING id
-      `, ['العناية بالبشرة والصابون البلدي', 'Personal Care & Traditional Soaps', null, '']);
-      const careId = careRes.rows[0].id;
-
-      // 2a. Olive Oil & Laurel Soaps
-      const soapRes = await pgPool.query(`
-        INSERT INTO categories (name_ar, name_en, parent_id, image_url) 
-        VALUES ($1, $2, $3, $4) RETURNING id
-      `, ['صابون زيت الزيتون والغار', 'Olive Oil & Laurel Soaps', careId, '']);
-      const soapId = soapRes.rows[0].id;
-
-      // Product: Laurel Soap
-      await pgPool.query(`
-        INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-      `, [
-        'صابون غار طرابلسي طبيعي حبة كبيرة',
-        'Natural Tripoli Laurel Soap Large Bar',
-        'صابون مصنوع يدوياً من زيت الغار وزيت الزيتون النقي، ممتاز للبشرة الحساسة.',
-        'Handcrafted traditional soap bar made with pure laurel oil and olive oil, ideal for sensitive skin.',
-        2.50, 1.20, null, soapId, 3,
-        'https://images.unsplash.com/photo-1607006342466-4aa8d8d32be5?auto=format&fit=crop&w=300&q=80',
-        60, 14, 3,
-        '["غار طبيعي (Natural)", "غار أخضر (Green)"]', '["حبة وسط (Medium)", "حبة كبيرة (Large)"]'
-      ]);
-
-      // Product: Olive oil soap with rose
-      await pgPool.query(`
-        INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-      `, [
-        'صابون زيت الزيتون بماء الورد البلدي',
-        'Olive Oil Soap with Natural Rose Water',
-        'صابون معطر بماء الورد الجوري اللبناني الطبيعي لتنظيف وترطيب البشرة.',
-        'Traditional olive oil soap bar infused with organic Lebanese rose water for gentle skin moisturizing.',
-        2.20, 1.00, 3.00, soapId, 3,
-        'https://images.unsplash.com/photo-1546554137-f86b9593a222?auto=format&fit=crop&w=300&q=80',
-        45, 10, 2,
-        '["وردي (Pink Rose)", "أبيض (White)"]', '["حبة وسط (Medium)", "حبة كبيرة (Large)"]'
-      ]);
-
-      // 3. Electronics & Phones
-      const electronicsRes = await pgPool.query(`
-        INSERT INTO categories (name_ar, name_en, parent_id, image_url) 
-        VALUES ($1, $2, $3, $4) RETURNING id
-      `, ['الأجهزة الإلكترونية والهواتف', 'Electronics & Phones', null, '']);
-      const electronicsId = electronicsRes.rows[0].id;
-
-      // Product: Smartphone
-      await pgPool.query(`
-        INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-      `, [
-        'هاتف ذكي متطور',
-        'Advanced Smartphone',
-        'شاشة مذهلة، كاميرات احترافية، وبطارية تدوم طويلاً.',
-        'Stunning display, pro cameras, and all-day battery life.',
-        799.00, 500.00, 899.00, electronicsId, 1,
-        'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=300&q=80',
-        10, 24, 5,
-        '["أسود (Black)", "ذهبي (Gold)"]', '["128GB", "256GB (+$100)", "512GB (+$250)"]'
-      ]);
-
-      console.log('[Database] Seeded categories, sub-categories, and products successfully.');
+    // Supermarket catalog migration check (runs once if old demo category exists)
+    const oldCatCheck = await pgPool.query("SELECT COUNT(*) FROM categories WHERE name_en = 'Phone Accessories'");
+    if (parseInt(oldCatCheck.rows[0].count) > 0) {
+      console.log('[Database] Migrating PostgreSQL to new clean supermarket catalog...');
+      await pgPool.query("DELETE FROM products");
+      await pgPool.query("DELETE FROM categories");
+      for (const cat of newSupermarketCategories) {
+        await pgPool.query(
+          'INSERT INTO categories (name_ar, name_en, parent_id, image_url) VALUES ($1, $2, null, $3)',
+          [cat.name_ar, cat.name_en, cat.image_url]
+        );
+      }
+      console.log('[Database] PostgreSQL supermarket migration completed successfully.');
     }
   } catch (err) {
     console.error('[Database] Sequential PostgreSQL initialization failed:', err);
@@ -881,152 +745,28 @@ function initializeDatabase() {
       }
     });
 
-    // Seed Categories & Sub-Categories & Products if empty
+    // Seed Categories if empty
     db.get('SELECT COUNT(*) as count FROM categories', [], (err, row) => {
       if (row && parseInt(row.count) === 0) {
-        db.run("INSERT INTO categories (name_ar, name_en, parent_id, image_url) VALUES ('المواد الغذائية والتموينية', 'Groceries & Provisions', NULL, '')", function(err) {
-          if (err) return;
-          const groceriesId = this.lastID;
-          
-          db.run(`INSERT INTO categories (name_ar, name_en, parent_id, image_url) VALUES ('الزيوت والدهون البلدية', 'Traditional Oils & Fats', ?, '')`, [groceriesId], function(err) {
-            if (err) return;
-            const oilsId = this.lastID;
-            
-            db.run(`
-              INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
-              VALUES (
-                'زيت زيتون لبناني بكر ممتاز ١ ليتر',
-                'Extra Virgin Lebanese Olive Oil 1L',
-                'زيت زيتون معصور على البارد من حقول الكورة الشمالية، طبيعي ١٠٠٪ وبجودة ممتازة.',
-                'Cold-pressed olive oil from the fields of Koura, North Lebanon. 100% natural and high quality.',
-                9.50, 6.00, 12.00, ?, 1,
-                'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=300&q=80',
-                25, 18, 4,
-                '[]', '["١ ليتر (1L)", "٢ ليتر (2L) (+$8.50)", "٥ ليتر (5L) (+$35.50)"]'
-              )
-            `, [oilsId]);
-          });
-
-          db.run(`INSERT INTO categories (name_ar, name_en, parent_id, image_url) VALUES ('العسل والمربيات البلدية', 'Local Honey & Jams', ?, '')`, [groceriesId], function(err) {
-            if (err) return;
-            const honeyId = this.lastID;
-            
-            db.run(`
-              INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
-              VALUES (
-                'عسل السنديان اللبناني الطبيعي ٥٠٠غ',
-                'Natural Lebanese Oak Honey 500g',
-                'عسل جبلي أسود طبيعي ١٠٠٪ غني بالفوائد، من مناحل جبال الشوف.',
-                '100% natural dark oak mountain honey, harvested from the beehives of Shouf mountains.',
-                14.00, 9.50, NULL, ?, 1,
-                'https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&w=300&q=80',
-                15, 23, 5,
-                '[]', '["٥٠٠غ (500g)", "١كغ (1kg)"]'
-              )
-            `, [honeyId]);
-
-            db.run(`
-              INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
-              VALUES (
-                'مربى التين اللبناني التقليدي ٦٠0غ',
-                'Traditional Lebanese Fig Jam 600g',
-                'مربى تين بلدي مصنوع على الطريقة التقليدية بالسمسم وجوز الهند من البقاع.',
-                'Homemade traditional Lebanese fig jam made with sesame and walnuts from Bekaa.',
-                4.50, 2.80, 5.50, ?, 2,
-                'https://images.unsplash.com/photo-1622484211148-716bdf2c4b7e?auto=format&fit=crop&w=300&q=80',
-                30, 9, 2,
-                '[]', '["٣٠٠غ (300g)", "٦٠٠غ (600g)"]'
-              )
-            `, [honeyId]);
-          });
-
-          db.run(`INSERT INTO categories (name_ar, name_en, parent_id, image_url) VALUES ('القهوة والبهارات اللبنانية', 'Lebanese Coffee & Spices', ?, '')`, [groceriesId], function(err) {
-            if (err) return;
-            const spicesId = this.lastID;
-
-            db.run(`
-              INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
-              VALUES (
-                'زعتر بلدي ممتاز محوج ٤50غ',
-                'Premium Lebanese Wild Zaatar 450g',
-                'خلطة الزعتر البلدي اللبناني مع السمسم المحمص والسماق البلدي النقي.',
-                'Traditional Lebanese zaatar blend with toasted sesame seeds and pure sumac.',
-                3.80, 2.00, NULL, ?, 2,
-                'https://images.unsplash.com/photo-1532634922-8fe0b757fb13?auto=format&fit=crop&w=300&q=80',
-                40, 5, 1,
-                '[]', '["٢٠٠غ (200g)", "٤٥٠غ (450g)"]'
-              )
-            `, [spicesId]);
-
-            db.run(`
-              INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
-              VALUES (
-                'قهوة لبنانية مطحونة مع هال ٢٥0غ',
-                'Lebanese Ground Coffee with Cardamom 250g',
-                'بن أشقر برازيلي مطحون ومحمص بنكهة الهال الغنية بخلطة لبنانية مميزة.',
-                'Traditional golden roasted and finely ground coffee with rich cardamom flavor.',
-                3.20, 1.80, 4.00, ?, 2,
-                'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=300&q=80',
-                50, 10, 2,
-                '[]', '["٢٥٠غ (250g)", "٥٠٠غ (500g)", "١كغ (1kg)"]'
-              )
-            `, [spicesId]);
-          });
+        newSupermarketCategories.forEach(cat => {
+          db.run('INSERT INTO categories (name_ar, name_en, parent_id, image_url) VALUES (?, ?, null, ?)', [cat.name_ar, cat.name_en, cat.image_url]);
         });
+        console.log('[Database] Seeded new SQLite supermarket categories.');
+      }
+    });
 
-        db.run("INSERT INTO categories (name_ar, name_en, parent_id, image_url) VALUES ('العناية بالبشرة والصابون البلدي', 'Personal Care & Traditional Soaps', NULL, '')", function(err) {
-          if (err) return;
-          const careId = this.lastID;
-
-          db.run(`INSERT INTO categories (name_ar, name_en, parent_id, image_url) VALUES ('صابون زيت الزيتون والغار', 'Olive Oil & Laurel Soaps', ?, '')`, [careId], function(err) {
-            if (err) return;
-            const soapId = this.lastID;
-
-            db.run(`
-              INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
-              VALUES (
-                'صابون غار طرابلسي طبيعي حبة كبيرة',
-                'Natural Tripoli Laurel Soap Large Bar',
-                'صابون مصنوع يدوياً من زيت الغار وزيت الزيتون النقي، ممتاز للبشرة الحساسة.',
-                'Handcrafted traditional soap bar made with pure laurel oil and olive oil, ideal for sensitive skin.',
-                2.50, 1.20, NULL, ?, 3,
-                'https://images.unsplash.com/photo-1607006342466-4aa8d8d32be5?auto=format&fit=crop&w=300&q=80',
-                60, 14, 3,
-                '["غار طبيعي (Natural)", "غار أخضر (Green)"]', '["حبة وسط (Medium)", "حبة كبيرة (Large)"]'
-              )
-            `, [soapId]);
-
-            db.run(`
-              INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
-              VALUES (
-                'صابون زيت الزيتون بماء الورد البلدي',
-                'Olive Oil Soap with Natural Rose Water',
-                'صابون معطر بماء الورد الجوري اللبناني الطبيعي لتنظيف وترطيب البشرة.',
-                'Traditional olive oil soap bar infused with organic Lebanese rose water for gentle skin moisturizing.',
-                2.20, 1.00, 3.00, ?, 3,
-                'https://images.unsplash.com/photo-1546554137-f86b9593a222?auto=format&fit=crop&w=300&q=80',
-                45, 10, 2,
-                '["وردي (Pink Rose)", "أبيض (White)"]', '["حبة وسط (Medium)", "حبة كبيرة (Large)"]'
-              )
-            `, [soapId]);
+    // Supermarket catalog migration check (runs once if old demo category exists)
+    db.get("SELECT COUNT(*) as count FROM categories WHERE name_en = 'Phone Accessories'", [], (err, row) => {
+      if (row && parseInt(row.count) > 0) {
+        console.log('[Database] Migrating SQLite to new clean supermarket catalog...');
+        db.serialize(() => {
+          db.run("DELETE FROM products");
+          db.run("DELETE FROM categories", [], () => {
+            newSupermarketCategories.forEach(cat => {
+              db.run('INSERT INTO categories (name_ar, name_en, parent_id, image_url) VALUES (?, ?, null, ?)', [cat.name_ar, cat.name_en, cat.image_url]);
+            });
+            console.log('[Database] SQLite supermarket migration completed successfully.');
           });
-        });
-
-        db.run("INSERT INTO categories (name_ar, name_en, parent_id, image_url) VALUES ('الأجهزة الإلكترونية والهواتف', 'Electronics & Phones', NULL, '')", function(err) {
-          if (err) return;
-          const electronicsId = this.lastID;
-          db.run(`
-            INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
-            VALUES (
-              'هاتف ذكي متطور', 'Advanced Smartphone',
-              'شاشة مذهلة، كاميرات احترافية، وبطارية تدوم طويلاً.',
-              'Stunning display, pro cameras, and all-day battery life.',
-              799.00, 500.00, 899.00, ?, 1,
-              'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=300&q=80',
-              10, 24, 5,
-              '["أسود (Black)", "ذهبي (Gold)"]', '["128GB", "256GB (+$100)", "512GB (+$250)"]'
-            )
-          `, [electronicsId]);
         });
       }
     });
@@ -1460,51 +1200,8 @@ const additionalProducts = {
 };
 
 async function seedDemoData() {
-  console.log('[Database] Checking additional demo categories and products...');
+  console.log('[Database] Checking additional demo categories and products... (Skipped per user request)');
   try {
-    for (const cat of additionalCategories) {
-      // Check if category exists
-      let category = await db.getAsync('SELECT id FROM categories WHERE name_en = ?', [cat.name_en]);
-      let categoryId;
-      if (!category) {
-        const result = await db.runAsync(
-          'INSERT INTO categories (name_ar, name_en, parent_id, image_url) VALUES (?, ?, NULL, ?)',
-          [cat.name_ar, cat.name_en, cat.image_url]
-        );
-        categoryId = result.lastID;
-        console.log(`[Database] Seeded category: ${cat.name_en}`);
-      } else {
-        categoryId = category.id;
-      }
-
-      // Now seed products for this category
-      const products = additionalProducts[cat.name_en] || [];
-      for (const prod of products) {
-        let product = await db.getAsync('SELECT id FROM products WHERE name_en = ?', [prod.name_en]);
-        if (!product) {
-          await db.runAsync(
-            `INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, 0, 0, ?, ?)`,
-            [
-              prod.name_ar,
-              prod.name_en,
-              prod.description_ar,
-              prod.description_en,
-              prod.price_usd,
-              prod.cost_price_usd,
-              prod.old_price_usd,
-              categoryId,
-              prod.image_url,
-              prod.stock,
-              prod.colors,
-              prod.sizes
-            ]
-          );
-          console.log(`[Database] Seeded product: ${prod.name_en}`);
-        }
-      }
-    }
-    console.log('[Database] Additional demo categories and products check/seeding finished.');
 
     // Update Settings Hero Banners to include tech/cosmetics/clothing banners
     const settings = await db.getAsync('SELECT id, hero_banners FROM settings LIMIT 1');
