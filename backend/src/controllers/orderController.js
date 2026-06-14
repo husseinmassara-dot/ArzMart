@@ -203,7 +203,7 @@ exports.getOrders = async (req, res) => {
 
 exports.getUserOrders = async (req, res) => {
   try {
-    const orders = await db.allAsync('SELECT * FROM orders WHERE user_id = ? AND status != "archived" ORDER BY id DESC', [req.user.id]);
+    const orders = await db.allAsync("SELECT * FROM orders WHERE user_id = ? AND status != 'archived' ORDER BY id DESC", [req.user.id]);
     const formattedOrders = orders.map(o => ({
       ...o,
       items: JSON.parse(o.items)
@@ -306,7 +306,7 @@ exports.deleteOrder = async (req, res) => {
       }
     }
 
-    await db.runAsync('UPDATE orders SET status = "archived" WHERE id = ?', [id]);
+    await db.runAsync("UPDATE orders SET status = 'archived' WHERE id = ?", [id]);
     res.json({ message_ar: 'تم نقل الطلبية إلى الأرشيف بنجاح', message_en: 'Order archived successfully' });
   } catch (err) {
     res.status(500).json({ error_ar: 'خطأ في أرشفة الطلبية', error_en: 'Error archiving order' });
