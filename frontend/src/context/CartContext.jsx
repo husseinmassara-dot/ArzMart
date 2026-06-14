@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { useApp } from './AppContext';
+import { useAuth } from './AuthContext';
 
 const CartContext = createContext();
 
@@ -22,15 +23,24 @@ export function getOptionPrice(optionString, basePrice) {
 
 export const CartProvider = ({ children }) => {
   const { settings } = useApp();
-  const [cartItems, setCartItems] = useState(() => {
-    const localData = localStorage.getItem('cart');
-    return localData ? JSON.parse(localData) : [];
-  });
+  const { user } = useAuth();
+  
+  const cartKey = user ? `cart_${user.username}` : 'cart_guest';
+  const [loadedKey, setLoadedKey] = useState('');
+  const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cartItems));
-  }, [cartItems]);
+    const localData = localStorage.getItem(cartKey);
+    setCartItems(localData ? JSON.parse(localData) : []);
+    setLoadedKey(cartKey);
+  }, [cartKey]);
+
+  useEffect(() => {
+    if (loadedKey === cartKey) {
+      localStorage.setItem(cartKey, JSON.stringify(cartItems));
+    }
+  }, [cartItems, cartKey, loadedKey]);
 
   const addToCart = (product, quantity = 1, selectedColor = null, selectedSize = null) => {
     setCartItems((prevItems) => {
