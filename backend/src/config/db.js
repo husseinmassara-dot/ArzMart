@@ -246,9 +246,18 @@ async function initializeDatabasePostgres() {
         role TEXT DEFAULT 'user',
         permissions TEXT DEFAULT '[]',
         discount_used INTEGER DEFAULT 0,
+        phone TEXT DEFAULT '',
+        email TEXT DEFAULT '',
+        full_name TEXT DEFAULT '',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    try {
+      await pgPool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT DEFAULT ''");
+      await pgPool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT DEFAULT ''");
+      await pgPool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name TEXT DEFAULT ''");
+    } catch (e) {}
 
     // 3. Categories Table
     await pgPool.query(`
@@ -645,9 +654,26 @@ function initializeDatabase() {
         role TEXT DEFAULT 'user',
         permissions TEXT DEFAULT '[]',
         discount_used INTEGER DEFAULT 0,
+        phone TEXT DEFAULT '',
+        email TEXT DEFAULT '',
+        full_name TEXT DEFAULT '',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `);
+    `, [], () => {
+      const alterPhone = isPostgres 
+        ? "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT DEFAULT ''" 
+        : "ALTER TABLE users ADD COLUMN phone TEXT DEFAULT ''";
+      const alterEmail = isPostgres 
+        ? "ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT DEFAULT ''" 
+        : "ALTER TABLE users ADD COLUMN email TEXT DEFAULT ''";
+      const alterFullName = isPostgres 
+        ? "ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name TEXT DEFAULT ''" 
+        : "ALTER TABLE users ADD COLUMN full_name TEXT DEFAULT ''";
+
+      db.run(alterPhone, [], () => {});
+      db.run(alterEmail, [], () => {});
+      db.run(alterFullName, [], () => {});
+    });
 
     // 3. Categories Table
     runInit(`

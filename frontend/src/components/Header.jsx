@@ -41,7 +41,15 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
         gap: '12px'
       }}>
         {/* Brand / Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => setCurrentView('store')}>
+        <a 
+          href="/"
+          onClick={(e) => {
+            if (e.button === 1 || e.metaKey || e.ctrlKey) return;
+            e.preventDefault();
+            setCurrentView('store');
+          }}
+          style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', textDecoration: 'none' }}
+        >
           {settings?.logo_url ? (
             <img src={settings.logo_url.startsWith('http') || settings.logo_url.startsWith('data:') ? settings.logo_url : `${apiHost}${settings.logo_url}`} alt="Logo" style={{ height: '40px', objectFit: 'contain' }} />
           ) : (
@@ -63,7 +71,7 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
           <span style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--text-primary)' }}>
             {settings?.app_name || t('appName')}
           </span>
-        </div>
+        </a>
 
         {/* Search Bar */}
         {currentView === 'store' && (
@@ -87,8 +95,13 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
           {/* Admin Dashboard Entry Button */}
           {user && (user.role === 'admin' || user.role === 'employee') && (
-            <button
-              onClick={() => setCurrentView(currentView === 'admin' ? 'store' : 'admin')}
+            <a
+              href={currentView === 'admin' ? '/' : '/?view=admin'}
+              onClick={(e) => {
+                if (e.button === 1 || e.metaKey || e.ctrlKey) return;
+                e.preventDefault();
+                setCurrentView(currentView === 'admin' ? 'store' : 'admin');
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -100,12 +113,13 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
                 borderRadius: '6px',
                 cursor: 'pointer',
                 fontWeight: '600',
-                fontSize: '0.85rem'
+                fontSize: '0.85rem',
+                textDecoration: 'none'
               }}
             >
               <Shield size={16} />
               {currentView === 'admin' ? t('go_to_store') : t('dashboard')}
-            </button>
+            </a>
           )}
 
           {/* Currency Toggle */}
@@ -286,8 +300,13 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
           {/* Auth Button */}
           {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div
-                onClick={() => setCurrentView('orders')}
+              <a
+                href="/?view=orders"
+                onClick={(e) => {
+                  if (e.button === 1 || e.metaKey || e.ctrlKey) return;
+                  e.preventDefault();
+                  setCurrentView('orders');
+                }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -295,13 +314,15 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
                   cursor: 'pointer',
                   padding: '4px 8px',
                   borderRadius: '6px',
-                  backgroundColor: 'var(--bg-tertiary)'
+                  backgroundColor: 'var(--bg-tertiary)',
+                  textDecoration: 'none',
+                  color: 'inherit'
                 }}
                 title={t('myOrders')}
               >
                 <User size={14} />
                 <span style={{ fontSize: '0.85rem', fontWeight: '600' }}>{user.username}</span>
-              </div>
+              </a>
               {window.AndroidApp && localStorage.getItem('biometric_username') && (
                 <button
                   onClick={() => {

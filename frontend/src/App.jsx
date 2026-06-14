@@ -15,7 +15,7 @@ import PwaInstallBanner from './components/PwaInstallBanner';
 // Admin panel imports
 import AdminDashboard from './components/admin/AdminDashboard';
 
-import { Key, User, FileText, ChevronDown, Check, Star, RefreshCw, Fingerprint } from 'lucide-react';
+import { Key, User, FileText, ChevronDown, Check, Star, RefreshCw, Fingerprint, Smartphone, Globe } from 'lucide-react';
 
 export default function App() {
   const { lang, formatPrice, t, apiBase, settings, currency, apiHost } = useApp();
@@ -48,6 +48,12 @@ export default function App() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
+  
+  // Enhanced security signup states
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   
   // Biometrics enrollment states
   const [showBiometricEnrollPrompt, setShowBiometricEnrollPrompt] = useState(false);
@@ -118,6 +124,34 @@ export default function App() {
       fetchUserOrders();
     }
   }, [currentView, token]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const viewParam = params.get('view') || 'store';
+    const tabParam = params.get('tab');
+    
+    if (currentView !== viewParam) {
+      let url = `/?view=${currentView}`;
+      if (currentView === 'admin') {
+        const tab = tabParam || 'products';
+        url += `&tab=${tab}`;
+      }
+      window.history.pushState(null, '', url);
+    }
+  }, [currentView]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const view = params.get('view') || 'store';
+      setCurrentView(view);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
 
   // Handle Biometric Login authentication
   const handleBiometricLogin = async () => {
@@ -213,8 +247,14 @@ export default function App() {
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     setAuthError('');
+
+    if (password !== confirmPassword) {
+      setAuthError(lang === 'ar' ? 'كلمتا المرور غير متطابقتين' : 'Passwords do not match');
+      return;
+    }
+
     try {
-      const data = await register(username, password);
+      const data = await register(username, password, fullName, phone, email);
       await login(username, password);
       
       const onNext = () => {
@@ -224,6 +264,10 @@ export default function App() {
         setCurrentView('store');
         setUsername('');
         setPassword('');
+        setFullName('');
+        setPhone('');
+        setEmail('');
+        setConfirmPassword('');
       };
       handleAuthSuccess(username, password, onNext);
     } catch (err) {
@@ -598,6 +642,61 @@ export default function App() {
                 </div>
               </div>
 
+              {currentView === 'register' && (
+                <>
+                  {/* Full Name */}
+                  <div>
+                    <label className="input-label">{lang === 'ar' ? 'الاسم الكامل' : 'Full Name'}</label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type="text"
+                        required
+                        className="input-field"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        style={{ paddingStart: '36px' }}
+                        placeholder={lang === 'ar' ? 'الاسم الثلاثي مثلاً' : 'e.g. John Doe'}
+                      />
+                      <User size={16} style={{ position: 'absolute', top: '12px', left: lang === 'ar' ? 'auto' : '12px', right: lang === 'ar' ? '12px' : 'auto', color: 'var(--text-light)' }} />
+                    </div>
+                  </div>
+
+                  {/* Phone */}
+                  <div>
+                    <label className="input-label">{lang === 'ar' ? 'رقم الهاتف' : 'Phone Number'}</label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type="tel"
+                        required
+                        className="input-field"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        style={{ paddingStart: '36px' }}
+                        placeholder="03 123 456"
+                      />
+                      <Smartphone size={16} style={{ position: 'absolute', top: '12px', left: lang === 'ar' ? 'auto' : '12px', right: lang === 'ar' ? '12px' : 'auto', color: 'var(--text-light)' }} />
+                    </div>
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label className="input-label">{lang === 'ar' ? 'البريد الإلكتروني' : 'Email Address'}</label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type="email"
+                        required
+                        className="input-field"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        style={{ paddingStart: '36px' }}
+                        placeholder="example@mail.com"
+                      />
+                      <Globe size={16} style={{ position: 'absolute', top: '12px', left: lang === 'ar' ? 'auto' : '12px', right: lang === 'ar' ? '12px' : 'auto', color: 'var(--text-light)' }} />
+                    </div>
+                  </div>
+                </>
+              )}
+
               <div>
                 <label className="input-label">{t('password')}</label>
                 <div style={{ position: 'relative' }}>
@@ -613,6 +712,23 @@ export default function App() {
                   <Key size={16} style={{ position: 'absolute', top: '12px', left: lang === 'ar' ? 'auto' : '12px', right: lang === 'ar' ? '12px' : 'auto', color: 'var(--text-light)' }} />
                 </div>
               </div>
+
+              {currentView === 'register' && (
+                <div>
+                  <label className="input-label">{lang === 'ar' ? 'تأكيد كلمة المرور' : 'Confirm Password'}</label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="password"
+                      required
+                      className="input-field"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      style={{ paddingStart: '36px' }}
+                    />
+                    <Key size={16} style={{ position: 'absolute', top: '12px', left: lang === 'ar' ? 'auto' : '12px', right: lang === 'ar' ? '12px' : 'auto', color: 'var(--text-light)' }} />
+                  </div>
+                </div>
+              )}
 
               <button
                 type="submit"
@@ -652,7 +768,16 @@ export default function App() {
             </form>
 
             <button
-              onClick={() => setCurrentView(currentView === 'login' ? 'register' : 'login')}
+              onClick={() => {
+                setAuthError('');
+                setUsername('');
+                setPassword('');
+                setFullName('');
+                setPhone('');
+                setEmail('');
+                setConfirmPassword('');
+                setCurrentView(currentView === 'login' ? 'register' : 'login');
+              }}
               style={{
                 border: 'none',
                 backgroundColor: 'transparent',
@@ -671,25 +796,27 @@ export default function App() {
               {lang === 'ar' ? (
                 <span>
                   بتسجيل الدخول أو التسجيل، أنت توافق على{' '}
-                  <button
-                    type="button"
-                    onClick={() => setCurrentView('privacy')}
-                    style={{ border: 'none', backgroundColor: 'transparent', color: 'var(--accent-blue)', cursor: 'pointer', padding: 0, fontSize: '0.72rem', textDecoration: 'underline', fontWeight: '600' }}
+                  <a
+                    href="/?view=privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: 'var(--accent-blue)', textDecoration: 'underline', fontWeight: '600' }}
                   >
                     سياسة الخصوصية
-                  </button>{' '}
+                  </a>{' '}
                   الخاصة بنا.
                 </span>
               ) : (
                 <span>
                   By logging in or registering, you agree to our{' '}
-                  <button
-                    type="button"
-                    onClick={() => setCurrentView('privacy')}
-                    style={{ border: 'none', backgroundColor: 'transparent', color: 'var(--accent-blue)', cursor: 'pointer', padding: 0, fontSize: '0.72rem', textDecoration: 'underline', fontWeight: '600' }}
+                  <a
+                    href="/?view=privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: 'var(--accent-blue)', textDecoration: 'underline', fontWeight: '600' }}
                   >
                     Privacy Policy
-                  </button>
+                  </a>
                   .
                 </span>
               )}

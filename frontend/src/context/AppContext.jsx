@@ -194,7 +194,7 @@ const translations = {
 };
 
 export const AppProvider = ({ children }) => {
-  const [lang, setLang] = useState(localStorage.getItem('lang') || 'ar');
+  const [lang, setLang] = useState(localStorage.getItem('lang') || 'en');
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [currency, setCurrency] = useState(localStorage.getItem('currency') || 'USD'); // 'USD' or 'LBP'
   const [settings, setSettings] = useState({

@@ -4,7 +4,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useChat } from '../../context/ChatContext';
 import { 
   Package, Folder, ShoppingBag, Users, BarChart3, Settings, Tag, ShieldAlert,
-  DollarSign, TrendingUp, AlertTriangle, ArrowRight, MessageSquare, Send, Store
+  DollarSign, TrendingUp, AlertTriangle, ArrowRight, MessageSquare, Send, Store,
+  ExternalLink
 } from 'lucide-react';
 
 // Sub-components
@@ -26,7 +27,14 @@ export default function AdminDashboard({ setCurrentView }) {
     const params = new URLSearchParams(window.location.search);
     return params.get('tab') || 'products';
   });
-  const [filterProductsOutOfStock, setFilterProductsOutOfStock] = useState(false);
+  const [openInNewTab, setOpenInNewTab] = useState(() => {
+    const saved = localStorage.getItem('admin_open_new_tab');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const [filterProductsOutOfStock, setFilterProductsOutOfStock] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('filter') === 'outofstock';
+  });
   const [stats, setStats] = useState({
     total_orders: 0,
     delivered_revenue_usd: 0,
@@ -55,6 +63,19 @@ export default function AdminDashboard({ setCurrentView }) {
     fetchStats();
   }, [activeTab]);
 
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab') || 'products';
+      setActiveTab(tab);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+
   const handleSendAdminMessage = (e) => {
     e.preventDefault();
     if (!chatInput.trim() || !activeChatUserId) return;
@@ -74,6 +95,24 @@ export default function AdminDashboard({ setCurrentView }) {
     { id: 'settings', name: t('settings'), icon: Settings, perm: 'settings' }
   ];
 
+  const handleTabClick = (e, tabId) => {
+    // Let browser handle middle click, ctrl+click, command+click
+    if (e.button === 1 || e.metaKey || e.ctrlKey) {
+      return;
+    }
+    if (openInNewTab) {
+      // Allow browser to open the link in a new tab/window
+      return;
+    }
+    e.preventDefault();
+    setActiveTab(tabId);
+    setActiveChatUserId(null);
+    setFilterProductsOutOfStock(false);
+    
+    // Update browser URL
+    window.history.pushState(null, '', `/?view=admin&tab=${tabId}`);
+  };
+
   return (
     <div style={{ display: 'flex', minHeight: 'calc(100vh - 70px)', direction: lang === 'ar' ? 'rtl' : 'ltr' }}>
       
@@ -91,8 +130,13 @@ export default function AdminDashboard({ setCurrentView }) {
           <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-primary)' }}>
             {t('admin_title')}
           </h3>
-          <button 
-            onClick={() => setCurrentView('store')}
+          <a 
+            href="/"
+            onClick={(e) => {
+              if (e.button === 1 || e.metaKey || e.ctrlKey) return;
+              e.preventDefault();
+              setCurrentView('store');
+            }}
             style={{
               marginTop: '10px',
               display: 'flex',
@@ -103,12 +147,73 @@ export default function AdminDashboard({ setCurrentView }) {
               color: 'var(--accent-blue)',
               cursor: 'pointer',
               fontWeight: '700',
-              fontSize: '0.85rem'
+              fontSize: '0.85rem',
+              textDecoration: 'none'
             }}
           >
             <span>{t('go_to_store')}</span>
             <ArrowRight size={14} style={{ transform: lang === 'ar' ? 'rotate(180deg)' : 'none' }} />
-          </button>
+          </a>
+
+          {/* Page Opening Behavior Switch */}
+          <div style={{
+            marginTop: '16px',
+            padding: '10px',
+            backgroundColor: 'var(--bg-tertiary)',
+            borderRadius: '8px',
+            border: '1px solid var(--border-color)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px'
+          }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--text-secondary)' }}>
+              {lang === 'ar' ? 'طريقة فتح الصفحات:' : 'Open Pages In:'}
+            </span>
+            <div style={{ display: 'flex', gap: '4px', backgroundColor: 'var(--bg-primary)', padding: '2px', borderRadius: '6px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpenInNewTab(true);
+                  localStorage.setItem('admin_open_new_tab', 'true');
+                }}
+                style={{
+                  flex: 1,
+                  padding: '5px 2px',
+                  fontSize: '0.7rem',
+                  fontWeight: '700',
+                  borderRadius: '4px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  backgroundColor: openInNewTab ? 'var(--accent-blue)' : 'transparent',
+                  color: openInNewTab ? 'white' : 'var(--text-secondary)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                {lang === 'ar' ? 'تبويب جديد' : 'New Tab'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpenInNewTab(false);
+                  localStorage.setItem('admin_open_new_tab', 'false');
+                }}
+                style={{
+                  flex: 1,
+                  padding: '5px 2px',
+                  fontSize: '0.7rem',
+                  fontWeight: '700',
+                  borderRadius: '4px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  backgroundColor: !openInNewTab ? 'var(--accent-blue)' : 'transparent',
+                  color: !openInNewTab ? 'white' : 'var(--text-secondary)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                {lang === 'ar' ? 'نفس الصفحة' : 'Same Page'}
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Menu Items */}
@@ -120,31 +225,66 @@ export default function AdminDashboard({ setCurrentView }) {
             const isActive = activeTab === item.id;
 
             return (
-              <button
+              <a
                 key={item.id}
-                onClick={() => {
-                  setActiveTab(item.id);
-                  setActiveChatUserId(null);
-                  setFilterProductsOutOfStock(false);
-                }}
+                href={`/?view=admin&tab=${item.id}`}
+                onClick={(e) => handleTabClick(e, item.id)}
+                target={openInNewTab ? "_blank" : undefined}
+                rel={openInNewTab ? "noopener noreferrer" : undefined}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '10px',
+                  justifyContent: 'space-between',
                   padding: '10px 14px',
                   borderRadius: '8px',
-                  border: 'none',
                   backgroundColor: isActive ? 'var(--accent-blue)' : 'transparent',
                   color: isActive ? 'white' : 'var(--text-primary)',
                   cursor: 'pointer',
-                  textAlign: 'start',
+                  textDecoration: 'none',
                   fontWeight: '600',
-                  fontSize: '0.9rem'
+                  fontSize: '0.9rem',
+                  transition: 'background-color 0.2s'
                 }}
               >
-                <Icon size={18} />
-                <span>{item.name}</span>
-              </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Icon size={18} />
+                  <span>{item.name}</span>
+                </div>
+                
+                {/* External link indicator */}
+                {!openInNewTab && (
+                  <span 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                    style={{ display: 'flex', alignItems: 'center' }}
+                  >
+                    <a
+                      href={`/?view=admin&tab=${item.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: isActive ? 'rgba(255,255,255,0.7)' : 'var(--text-light)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '2px',
+                        borderRadius: '4px',
+                        transition: 'color 0.25s, background-color 0.25s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = isActive ? 'white' : 'var(--accent-blue)';
+                        e.currentTarget.style.backgroundColor = isActive ? 'rgba(255,255,255,0.1)' : 'var(--bg-tertiary)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = isActive ? 'rgba(255,255,255,0.7)' : 'var(--text-light)';
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }}
+                    >
+                      <ExternalLink size={14} />
+                    </a>
+                  </span>
+                )}
+              </a>
             );
           })}
         </nav>
@@ -167,7 +307,11 @@ export default function AdminDashboard({ setCurrentView }) {
               }}
               onClick={() => {
                 if (hasPermission('reports')) {
-                  setActiveTab('reports');
+                  if (openInNewTab) {
+                    window.open('/?view=admin&tab=reports', '_blank');
+                  } else {
+                    setActiveTab('reports');
+                  }
                 }
               }}
               onMouseEnter={(e) => {
@@ -204,7 +348,11 @@ export default function AdminDashboard({ setCurrentView }) {
               }}
               onClick={() => {
                 if (hasPermission('orders')) {
-                  setActiveTab('orders');
+                  if (openInNewTab) {
+                    window.open('/?view=admin&tab=orders', '_blank');
+                  } else {
+                    setActiveTab('orders');
+                  }
                 }
               }}
               onMouseEnter={(e) => {
@@ -241,8 +389,12 @@ export default function AdminDashboard({ setCurrentView }) {
               }}
               onClick={() => {
                 if (hasPermission('products')) {
-                  setFilterProductsOutOfStock(true);
-                  setActiveTab('products');
+                  if (openInNewTab) {
+                    window.open('/?view=admin&tab=products&filter=outofstock', '_blank');
+                  } else {
+                    setFilterProductsOutOfStock(true);
+                    setActiveTab('products');
+                  }
                 }
               }}
               onMouseEnter={(e) => {
