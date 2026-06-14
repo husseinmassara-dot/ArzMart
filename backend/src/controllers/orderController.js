@@ -235,14 +235,36 @@ exports.updateOrderStatus = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
-  if (!['pending', 'processing', 'shipped', 'delivered'].includes(status)) {
+  if (!['pending', 'processing', 'shipped', 'delivered', 'cancelled'].includes(status)) {
     return res.status(400).json({ error_ar: 'حالة الطلب غير صالحة', error_en: 'Invalid order status' });
+  }
+
+  // Cancelled status is restricted to general manager/admin only
+  if (status === 'cancelled' && req.user.role !== 'admin') {
+    return res.status(403).json({ 
+      error_ar: 'عذراً، إلغاء الطلبيات مسموح به للمدير العام فقط وليس للموظفين', 
+      error_en: 'Forbidden, only the general manager can cancel orders' 
+    });
   }
 
   try {
     const order = await db.getAsync('SELECT * FROM orders WHERE id = ?', [id]);
     if (!order) {
       return res.status(404).json({ error_ar: 'الطلبية غير موجودة', error_en: 'Order not found' });
+    }
+
+    // Restore stock if status changes to cancelled
+    if (status === 'cancelled' && order.status !== 'cancelled') {
+      try {
+        const items = JSON.parse(order.items || '[]');
+        for (const item of items) {
+          if (item.product_id && item.quantity) {
+            await db.runAsync('UPDATE products SET stock = stock + ? WHERE id = ?', [item.quantity, item.product_id]);
+          }
+        }
+      } catch (e) {
+        console.error('Error restoring stock for cancelled order:', e);
+      }
     }
 
     await db.runAsync('UPDATE orders SET status = ? WHERE id = ?', [status, id]);
@@ -255,6 +277,15 @@ exports.updateOrderStatus = async (req, res) => {
 
 exports.deleteOrder = async (req, res) => {
   const { id } = req.params;
+
+  // Restrict order deletion to general manager/admin only
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ 
+      error_ar: 'عذراً، حذف الطلبيات مسموح به للمدير العام فقط وليس للموظفين', 
+      error_en: 'Forbidden, only the general manager can delete orders' 
+    });
+  }
+
   try {
     const order = await db.getAsync('SELECT * FROM orders WHERE id = ?', [id]);
     if (!order) {
@@ -266,6 +297,7 @@ exports.deleteOrder = async (req, res) => {
     res.status(500).json({ error_ar: 'خطأ في حذف الطلبية', error_en: 'Error deleting order' });
   }
 };
+
 
 exports.getReports = async (req, res) => {
   try {

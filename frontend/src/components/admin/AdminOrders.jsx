@@ -5,10 +5,10 @@ import { Printer, Eye, CheckCircle2 } from 'lucide-react';
 
 export default function AdminOrders() {
   const { lang, formatPrice, apiBase, settings } = useApp();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
 
   const [orders, setOrders] = useState([]);
-  const [activeSubTab, setActiveSubTab] = useState('new'); // 'new' (pending/processing/shipped) or 'delivered'
+  const [activeSubTab, setActiveSubTab] = useState('active'); // 'active', 'delivered', 'cancelled'
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [hidePricesInPrint, setHidePricesInPrint] = useState(false);
 
@@ -58,11 +58,34 @@ export default function AdminOrders() {
     }, 200);
   };
 
+  const handleDeleteOrder = async (id) => {
+    const confirmDelete = window.confirm(lang === 'ar' ? 'هل أنت متأكد من حذف هذه الطلبية نهائياً؟' : 'Are you sure you want to permanently delete this order?');
+    if (!confirmDelete) return;
+
+    try {
+      const res = await fetch(`${apiBase}/orders/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        fetchOrders();
+        setSelectedOrder(null);
+      } else {
+        const errData = await res.json();
+        alert(lang === 'ar' ? errData.error_ar : errData.error_en);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const filteredOrders = orders.filter(order => {
-    if (activeSubTab === 'new') {
-      return order.status !== 'delivered';
-    } else {
+    if (activeSubTab === 'active') {
+      return order.status !== 'delivered' && order.status !== 'cancelled';
+    } else if (activeSubTab === 'delivered') {
       return order.status === 'delivered';
+    } else {
+      return order.status === 'cancelled';
     }
   });
 
@@ -70,21 +93,21 @@ export default function AdminOrders() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       
       {/* Sub tabs */}
-      <div className="no-print" style={{ display: 'flex', gap: '10px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+      <div className="no-print" style={{ display: 'flex', gap: '10px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px', flexWrap: 'wrap' }}>
         <button
-          onClick={() => setActiveSubTab('new')}
+          onClick={() => setActiveSubTab('active')}
           style={{
             padding: '8px 16px',
             borderRadius: '20px',
             border: 'none',
-            backgroundColor: activeSubTab === 'new' ? 'var(--accent-blue)' : 'var(--bg-tertiary)',
-            color: activeSubTab === 'new' ? 'white' : 'var(--text-primary)',
+            backgroundColor: activeSubTab === 'active' ? 'var(--accent-blue)' : 'var(--bg-tertiary)',
+            color: activeSubTab === 'active' ? 'white' : 'var(--text-primary)',
             cursor: 'pointer',
             fontWeight: '700',
             fontSize: '0.85rem'
           }}
         >
-          الطلبيات الجديدة / النشطة ({orders.filter(o => o.status !== 'delivered').length})
+          الطلبيات النشطة ({orders.filter(o => o.status !== 'delivered' && o.status !== 'cancelled').length})
         </button>
         <button
           onClick={() => setActiveSubTab('delivered')}
@@ -100,6 +123,21 @@ export default function AdminOrders() {
           }}
         >
           الطلبيات المسلمة ({orders.filter(o => o.status === 'delivered').length})
+        </button>
+        <button
+          onClick={() => setActiveSubTab('cancelled')}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '20px',
+            border: 'none',
+            backgroundColor: activeSubTab === 'cancelled' ? 'var(--accent-blue)' : 'var(--bg-tertiary)',
+            color: activeSubTab === 'cancelled' ? 'white' : 'var(--text-primary)',
+            cursor: 'pointer',
+            fontWeight: '700',
+            fontSize: '0.85rem'
+          }}
+        >
+          الطلبيات الملغاة ({orders.filter(o => o.status === 'cancelled').length})
         </button>
       </div>
 
@@ -146,10 +184,10 @@ export default function AdminOrders() {
                     fontWeight: 'bold',
                     padding: '2px 8px',
                     borderRadius: '12px',
-                    backgroundColor: o.status === 'pending' ? 'rgba(239,68,68,0.1)' : o.status === 'processing' ? 'rgba(59,130,246,0.1)' : o.status === 'shipped' ? 'rgba(217,119,6,0.1)' : 'rgba(16,185,129,0.1)',
-                    color: o.status === 'pending' ? '#ef4444' : o.status === 'processing' ? 'var(--accent-blue)' : o.status === 'shipped' ? '#d97706' : '#10b981'
+                    backgroundColor: o.status === 'pending' ? 'rgba(239,68,68,0.1)' : o.status === 'processing' ? 'rgba(59,130,246,0.1)' : o.status === 'shipped' ? 'rgba(217,119,6,0.1)' : o.status === 'cancelled' ? 'rgba(107,114,128,0.1)' : 'rgba(16,185,129,0.1)',
+                    color: o.status === 'pending' ? '#ef4444' : o.status === 'processing' ? 'var(--accent-blue)' : o.status === 'shipped' ? '#d97706' : o.status === 'cancelled' ? '#6b7280' : '#10b981'
                   }}>
-                    {o.status.toUpperCase()}
+                    {o.status === 'cancelled' ? (lang === 'ar' ? 'ملغاة' : 'CANCELLED') : o.status.toUpperCase()}
                   </span>
                 </div>
               </div>
@@ -164,7 +202,7 @@ export default function AdminOrders() {
               
               {/* Actions Header */}
               <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', borderBottom: '1px solid var(--border-color)', paddingBottom: '14px', marginBottom: '14px' }}>
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   <button
                     onClick={() => handlePrint(false)}
                     className="input-field"
@@ -181,9 +219,18 @@ export default function AdminOrders() {
                     <Printer size={14} />
                     <span>طباعة بدون سعر</span>
                   </button>
+                  {user?.role === 'admin' && (
+                    <button
+                      onClick={() => handleDeleteOrder(selectedOrder.id)}
+                      className="input-field animate-scale"
+                      style={{ width: 'auto', padding: '6px 12px', backgroundColor: '#ef4444', color: 'white', border: 'none', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
+                    >
+                      <span>حذف الطلبية</span>
+                    </button>
+                  )}
                 </div>
 
-                {selectedOrder.status !== 'delivered' && (
+                {selectedOrder.status !== 'delivered' && selectedOrder.status !== 'cancelled' && (
                   <select
                     className="input-field"
                     style={{ width: 'auto', padding: '4px 10px', fontSize: '0.8rem' }}
@@ -194,6 +241,9 @@ export default function AdminOrders() {
                     <option value="processing">قيد التحضير (Processing)</option>
                     <option value="shipped">تم الشحن (Shipped)</option>
                     <option value="delivered">تم التسليم (Delivered)</option>
+                    {user?.role === 'admin' && (
+                      <option value="cancelled">ملغاة (Cancelled)</option>
+                    )}
                   </select>
                 )}
               </div>
