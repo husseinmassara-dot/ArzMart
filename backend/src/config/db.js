@@ -1497,7 +1497,7 @@ async function seedDemoData() {
       }
 
       // Check if our new banners are already added
-      const hasNewBanners = banners.some(b => b.id === 'banner_init_3');
+      const hasNewBanners = banners.some(b => b.id === 'banner_init_8');
       if (!hasNewBanners) {
         const updatedBanners = [
           {
@@ -1539,6 +1539,30 @@ async function seedDemoData() {
             title_en: 'Latest Trends & High-End Clothing',
             desc_ar: 'تشكيلة واسعة من الملابس الصيفية، الأحذية الرياضية، والإكسسوارات الأنيقة',
             desc_en: 'A wide range of summer clothing, athletic shoes, and stylish accessories'
+          },
+          {
+            id: 'banner_init_6',
+            image: 'https://images.unsplash.com/photo-1532330393533-443990a51d10?auto=format&fit=crop&w=1200&q=80',
+            title_ar: 'عالم الألعاب والمرح للأطفال',
+            title_en: 'Kids Toys & Fun World',
+            desc_ar: 'سيارات تحكم عن بعد، مكعبات بناء إبداعية، وألعاب لوحية ممتعة للعائلة',
+            desc_en: 'Remote control cars, creative building blocks, and fun board games for the family'
+          },
+          {
+            id: 'banner_init_7',
+            image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=1200&q=80',
+            title_ar: 'العدة والأدوات المنزلية والمهنية',
+            title_en: 'Professional Tools & Hardware',
+            desc_ar: 'مفكات، أدوات قياس ليزر، وحقائب عدة متكاملة لمختلف أعمال الصيانة',
+            desc_en: 'Screwdrivers, laser measures, and complete toolkits for all maintenance needs'
+          },
+          {
+            id: 'banner_init_8',
+            image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=1200&q=80',
+            title_ar: 'زجاجيات وأدوات منزلية فاخرة',
+            title_en: 'Luxury Glassware & Dining',
+            desc_ar: 'طقم كؤوس أنيق، أوعية تقديم كريستال، وأواني زجاجية مقاومة للحرارة',
+            desc_en: 'Elegant glass tumblers, crystal bowls, and heat-resistant pitchers for your home'
           }
         ];
 
