@@ -164,53 +164,57 @@ export default function AdminOrders() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
         
         {/* Left Side: Orders List */}
-        <div className="no-print dashboard-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <h4 style={{ fontSize: '1rem', fontWeight: '800' }}>قائمة الطلبيات</h4>
+        <div className="no-print dashboard-card" style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '0px' }}>
+          <h4 style={{ fontSize: '1rem', fontWeight: '800', marginBottom: '8px', padding: '0 4px' }}>قائمة الطلبيات</h4>
           {filteredOrders.length === 0 ? (
             <div style={{ color: 'var(--text-light)', fontSize: '0.85rem', textAlign: 'center', padding: '20px' }}>
               لا يوجد طلبيات في هذا القسم حالياً.
             </div>
           ) : (
-            filteredOrders.map((o) => (
-              <div
-                key={o.id}
-                onClick={() => setSelectedOrder(o)}
-                style={{
-                  padding: '12px',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border-color)',
-                  backgroundColor: selectedOrder?.id === o.id ? 'var(--bg-tertiary)' : 'var(--bg-primary)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}
-              >
-                <div>
-                  <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>{o.user_name}</strong>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '2px' }}>{o.tracking_number}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>
-                    {new Date(o.created_at).toLocaleDateString([], { day: 'numeric', month: 'short' })}
+            <div style={{ border: '1px solid var(--border-color)', borderRadius: '8px', overflow: 'hidden' }}>
+              {filteredOrders.map((o, index) => (
+                <div
+                  key={o.id}
+                  onClick={() => setSelectedOrder(o)}
+                  style={{
+                    padding: '8px 12px',
+                    borderBottom: index === filteredOrders.length - 1 ? 'none' : '1px solid var(--border-color)',
+                    backgroundColor: selectedOrder?.id === o.id ? 'var(--bg-tertiary)' : 'var(--bg-primary)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    transition: 'background-color 0.2s'
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>{o.user_name}</strong>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-light)', fontFamily: 'monospace' }}>({o.tracking_number})</span>
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-light)' }}>
+                      {new Date(o.created_at).toLocaleDateString([], { day: 'numeric', month: 'short' })}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--accent-red-gold)' }}>
+                      {formatPrice(o.total_usd)}
+                    </span>
+                    <span style={{
+                      fontSize: '0.7rem',
+                      fontWeight: 'bold',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      backgroundColor: o.status === 'pending' ? 'rgba(239,68,68,0.1)' : o.status === 'processing' ? 'rgba(59,130,246,0.1)' : o.status === 'shipped' ? 'rgba(217,119,6,0.1)' : o.status === 'cancelled' ? 'rgba(107,114,128,0.1)' : 'rgba(16,185,129,0.1)',
+                      color: o.status === 'pending' ? '#ef4444' : o.status === 'processing' ? 'var(--accent-blue)' : o.status === 'shipped' ? '#d97706' : o.status === 'cancelled' ? '#6b7280' : '#10b981'
+                    }}>
+                      {o.status === 'cancelled' ? (lang === 'ar' ? 'ملغاة' : 'CANCELLED') : o.status.toUpperCase()}
+                    </span>
                   </div>
                 </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                  <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--accent-red-gold)' }}>
-                    {formatPrice(o.total_usd)}
-                  </span>
-                  <span style={{
-                    fontSize: '0.7rem',
-                    fontWeight: 'bold',
-                    padding: '2px 8px',
-                    borderRadius: '12px',
-                    backgroundColor: o.status === 'pending' ? 'rgba(239,68,68,0.1)' : o.status === 'processing' ? 'rgba(59,130,246,0.1)' : o.status === 'shipped' ? 'rgba(217,119,6,0.1)' : o.status === 'cancelled' ? 'rgba(107,114,128,0.1)' : 'rgba(16,185,129,0.1)',
-                    color: o.status === 'pending' ? '#ef4444' : o.status === 'processing' ? 'var(--accent-blue)' : o.status === 'shipped' ? '#d97706' : o.status === 'cancelled' ? '#6b7280' : '#10b981'
-                  }}>
-                    {o.status === 'cancelled' ? (lang === 'ar' ? 'ملغاة' : 'CANCELLED') : o.status.toUpperCase()}
-                  </span>
-                </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
 
@@ -245,6 +249,18 @@ export default function AdminOrders() {
                       style={{ width: 'auto', padding: '6px 12px', backgroundColor: '#ef4444', color: 'white', border: 'none', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
                     >
                       <span>أرشفة الطلبية</span>
+                    </button>
+                  )}
+                  {user?.role === 'admin' && selectedOrder.status !== 'cancelled' && selectedOrder.status !== 'delivered' && selectedOrder.status !== 'archived' && (
+                    <button
+                      onClick={() => {
+                        const confirmCancel = window.confirm(lang === 'ar' ? 'هل أنت متأكد من إلغاء هذه الطلبية؟' : 'Are you sure you want to cancel this order?');
+                        if (confirmCancel) handleUpdateStatus(selectedOrder.id, 'cancelled');
+                      }}
+                      className="input-field animate-scale"
+                      style={{ width: 'auto', padding: '6px 12px', backgroundColor: '#6b7280', color: 'white', border: 'none', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
+                    >
+                      <span>إلغاء الطلبية</span>
                     </button>
                   )}
                 </div>
