@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { Trash2, Edit3, Image } from 'lucide-react';
 
-export default function AdminProducts() {
+export default function AdminProducts({ filterOutOfStock = false, onClearFilter = null }) {
   const { lang, formatPrice, apiBase, apiHost } = useApp();
   const { token } = useAuth();
 
@@ -383,6 +383,47 @@ export default function AdminProducts() {
         </form>
       </div>
 
+      {filterOutOfStock && (
+        <div className="animate-scale" style={{
+          backgroundColor: 'rgba(217,119,6,0.1)',
+          border: '1px solid #d97706',
+          padding: '12px 20px',
+          borderRadius: '12px',
+          color: '#d97706',
+          fontWeight: '700',
+          fontSize: '0.95rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>⚠️</span>
+            <span>{lang === 'ar' ? 'عرض السلع المنتهية من المخزون فقط' : 'Showing out of stock items only'}</span>
+          </div>
+          {onClearFilter && (
+            <button
+              onClick={onClearFilter}
+              style={{
+                backgroundColor: '#d97706',
+                color: 'white',
+                border: 'none',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                fontSize: '0.8rem',
+                transition: 'opacity 0.2s'
+              }}
+              onMouseEnter={(e) => e.target.style.opacity = '0.9'}
+              onMouseLeave={(e) => e.target.style.opacity = '1'}
+            >
+              {lang === 'ar' ? 'عرض جميع المنتجات' : 'Show All Products'}
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Products Table */}
       <div className="dashboard-card" style={{ overflowX: 'auto', padding: '20px' }}>
         <h4 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '16px' }}>قائمة المنتجات الحالية</h4>
@@ -403,7 +444,7 @@ export default function AdminProducts() {
             </tr>
           </thead>
           <tbody>
-            {products.map((p) => {
+            {(filterOutOfStock ? products.filter(p => p.stock === 0) : products).map((p) => {
               const imageUrl = p.image_url 
                 ? (p.image_url.startsWith('http') || p.image_url.startsWith('data:') ? p.image_url : `${apiHost}${p.image_url}`)
                 : 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=50&q=80';

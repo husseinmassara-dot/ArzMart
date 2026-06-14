@@ -23,6 +23,7 @@ export default function AdminDashboard({ setCurrentView }) {
   const { chatUsers, activeChatUserId, setActiveChatUserId, messages, sendMessage } = useChat();
 
   const [activeTab, setActiveTab] = useState('products');
+  const [filterProductsOutOfStock, setFilterProductsOutOfStock] = useState(false);
   const [stats, setStats] = useState({
     total_orders: 0,
     delivered_revenue_usd: 0,
@@ -121,6 +122,7 @@ export default function AdminDashboard({ setCurrentView }) {
                 onClick={() => {
                   setActiveTab(item.id);
                   setActiveChatUserId(null);
+                  setFilterProductsOutOfStock(false);
                 }}
                 style={{
                   display: 'flex',
@@ -153,7 +155,29 @@ export default function AdminDashboard({ setCurrentView }) {
           <section className="no-print dashboard-grid animate-fade">
             
             {/* Earnings USD */}
-            <div className="dashboard-card" style={{ borderLeft: '4px solid #10b981' }}>
+            <div 
+              className="dashboard-card" 
+              style={{ 
+                borderLeft: '4px solid #10b981',
+                cursor: hasPermission('reports') ? 'pointer' : 'default',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+              }}
+              onClick={() => {
+                if (hasPermission('reports')) {
+                  setActiveTab('reports');
+                }
+              }}
+              onMouseEnter={(e) => {
+                if (hasPermission('reports')) {
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '600' }}>المبيعات (USD)</span>
@@ -168,7 +192,29 @@ export default function AdminDashboard({ setCurrentView }) {
             </div>
 
             {/* Pending Orders */}
-            <div className="dashboard-card" style={{ borderLeft: '4px solid var(--accent-blue)' }}>
+            <div 
+              className="dashboard-card" 
+              style={{ 
+                borderLeft: '4px solid var(--accent-blue)',
+                cursor: hasPermission('orders') ? 'pointer' : 'default',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+              }}
+              onClick={() => {
+                if (hasPermission('orders')) {
+                  setActiveTab('orders');
+                }
+              }}
+              onMouseEnter={(e) => {
+                if (hasPermission('orders')) {
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '600' }}>الطلبات الجديدة</span>
@@ -183,7 +229,30 @@ export default function AdminDashboard({ setCurrentView }) {
             </div>
 
             {/* Stock Warning */}
-            <div className="dashboard-card" style={{ borderLeft: '4px solid #d97706' }}>
+            <div 
+              className="dashboard-card" 
+              style={{ 
+                borderLeft: '4px solid #d97706',
+                cursor: hasPermission('products') ? 'pointer' : 'default',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+              }}
+              onClick={() => {
+                if (hasPermission('products')) {
+                  setFilterProductsOutOfStock(true);
+                  setActiveTab('products');
+                }
+              }}
+              onMouseEnter={(e) => {
+                if (hasPermission('products')) {
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '600' }}>السلع المنتهية</span>
@@ -202,7 +271,12 @@ export default function AdminDashboard({ setCurrentView }) {
 
         {/* Dynamic Panel Renderer */}
         <div style={{ minHeight: '400px' }}>
-          {activeTab === 'products' && hasPermission('products') && <AdminProducts />}
+          {activeTab === 'products' && hasPermission('products') && (
+            <AdminProducts 
+              filterOutOfStock={filterProductsOutOfStock} 
+              onClearFilter={() => setFilterProductsOutOfStock(false)} 
+            />
+          )}
           {activeTab === 'categories' && hasPermission('categories') && <AdminCategories />}
           {activeTab === 'orders' && hasPermission('orders') && <AdminOrders />}
           {activeTab === 'merchants' && hasPermission('merchants') && <AdminMerchants />}
