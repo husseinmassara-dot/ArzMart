@@ -11,7 +11,7 @@ let sqliteDb = null;
 const db = {};
 
 const newGeneralCategories = [
-  // 1. Electronics & Smart Tech
+  // 1. Electronics & Smart Tech (15 categories)
   { name_ar: 'الهواتف الذكية', name_en: 'Smartphones', image_url: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'أجهزة التابلت والأيباد', name_en: 'Tablets & iPads', image_url: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'الحواسيب المحمولة ولوازمها', name_en: 'Laptops & Accessories', image_url: 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=300&q=80' },
@@ -22,8 +22,20 @@ const newGeneralCategories = [
   { name_ar: 'كاميرات التصوير ولوازمها', name_en: 'Cameras & Photography Gear', image_url: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'أجهزة الراوتر والشبكات', name_en: 'Routers & Network Devices', image_url: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'منصات وإكسسوارات الألعاب', name_en: 'Gaming Consoles & Accessories', image_url: 'https://images.unsplash.com/photo-1605901309584-818e25960a8f?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'أجهزة المنزل الذكي', name_en: 'Smart Home Devices', image_url: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'بطاقات الذاكرة والفلاشات', name_en: 'Memory Cards & Flash Drives', image_url: 'https://images.unsplash.com/photo-1589156280159-27698a70f29e?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'فأرة ولوحات مفاتيح الكمبيوتر', name_en: 'Computer Mice & Keyboards', image_url: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'شاشات العرض والكمبيوتر', name_en: 'Monitors & Screen Displays', image_url: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'أجهزة البروجكتر وشاشات العرض', name_en: 'Projectors & Screens', image_url: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?auto=format&fit=crop&w=300&q=80' },
 
-  // 2. Home, Decor & Furniture
+  // 2. Accessories & Cases (5 categories)
+  { name_ar: 'أغطية الهواتف وحماة الشاشة', name_en: 'Phone Cases & Screen Protectors', image_url: 'https://images.unsplash.com/photo-1603302576837-37561b2e2302?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'الميكروفونات وأجهزة التسجيل', name_en: 'Microphones & Recording Gear', image_url: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'المقابس والمحولات الذكية', name_en: 'Smart Plugs & Adapters', image_url: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'الطابعات والماسحات الضوئية', name_en: 'Printers & Scanners', image_url: 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'وصلات الكهرباء وحماة التيار', name_en: 'Power Strips & Surge Protectors', image_url: 'https://images.unsplash.com/photo-1622445262465-2481c4574875?auto=format&fit=crop&w=300&q=80' },
+
+  // 3. Home Furniture & Living (15 categories)
   { name_ar: 'الأثاث المنزلي', name_en: 'Home Furniture', image_url: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'السجاد والمفروشات', name_en: 'Rugs & Carpets', image_url: 'https://images.unsplash.com/photo-1587588354456-ae0904f95f72?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'إضاءة وثريات', name_en: 'Lighting & Chandeliers', image_url: 'https://images.unsplash.com/photo-1565814636199-ae8133055c1c?auto=format&fit=crop&w=300&q=80' },
@@ -34,8 +46,20 @@ const newGeneralCategories = [
   { name_ar: 'بياضات ومستلزمات غرف النوم', name_en: 'Bedding & Bedroom Textiles', image_url: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'مستلزمات الحمامات', name_en: 'Bath Accessories', image_url: 'https://images.unsplash.com/photo-1618220179428-22790b461013?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'الأجهزة المنزلية الصغيرة', name_en: 'Small Home Appliances', image_url: 'https://images.unsplash.com/photo-1581244277943-fe4a9c777189?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'الستائر وشيش النوافذ', name_en: 'Curtains & Window Blinds', image_url: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'لوحات الحائط والرسومات', name_en: 'Wall Art & Paintings', image_url: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'ساعات الحائط وساعات المكتب', name_en: 'Wall Clocks & Desk Clocks', image_url: 'https://images.unsplash.com/photo-1563861826100-9cb868fdbe1c?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'منشارات ومنظمات الغسيل', name_en: 'Clothes Drying Racks & Pegs', image_url: 'https://images.unsplash.com/photo-1610557892470-7661848140ed?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'سلال النفايات وإعادة التدوير', name_en: 'Waste Bins & Recycling Bins', image_url: 'https://images.unsplash.com/photo-1503596476-1c12a8ba09a9?auto=format&fit=crop&w=300&q=80' },
 
-  // 3. Fashion, Clothes & Shoes
+  // 4. Home Maintenance & Cleaning (5 categories)
+  { name_ar: 'المكنسة الكهربائية والممسحة البخارية', name_en: 'Vacuum Cleaners & Steam Mops', image_url: 'https://images.unsplash.com/photo-1558317374-067fb5f30001?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'طاولات المكواة ومكاوي البخار', name_en: 'Ironing Boards & Clothes Steamers', image_url: 'https://images.unsplash.com/photo-1522338242992-e1a54906a8da?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'منظمات المطبخ ورفوف التوابل', name_en: 'Kitchen Organizers & Spice Racks', image_url: 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'المرايا الجدارية واليدوية', name_en: 'Mirrors', image_url: 'https://images.unsplash.com/photo-1618220179428-22790b461013?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'المزهريات والزهور الاصطناعية', name_en: 'Vases & Artificial Flowers', image_url: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=300&q=80' },
+
+  // 5. Fashion & Apparel (20 categories)
   { name_ar: 'ملابس رجالية كاجوال', name_en: "Men's Casual Wear", image_url: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'أطقم وملابس رسمية للرجال', name_en: "Men's Formal Suits & Wear", image_url: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'فساتين وملابس نسائية', name_en: "Women's Dresses & Apparel", image_url: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=300&q=80' },
@@ -46,41 +70,118 @@ const newGeneralCategories = [
   { name_ar: 'أحذية نسائية', name_en: "Women's Shoes", image_url: 'https://images.unsplash.com/photo-1562273138-f46be4ebdf33?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'حقائب اليد والظهر', name_en: 'Handbags & Backpacks', image_url: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'النظارات الشمسية والطبية', name_en: 'Sunglasses & Eyewear', image_url: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'ملابس النوم والأرواب للرجال', name_en: "Men's Sleepwear & Robes", image_url: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'ملابس نوم وفساتين منزلية للنساء', name_en: "Women's Sleepwear & Lingerie", image_url: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'المعاطف والسترات الشتوية', name_en: 'Winter Coats & Jackets', image_url: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'الأحزمة والمحافظ الجلدية', name_en: 'Belts & Wallets', image_url: 'https://images.unsplash.com/photo-1627124718185-1e36c9945f7c?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'القبعات وأغطية الرأس', name_en: 'Hats & Caps', image_url: 'https://images.unsplash.com/photo-1534215754734-18e55d13ce35?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'الأوشحة والقفازات', name_en: 'Scarves & Gloves', image_url: 'https://images.unsplash.com/photo-1544022613-e87ca75a784a?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'الجوارب ومستلزماتها', name_en: 'Socks & Hosiery', image_url: 'https://images.unsplash.com/photo-1582966772680-860e372bb558?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'المجوهرات والإكسسوارات النسائية', name_en: 'Jewelry & Fashion Accessories', image_url: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'أحذية الأطفال', name_en: "Kids' Shoes", image_url: 'https://images.unsplash.com/photo-1606041008023-472dfb5e530f?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'ملابس الرضع وحديثي الولادة', name_en: 'Baby Clothing', image_url: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=300&q=80' },
 
-  // 4. Beauty & Personal Care
+  // 6. Beauty & Personal Care (15 categories)
   { name_ar: 'مستحضرات التجميل والمكياج', name_en: 'Cosmetics & Makeup', image_url: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'منتجات العناية بالبشرة', name_en: 'Skin Care Products', image_url: 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'الشامبو والعناية بالشعر', name_en: 'Hair Care & Styling', image_url: 'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a3ef?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'العطور والبخور الفاخر', name_en: 'Perfumes & Luxury Incense', image_url: 'https://images.unsplash.com/photo-1541643600914-78b084683601?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'مستلزمات العناية بالأظافر', name_en: 'Nail Care & Accessories', image_url: 'https://images.unsplash.com/photo-1607006342466-4aa8d8d32be5?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'مجففات ومصففات الشعر', name_en: 'Hair Dryers & Stylers', image_url: 'https://images.unsplash.com/photo-1522338242992-e1a54906a8da?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'ماكينات الحلاقة وتشذيب الشعر', name_en: 'Electric Shavers & Trimmers', image_url: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'زيوت المساج ومرطبات الجسم', name_en: 'Massage Oils & Body Lotions', image_url: 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'واقيات الشمس وزيوت التسمير', name_en: 'Sunscreens & Tanning Oils', image_url: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'غسول الجسم والصابون الطبيعي', name_en: 'Body Washes & Soaps', image_url: 'https://images.unsplash.com/photo-1607006342466-4aa8d8d32be5?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'العناية بالفم وفرش الأسنان', name_en: 'Oral Care & Toothbrushes', image_url: 'https://images.unsplash.com/photo-1522845015757-519cbb2df93f?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'فرش وإسفنج المكياج', name_en: 'Makeup Brushes & Sponges', image_url: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'مزيلات العرق ومضادات التعرق', name_en: 'Deodorants & Antiperspirants', image_url: 'https://images.unsplash.com/photo-1607006342466-4aa8d8d32be5?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'غسول ومقشرات الوجه', name_en: 'Facial Cleansers & Scrubs', image_url: 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'صبغات وملونات الشعر', name_en: 'Hair Colors & Dyes', image_url: 'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a3ef?auto=format&fit=crop&w=300&q=80' },
 
-  // 5. Toys, Kids & Parenting
+  // 7. Toys & Baby Gear (15 categories)
   { name_ar: 'ألعاب الأطفال التعليمية', name_en: 'Educational Toys', image_url: 'https://images.unsplash.com/photo-1532330393533-443990a51d10?auto=format&fit=crop&w=1200&q=80' },
   { name_ar: 'مجسمات وسيارات تحكم عن بعد', name_en: 'Action Figures & RC Cars', image_url: 'https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'ألعاب جماعية ولوحية', name_en: 'Board Games & Puzzles', image_url: 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'عربات كراسي ومقاعد الأطفال', name_en: 'Strollers & Car Seats', image_url: 'https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'ألعاب الطاولة والتركيب', name_en: 'Building Blocks & Lego', image_url: 'https://images.unsplash.com/photo-1532330393533-443990a51d10?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'الألعاب اللينة والدببة المحشوة', name_en: 'Soft Toys & Teddy Bears', image_url: 'https://images.unsplash.com/photo-1559251606-c623743a6d76?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'الأرجوحات والزحليقات للأطفال', name_en: 'Kids\' Outdoor Swings & Slides', image_url: 'https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'أجهزة مراقبة وحواجز سلامة الأطفال', name_en: 'Baby Monitors & Safety Gates', image_url: 'https://images.unsplash.com/photo-1559251606-c623743a6d76?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'رضّاعات ومستلزمات تغذية الرضع', name_en: 'Baby Bottles & Feeding Accessories', image_url: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'حقائب الحفاضات ومفارش التغيير', name_en: 'Diaper Bags & Changing Mats', image_url: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'أحواض استحمام ومقاعد تدريب الأطفال', name_en: 'Baby Bath Tubs & Toilet Trainers', image_url: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'ألواح الرسم الرقمية للأطفال', name_en: 'Drawing Tablets for Kids', image_url: 'https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'السلايم وعجين اللعب', name_en: 'Slime & Playdough', image_url: 'https://images.unsplash.com/photo-1532330393533-443990a51d10?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'سجاد الحصير واللعب للأطفال', name_en: 'Puzzle Mats & Playmats', image_url: 'https://images.unsplash.com/photo-1559251606-c623743a6d76?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'أزياء وملابس تنكرية للأطفال', name_en: 'Costume & Dress Up Toys', image_url: 'https://images.unsplash.com/photo-1622273509399-5287e03aa3a6?auto=format&fit=crop&w=300&q=80' },
 
-  // 6. Sports & Outdoors
+  // 8. Sports & Outdoors (15 categories)
   { name_ar: 'معدات اللياقة البدنية والحديد', name_en: 'Fitness & Gym Equipment', image_url: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'مستلزمات التخييم والرحلات', name_en: 'Camping & Hiking Gear', image_url: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'الدراجات الهوائية ومعداتها', name_en: 'Bicycles & Accessories', image_url: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'مستلزمات السباحة والرياضات المائية', name_en: 'Swimming & Water Sports', image_url: 'https://images.unsplash.com/photo-1519412666065-94acb3f8838f?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'مستلزمات السفر وحقائب السفر', name_en: 'Travel Bags & Luggage', image_url: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'مطارات المياه الرياضية', name_en: 'Sport Water Bottles', image_url: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'سجادات ومكعبات اليوغا', name_en: 'Yoga Mats & Blocks', image_url: 'https://images.unsplash.com/photo-1592432678016-e910b452f9a2?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'الأوزان والدمبلز الرياضية', name_en: 'Dumbbells & Barbells', image_url: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'حقائب الظهر الرياضية', name_en: 'Sports Backpacks', image_url: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'خيام التخييم وأكياس النوم', name_en: 'Hiking Tents & Sleeping Bags', image_url: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'نظارات وقبعات السباحة', name_en: 'Swimming Goggles & Caps', image_url: 'https://images.unsplash.com/photo-1519412666065-94acb3f8838f?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'كرات القدم والسلة', name_en: 'Footballs & Basketballs', image_url: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'مضارب التنس والريشة', name_en: 'Rackets for Tennis & Badminton', image_url: 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'أحذية الجري والرياضة', name_en: 'Running Shoes', image_url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'خوذ وواقيات الحماية الرياضية', name_en: 'Protectors & Helmets', image_url: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=300&q=80' },
 
-  // 7. Tools, Garden & Automotive
+  // 9. Tools, Hardware & Garden (15 categories)
   { name_ar: 'العدد اليدوية والمفكات', name_en: 'Hand Tools & Screwdrivers', image_url: 'https://images.unsplash.com/photo-1581244277943-fe4a9c777189?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'المعدات الكهربائية والصيانة', name_en: 'Power Tools & Gear', image_url: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'أثاث ومستلزمات الحدائق', name_en: 'Garden Furniture & Decor', image_url: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'أدوات الزراعة وسقي النباتات', name_en: 'Gardening Tools & Watering', image_url: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'إكسسوارات السيارات الداخلية', name_en: 'Car Interior Accessories', image_url: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'أدوات ومعدات تنظيف السيارات', name_en: 'Car Cleaning & Care Tools', image_url: 'https://images.unsplash.com/photo-1607860108855-64acf2078ed9?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'أحواض وأوعية النباتات', name_en: 'Garden Pots & Planters', image_url: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'إضاءة الحدائق والمصابيح الشمسية', name_en: 'Garden Lighting & Solar Lights', image_url: 'https://images.unsplash.com/photo-1565814636199-ae8133055c1c?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'صناديق ومنظمات العدة والملحقات', name_en: 'Toolboxes & Organizers', image_url: 'https://images.unsplash.com/photo-1581244277943-fe4a9c777189?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'فرش ورولات الدهان', name_en: 'Paintbrushes & Paint Rollers', image_url: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'أشرطة القياس وموازين الماء', name_en: 'Measuring Tapes & Levels', image_url: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'نظارات وقفازات الحماية المهنية', name_en: 'Protective Gloves & Goggles', image_url: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'حوامل الهاتف للسيارات', name_en: 'Car Phone Mounts', image_url: 'https://images.unsplash.com/photo-1586105251261-72a756497a11?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'أغطية ومفروشات مقاعد السيارات', name_en: 'Car Seat Covers', image_url: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'شواحن وبطاريات طوارئ السيارات', name_en: 'Car Jump Starters & Chargers', image_url: 'https://images.unsplash.com/photo-1622445262465-2481c4574875?auto=format&fit=crop&w=300&q=80' },
 
-  // 8. Stationery, Office & Books
+  // 10. Stationery & Office Supplies (15 categories)
+  { name_ar: 'معطرات وتونر السيارات', name_en: 'Car Air Fresheners', image_url: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'أدوات القرطاسية والأقلام', name_en: 'Stationery & Pens', image_url: 'https://images.unsplash.com/photo-1531346878377-a5be20888e57?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'دفاتر ومذكرات جلدية', name_en: 'Notebooks & Planners', image_url: 'https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'مستلزمات المكاتب والملفات', name_en: 'Office Supplies & Organizers', image_url: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=300&q=80' },
-  { name_ar: 'كتب وروايات', name_en: 'Books & Novels', image_url: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=300&q=80' }
+  { name_ar: 'كتب وروايات', name_en: 'Books & Novels', image_url: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'دفاتر الرسم وأوراق الفنون', name_en: 'Sketchbooks & Art Papers', image_url: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'الأقلام الملونة وأقلام التحديد', name_en: 'Colored Pencils & Markers', image_url: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'المقصات وقاطعات الورق', name_en: 'Scissors & Paper Cutters', image_url: 'https://images.unsplash.com/photo-1531346878377-a5be20888e57?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'السبورات البيضاء وأقلام التخطيط', name_en: 'Whiteboards & Markers', image_url: 'https://images.unsplash.com/photo-1531346878377-a5be20888e57?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'مجلدات وحافظات الملفات', name_en: 'File Folders & Ring Binders', image_url: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'مصابيح ومنظمات المكتب', name_en: 'Desk Lamps & Organizers', image_url: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'أوراق وشرائط تغليف الهدايا', name_en: 'Gift Wrapping Papers & Ribbons', image_url: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'الآلات الحاسبة المكتبية', name_en: 'Calculators', image_url: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'قصص وكتب الأطفال', name_en: "Children's Storybooks", image_url: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'كتب تطوير الذات والتنمية البشرية', name_en: 'Self-Help & Personal Growth Books', image_url: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=300&q=80' },
+
+  // 11. Pet Accessories & Music Instruments (15 categories)
+  { name_ar: 'أطواق وحبال الحيوانات الأليفة', name_en: 'Pet Collars & Leashes', image_url: 'https://images.unsplash.com/photo-1541599540903-216a46ca1ad0?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'فرش تنظيف وتمشيط الحيوانات', name_en: 'Pet Grooming Brushes', image_url: 'https://images.unsplash.com/photo-1541599540903-216a46ca1ad0?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'ألعاب الحيوانات الأليفة', name_en: 'Pet Toys & Chews', image_url: 'https://images.unsplash.com/photo-1541599540903-216a46ca1ad0?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'أسرة ووسائد الحيوانات الأليفة', name_en: 'Pet Beds & Cushions', image_url: 'https://images.unsplash.com/photo-1541599540903-216a46ca1ad0?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'أحواض الأسماك ولوازمها', name_en: 'Aquariums & Fish Tanks', image_url: 'https://images.unsplash.com/photo-1541599540903-216a46ca1ad0?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'القيثارات الصوتية والكهربائية', name_en: 'Acoustic & Electric Guitars', image_url: 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'الأورغ والبيانو الإلكتروني', name_en: 'Electronic Keyboards & Pianos', image_url: 'https://images.unsplash.com/photo-1552422535-c45813c61732?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'الكمان والآلات الوترية', name_en: 'Violin & String Instruments', image_url: 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'حوامل النوتة وأجهزة الدوزان', name_en: 'Music Stands & Tuning Gear', image_url: 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'ميكروفونات وميكسر الصوت', name_en: 'Microphones & Sound Mixers', image_url: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'خيوط وإبر الخياطة', name_en: 'Sewing Threads & Needles', image_url: 'https://images.unsplash.com/photo-1506806732259-39c2d0268443?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'صوف وخيوط الحياكة', name_en: 'Knitting Wool & Yarns', image_url: 'https://images.unsplash.com/photo-1506806732259-39c2d0268443?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'مجموعات صنع الشموع اليدوية', name_en: 'DIY Candle Making Kits', image_url: 'https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'الصلصال وأدوات النحت', name_en: 'Clay & Sculpting Tools', image_url: 'https://images.unsplash.com/photo-1506806732259-39c2d0268443?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'مسدسات الغراء الساخن وأصابعه', name_en: 'Hot Glue Guns & Sticks', image_url: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=300&q=80' }
 ];
 
 // Helper to convert SQLite SQL placeholders (?) to PostgreSQL ($1, $2...)
@@ -516,22 +617,11 @@ async function initializeDatabasePostgres() {
       console.log('[Database] Seeded merchants.');
     }
 
-    // Seed Categories
+    // Seed Categories / Migration check
     const categoriesCount = await pgPool.query('SELECT COUNT(*) FROM categories');
-    if (parseInt(categoriesCount.rows[0].count) === 0) {
-      for (const cat of newGeneralCategories) {
-        await pgPool.query(
-          'INSERT INTO categories (name_ar, name_en, parent_id, image_url) VALUES ($1, $2, null, $3)',
-          [cat.name_ar, cat.name_en, cat.image_url]
-        );
-      }
-      console.log('[Database] Seeded new general categories.');
-    }
-
-    // General catalog migration check (runs once if old Groceries & Provisions category exists)
-    const oldCatCheck = await pgPool.query("SELECT COUNT(*) FROM categories WHERE name_en = 'Groceries & Provisions'");
-    if (parseInt(oldCatCheck.rows[0].count) > 0) {
-      console.log('[Database] Migrating PostgreSQL to new general non-food catalog with 50+ categories...');
+    const pgCount = parseInt(categoriesCount.rows[0].count);
+    if (pgCount !== newGeneralCategories.length) {
+      console.log(`[Database] PostgreSQL categories count (${pgCount}) doesn't match expected (${newGeneralCategories.length}). Migrating database categories...`);
       await pgPool.query("DELETE FROM products");
       await pgPool.query("DELETE FROM categories");
       for (const cat of newGeneralCategories) {
@@ -540,7 +630,7 @@ async function initializeDatabasePostgres() {
           [cat.name_ar, cat.name_en, cat.image_url]
         );
       }
-      console.log('[Database] PostgreSQL general catalog migration completed successfully.');
+      console.log('[Database] Seeded new general categories.');
     }
   } catch (err) {
     console.error('[Database] Sequential PostgreSQL initialization failed:', err);
@@ -806,20 +896,11 @@ function initializeDatabase() {
       }
     });
 
-    // Seed Categories if empty
+    // Seed Categories / Migration check
     db.get('SELECT COUNT(*) as count FROM categories', [], (err, row) => {
-      if (row && parseInt(row.count) === 0) {
-        newGeneralCategories.forEach(cat => {
-          db.run('INSERT INTO categories (name_ar, name_en, parent_id, image_url) VALUES (?, ?, null, ?)', [cat.name_ar, cat.name_en, cat.image_url]);
-        });
-        console.log('[Database] Seeded new SQLite general categories.');
-      }
-    });
-
-    // General catalog migration check (runs once if old Groceries & Provisions category exists)
-    db.get("SELECT COUNT(*) as count FROM categories WHERE name_en = 'Groceries & Provisions'", [], (err, row) => {
-      if (row && parseInt(row.count) > 0) {
-        console.log('[Database] Migrating SQLite to new general non-food catalog with 50+ categories...');
+      const sqliteCount = row ? parseInt(row.count) : 0;
+      if (sqliteCount !== newGeneralCategories.length) {
+        console.log(`[Database] SQLite categories count (${sqliteCount}) doesn't match expected (${newGeneralCategories.length}). Migrating database categories...`);
         db.serialize(() => {
           db.run("DELETE FROM products");
           db.run("DELETE FROM categories", [], () => {
