@@ -449,12 +449,12 @@ export default function AdminOrders() {
                   {/* Left: Thank you and Note */}
                   <div style={{ flex: 1, minWidth: '220px', fontSize: '0.78rem', color: 'var(--text-light)' }}>
                     <div style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '4px' }}>
-                      {lang === 'ar' ? 'ملاحظة هامة:' : 'Important Note:'}
+                      {lang === 'ar' ? 'شكراً لتسوقكم معنا!' : 'Thank you for shopping with us!'}
                     </div>
                     <div>
                       {lang === 'ar' 
-                        ? 'الرجاء الاحتفاظ بهذا الوصل للاستبدال أو المرجوعات خلال مدة أقصاها ٧ أيام من تاريخ التسليم.'
-                        : 'Please keep this receipt for exchanges or returns within a maximum of 7 days from delivery.'}
+                        ? 'نسعد دائماً بخدمتكم.'
+                        : 'We are always happy to serve you.'}
                     </div>
                   </div>
 
