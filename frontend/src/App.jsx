@@ -23,7 +23,10 @@ export default function App() {
   const { setIsCartOpen, cartItems } = useCart();
   const { isChatOpen, setIsChatOpen } = useChat();
 
-  const [currentView, setCurrentView] = useState('store'); // 'store', 'admin', 'orders', 'login', 'register'
+  const [currentView, setCurrentView] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('view') || 'store';
+  });
 
   // Catalog states
   const [products, setProducts] = useState([]);

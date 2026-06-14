@@ -22,7 +22,10 @@ export default function AdminDashboard({ setCurrentView }) {
   const { token, hasPermission } = useAuth();
   const { chatUsers, activeChatUserId, setActiveChatUserId, messages, sendMessage } = useChat();
 
-  const [activeTab, setActiveTab] = useState('products');
+  const [activeTab, setActiveTab] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('tab') || 'products';
+  });
   const [filterProductsOutOfStock, setFilterProductsOutOfStock] = useState(false);
   const [stats, setStats] = useState({
     total_orders: 0,
@@ -290,8 +293,25 @@ export default function AdminDashboard({ setCurrentView }) {
             <div style={{ display: 'flex', gap: '20px', height: '620px', border: '1px solid var(--border-color)', borderRadius: '12px', overflow: 'hidden', backgroundColor: 'var(--bg-secondary)', animation: 'fadeIn 0.3s ease-out' }}>
               {/* Users list for chat selection */}
               <div style={{ width: '280px', borderInlineEnd: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: 'var(--bg-tertiary)' }}>
-                <div style={{ padding: '16px', borderBottom: '1px solid var(--border-color)', fontWeight: '800', fontSize: '0.95rem' }}>
-                  {lang === 'ar' ? 'محادثات العملاء' : 'Customer Chats'}
+                <div style={{ padding: '16px', borderBottom: '1px solid var(--border-color)', fontWeight: '800', fontSize: '0.95rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>{lang === 'ar' ? 'محادثات العملاء' : 'Customer Chats'}</span>
+                  <button
+                    type="button"
+                    onClick={() => window.open('/?view=admin&tab=chats', '_blank')}
+                    style={{
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      color: 'var(--accent-blue)',
+                      fontSize: '0.75rem',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    {lang === 'ar' ? 'فتح في صفحة منفصلة ↗️' : 'Open in separate tab ↗️'}
+                  </button>
                 </div>
                 <div style={{ flex: '1', overflowY: 'auto', padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {chatUsers.length === 0 ? (
