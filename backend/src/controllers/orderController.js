@@ -306,10 +306,15 @@ exports.deleteOrder = async (req, res) => {
       }
     }
 
+    if (order.status === 'archived') {
+      await db.runAsync("DELETE FROM orders WHERE id = ?", [id]);
+      return res.json({ message_ar: 'تم حذف الطلبية نهائياً بنجاح', message_en: 'Order permanently deleted successfully' });
+    }
+
     await db.runAsync("UPDATE orders SET status = 'archived' WHERE id = ?", [id]);
     res.json({ message_ar: 'تم نقل الطلبية إلى الأرشيف بنجاح', message_en: 'Order archived successfully' });
   } catch (err) {
-    res.status(500).json({ error_ar: 'خطأ في أرشفة الطلبية', error_en: 'Error archiving order' });
+    res.status(500).json({ error_ar: 'خطأ في حذف الطلبية', error_en: 'Error deleting order' });
   }
 };
 

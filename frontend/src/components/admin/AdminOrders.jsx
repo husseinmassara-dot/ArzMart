@@ -58,8 +58,12 @@ export default function AdminOrders() {
     }, 200);
   };
 
-  const handleDeleteOrder = async (id) => {
-    const confirmDelete = window.confirm(lang === 'ar' ? 'هل أنت متأكد من نقل هذه الطلبية إلى الأرشيف؟' : 'Are you sure you want to move this order to the archive?');
+  const handleDeleteOrder = async (id, isArchived) => {
+    const confirmMsg = isArchived 
+      ? (lang === 'ar' ? 'هل أنت متأكد من حذف هذه الطلبية نهائياً؟ (لا يمكن التراجع عن هذا الإجراء)' : 'Are you sure you want to permanently delete this order? (This action cannot be undone)')
+      : (lang === 'ar' ? 'هل أنت متأكد من حذف هذه الطلبية ونقلها إلى الأرشيف؟' : 'Are you sure you want to delete this order and move it to the archive?');
+    
+    const confirmDelete = window.confirm(confirmMsg);
     if (!confirmDelete) return;
 
     try {
@@ -242,13 +246,13 @@ export default function AdminOrders() {
                     <Printer size={14} />
                     <span>طباعة بدون سعر</span>
                   </button>
-                  {user?.role === 'admin' && selectedOrder.status !== 'archived' && (
+                  {user?.role === 'admin' && (
                     <button
-                      onClick={() => handleDeleteOrder(selectedOrder.id)}
+                      onClick={() => handleDeleteOrder(selectedOrder.id, selectedOrder.status === 'archived')}
                       className="input-field animate-scale"
                       style={{ width: 'auto', padding: '6px 12px', backgroundColor: '#ef4444', color: 'white', border: 'none', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
                     >
-                      <span>أرشفة الطلبية</span>
+                      <span>{selectedOrder.status === 'archived' ? (lang === 'ar' ? 'حذف نهائي' : 'Delete Permanently') : (lang === 'ar' ? 'حذف الطلبية' : 'Delete Order')}</span>
                     </button>
                   )}
                   {user?.role === 'admin' && selectedOrder.status !== 'cancelled' && selectedOrder.status !== 'delivered' && selectedOrder.status !== 'archived' && (
