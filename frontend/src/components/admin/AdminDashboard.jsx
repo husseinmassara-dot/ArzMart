@@ -421,6 +421,84 @@ export default function AdminDashboard({ setCurrentView }) {
               </div>
             </div>
 
+            {/* Unique Visitors */}
+            {hasPermission('reports') && (
+              <div 
+                className="dashboard-card" 
+                style={{ 
+                  borderLeft: '4px solid #8b5cf6',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+                }}
+                onClick={() => {
+                  if (openInNewTab) {
+                    window.open('/?view=admin&tab=reports', '_blank');
+                  } else {
+                    setActiveTab('reports');
+                  }
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '600' }}>الزوار الفريدون (Unique Visitors)</span>
+                    <h3 style={{ fontSize: '1.5rem', fontWeight: '800', margin: '4px 0', color: '#8b5cf6' }}>
+                      {stats.unique_visitors || 0}
+                    </h3>
+                  </div>
+                  <div style={{ backgroundColor: 'rgba(139,92,246,0.1)', padding: '10px', borderRadius: '50%' }}>
+                    <Users size={22} color="#8b5cf6" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Page Views */}
+            {hasPermission('reports') && (
+              <div 
+                className="dashboard-card" 
+                style={{ 
+                  borderLeft: '4px solid var(--accent-red-gold)',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+                }}
+                onClick={() => {
+                  if (openInNewTab) {
+                    window.open('/?view=admin&tab=reports', '_blank');
+                  } else {
+                    setActiveTab('reports');
+                  }
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '600' }}>مشاهدات الصفحات (Page Views)</span>
+                    <h3 style={{ fontSize: '1.5rem', fontWeight: '800', margin: '4px 0', color: 'var(--accent-red-gold)' }}>
+                      {stats.total_views || 0}
+                    </h3>
+                  </div>
+                  <div style={{ backgroundColor: 'rgba(217,119,6,0.1)', padding: '10px', borderRadius: '50%' }}>
+                    <BarChart3 size={22} color="var(--accent-red-gold)" />
+                  </div>
+                </div>
+              </div>
+            )}
+
           </section>
         )}
 

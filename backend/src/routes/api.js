@@ -61,6 +61,8 @@ router.delete('/coupons/:id', authenticateToken, requirePermission('coupons'), c
 router.get('/settings', settingsController.getSettings);
 router.put('/settings', authenticateToken, requirePermission('settings'), upload.single('logo'), settingsController.updateSettings);
 router.put('/settings/banners', authenticateToken, requirePermission('settings'), upload.any(), settingsController.updateBanners);
+router.post('/analytics/hit', settingsController.trackHit);
+router.get('/reports', authenticateToken, requirePermission('reports'), orderController.getReports);
 
 // --- Chat Routes ---
 router.post('/chat/send', authenticateToken, chatController.sendMessage);

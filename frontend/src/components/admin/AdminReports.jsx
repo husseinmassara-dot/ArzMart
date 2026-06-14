@@ -125,6 +125,33 @@ export default function AdminReports() {
 
       </div>
 
+      {/* Traffic & Visitors Analytics */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
+        
+        {/* Unique Visitors */}
+        <div className="dashboard-card" style={{ borderLeft: '4px solid #8b5cf6', padding: '20px' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '600' }}>الزوار الفريدون (Unique Visitors)</span>
+          <h3 style={{ fontSize: '1.5rem', fontWeight: '800', margin: '4px 0', color: '#8b5cf6' }}>
+            {summary.unique_visitors || 0}
+          </h3>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>
+            عدد المستخدمين الفريدين الذين فتحوا المتجر
+          </span>
+        </div>
+
+        {/* Total Page Views */}
+        <div className="dashboard-card" style={{ borderLeft: '4px solid var(--accent-red-gold)', padding: '20px' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '600' }}>إجمالي مشاهدات الصفحات (Page Views)</span>
+          <h3 style={{ fontSize: '1.5rem', fontWeight: '800', margin: '4px 0', color: 'var(--accent-red-gold)' }}>
+            {summary.total_views || 0}
+          </h3>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>
+            إجمالي النقرات وتصفح الأقسام على الموقع والتطبيق
+          </span>
+        </div>
+
+      </div>
+
       {/* Visual Analytics Section (Bar Charts mockup using CSS) */}
       <div className="no-print" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
         

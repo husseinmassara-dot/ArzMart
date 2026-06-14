@@ -365,6 +365,23 @@ exports.getReports = async (req, res) => {
       FROM products
     `);
 
+    let totalViews = 0;
+    let uniqueVisitors = 0;
+    try {
+      const viewsStats = await db.getAsync(`
+        SELECT 
+          COUNT(id) as total_views,
+          COUNT(DISTINCT visitor_id) as unique_visitors
+        FROM page_views
+      `);
+      if (viewsStats) {
+        totalViews = viewsStats.total_views || 0;
+        uniqueVisitors = viewsStats.unique_visitors || 0;
+      }
+    } catch (e) {
+      console.error('Error fetching page views stats:', e);
+    }
+
     res.json({
       summary: {
         total_orders: stats.total_orders || 0,
@@ -374,7 +391,9 @@ exports.getReports = async (req, res) => {
         pending_orders: stats.pending_orders || 0,
         delivered_orders: stats.delivered_orders || 0,
         estimated_profit_usd: netProfitUsd, // Exact net profit in USD
-        estimated_profit_lbp: netProfitLbp  // Exact net profit in LBP
+        estimated_profit_lbp: netProfitLbp,  // Exact net profit in LBP
+        total_views: totalViews,
+        unique_visitors: uniqueVisitors
       },
       dailySales,
       monthlySales,

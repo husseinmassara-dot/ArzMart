@@ -115,6 +115,34 @@ export default function App() {
     fetchProducts();
   }, [selectedCategory, searchVal, minPrice, maxPrice, minRating]);
 
+  // Analytics: Track visitor page views
+  useEffect(() => {
+    // Generate a unique visitor ID if it doesn't exist yet
+    let visitorId = localStorage.getItem('arz_mart_visitor_id');
+    if (!visitorId) {
+      visitorId = 'vis_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      localStorage.setItem('arz_mart_visitor_id', visitorId);
+    }
+
+    // Report page hit to backend
+    const trackPageHit = async () => {
+      try {
+        await fetch(`${apiBase}/analytics/hit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            visitor_id: visitorId,
+            url: window.location.pathname + window.location.search
+          })
+        });
+      } catch (err) {
+        console.error('Failed to report analytics hit:', err);
+      }
+    };
+
+    trackPageHit();
+  }, [currentView]);
+
   useEffect(() => {
     fetchCategories();
   }, [currentView]);

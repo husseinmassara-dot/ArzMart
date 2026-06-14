@@ -370,6 +370,16 @@ async function initializeDatabasePostgres() {
       )
     `);
 
+    // 10. Page Views Table
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS page_views (
+        id SERIAL PRIMARY KEY,
+        visitor_id TEXT NOT NULL,
+        url TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     console.log('[Database] PostgreSQL tables created successfully. Checking seeding...');
 
     // Seed settings
@@ -788,6 +798,16 @@ function initializeDatabase() {
         title_en TEXT NOT NULL,
         message_ar TEXT NOT NULL,
         message_en TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // 10. Page Views Table
+    runInit(`
+      CREATE TABLE IF NOT EXISTS page_views (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        visitor_id TEXT NOT NULL,
+        url TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
