@@ -91,7 +91,11 @@ const translations = {
     congrats_title: 'تهانينا الحارة! 🎉',
     congrats_desc: 'لقد حصلت على كود خصم بقيمة ١٠٪ على طلبيتك الأولى بمناسبة انضمامك إلينا.',
     congrats_code: 'رمز الخصم هو: WELCOME10',
-    privacy_policy: 'سياسة الخصوصية'
+    privacy_policy: 'سياسة الخصوصية',
+    pwa_install_title: 'تثبيت تطبيق أرز مارت',
+    pwa_install_desc: 'تسوّق أسرع وتابع طلباتك بكل سهولة من شاشتك الرئيسية!',
+    pwa_install_btn: 'تثبيت التطبيق الآن',
+    pwa_install_ios_hint: 'اضغط على زر المشاركة 📥 ثم اختر "إضافة إلى الشاشة الرئيسية"'
   },
   en: {
     appName: 'Arz-Mart',
@@ -181,7 +185,11 @@ const translations = {
     congrats_title: 'Congratulations! 🎉',
     congrats_desc: 'You received a 10% discount promo code for your first purchase as a welcome gift.',
     congrats_code: 'Discount Code: WELCOME10',
-    privacy_policy: 'Privacy Policy'
+    privacy_policy: 'Privacy Policy',
+    pwa_install_title: 'Install Arz-Mart Store',
+    pwa_install_desc: 'Shop faster and track your orders easily from your home screen!',
+    pwa_install_btn: 'Install App Now',
+    pwa_install_ios_hint: 'Tap the Share button 📥 then select "Add to Home Screen"'
   }
 };
 

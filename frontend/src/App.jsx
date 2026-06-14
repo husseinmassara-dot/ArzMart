@@ -10,6 +10,7 @@ import ProductDetails from './components/ProductDetails';
 import Cart from './components/Cart';
 import Checkout from './components/Checkout';
 import Chat from './components/Chat';
+import PwaInstallBanner from './components/PwaInstallBanner';
 
 // Admin panel imports
 import AdminDashboard from './components/admin/AdminDashboard';
@@ -1129,6 +1130,9 @@ export default function App() {
 
       {/* 7. Live Customer Chat Panel */}
       <Chat />
+
+      {/* 8. PWA Install Notification Banner */}
+      <PwaInstallBanner />
 
     </div>
   );
