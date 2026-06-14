@@ -863,7 +863,7 @@ export default function App() {
                       ))}
                     </div>
                     <div style={{ textAlign: 'end' }}>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>إجمالي الفاتورة:</span>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>{lang === 'ar' ? 'إجمالي الطلبية:' : 'Order Total:'}</span>
                       <h4 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--accent-red-gold)' }}>
                         {formatPrice(o.total_usd)}
                       </h4>

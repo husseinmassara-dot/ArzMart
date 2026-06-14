@@ -228,7 +228,7 @@ export default function AdminOrders() {
                     style={{ width: 'auto', padding: '6px 12px', backgroundColor: 'var(--accent-blue)', color: 'white', border: 'none', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.8rem' }}
                   >
                     <Printer size={14} />
-                    <span>طباعة الفاتورة</span>
+                    <span>طباعة تفاصيل الطلب</span>
                   </button>
                   <button
                     onClick={() => handlePrint(true)}
@@ -319,7 +319,7 @@ export default function AdminOrders() {
                   
                   <div style={{ textAlign: lang === 'ar' ? 'left' : 'right', direction: 'ltr' }}>
                     <h1 style={{ fontSize: '1.3rem', fontWeight: '900', color: 'var(--accent-blue)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      {lang === 'ar' ? 'فاتورة بيع رسمية' : 'OFFICIAL INVOICE'}
+                      {lang === 'ar' ? 'وصل استلام طلبية' : 'ORDER RECEIPT'}
                     </h1>
                     <div style={{ fontSize: '0.8rem', fontWeight: '700', marginTop: '4px', color: 'var(--text-primary)' }}>
                       #{selectedOrder.id}
@@ -332,7 +332,7 @@ export default function AdminOrders() {
                   {/* Left Column: Client Details */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <strong style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-light)', letterSpacing: '0.5px', borderBottom: '1px solid var(--border-color)', paddingBottom: '4px', marginBottom: '4px' }}>
-                      {lang === 'ar' ? 'المرسل إليه (Bill To):' : 'Bill To / Ship To:'}
+                      {lang === 'ar' ? 'معلومات العميل:' : 'Customer Info:'}
                     </strong>
                     <div style={{ fontWeight: '800', fontSize: '1.05rem', color: 'var(--text-primary)' }}>
                       {selectedOrder.user_name}
@@ -350,7 +350,7 @@ export default function AdminOrders() {
                   {/* Right Column: Order/Invoice Info */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', textAlign: lang === 'ar' ? 'left' : 'right', alignItems: lang === 'ar' ? 'flex-start' : 'flex-end' }}>
                     <strong style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-light)', letterSpacing: '0.5px', borderBottom: '1px solid var(--border-color)', paddingBottom: '4px', marginBottom: '4px', width: '100%' }}>
-                      {lang === 'ar' ? 'تفاصيل الفاتورة:' : 'Invoice Details:'}
+                      {lang === 'ar' ? 'تفاصيل الطلبية:' : 'Order Details:'}
                     </strong>
                     <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                       <span style={{ fontWeight: '600' }}>{lang === 'ar' ? 'التاريخ: ' : 'Date: '}</span>
@@ -453,8 +453,8 @@ export default function AdminOrders() {
                     </div>
                     <div>
                       {lang === 'ar' 
-                        ? 'الرجاء الاحتفاظ بهذه الفاتورة للاستبدال أو المرجوعات خلال مدة أقصاها ٧ أيام من تاريخ التسليم.'
-                        : 'Please keep this invoice for exchanges or returns within a maximum of 7 days from delivery.'}
+                        ? 'الرجاء الاحتفاظ بهذا الوصل للاستبدال أو المرجوعات خلال مدة أقصاها ٧ أيام من تاريخ التسليم.'
+                        : 'Please keep this receipt for exchanges or returns within a maximum of 7 days from delivery.'}
                     </div>
                   </div>
 
@@ -506,7 +506,7 @@ export default function AdminOrders() {
             </div>
           ) : (
             <div className="no-print dashboard-card" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '300px' }}>
-              اختر طلبية من القائمة الجانبية لعرض تفاصيلها وطباعة الفاتورة.
+              اختر طلبية من القائمة الجانبية لعرض تفاصيلها وطباعتها.
             </div>
           )}
         </div>
