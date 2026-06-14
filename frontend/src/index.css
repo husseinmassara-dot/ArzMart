@@ -209,9 +209,13 @@ button, input, select, textarea {
 
 /* Printing styling layout */
 @media print {
+  @page {
+    margin: 0;
+  }
   body {
     background: white !important;
     color: black !important;
+    margin: 1.6cm !important;
   }
   
   .no-print {
