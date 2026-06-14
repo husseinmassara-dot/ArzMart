@@ -59,7 +59,7 @@ export default function AdminOrders() {
   };
 
   const handleDeleteOrder = async (id) => {
-    const confirmDelete = window.confirm(lang === 'ar' ? 'هل أنت متأكد من حذف هذه الطلبية نهائياً؟' : 'Are you sure you want to permanently delete this order?');
+    const confirmDelete = window.confirm(lang === 'ar' ? 'هل أنت متأكد من نقل هذه الطلبية إلى الأرشيف؟' : 'Are you sure you want to move this order to the archive?');
     if (!confirmDelete) return;
 
     try {
@@ -81,11 +81,13 @@ export default function AdminOrders() {
 
   const filteredOrders = orders.filter(order => {
     if (activeSubTab === 'active') {
-      return order.status !== 'delivered' && order.status !== 'cancelled';
+      return order.status !== 'delivered' && order.status !== 'cancelled' && order.status !== 'archived';
     } else if (activeSubTab === 'delivered') {
       return order.status === 'delivered';
-    } else {
+    } else if (activeSubTab === 'cancelled') {
       return order.status === 'cancelled';
+    } else {
+      return order.status === 'archived';
     }
   });
 
@@ -107,7 +109,7 @@ export default function AdminOrders() {
             fontSize: '0.85rem'
           }}
         >
-          الطلبيات النشطة ({orders.filter(o => o.status !== 'delivered' && o.status !== 'cancelled').length})
+          الطلبيات النشطة ({orders.filter(o => o.status !== 'delivered' && o.status !== 'cancelled' && o.status !== 'archived').length})
         </button>
         <button
           onClick={() => setActiveSubTab('delivered')}
@@ -139,6 +141,23 @@ export default function AdminOrders() {
         >
           الطلبيات الملغاة ({orders.filter(o => o.status === 'cancelled').length})
         </button>
+        {user?.role === 'admin' && (
+          <button
+            onClick={() => setActiveSubTab('archive')}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '20px',
+              border: 'none',
+              backgroundColor: activeSubTab === 'archive' ? 'var(--accent-blue)' : 'var(--bg-tertiary)',
+              color: activeSubTab === 'archive' ? 'white' : 'var(--text-primary)',
+              cursor: 'pointer',
+              fontWeight: '700',
+              fontSize: '0.85rem'
+            }}
+          >
+            أرشيف الطلبيات ({orders.filter(o => o.status === 'archived').length})
+          </button>
+        )}
       </div>
 
       {/* Orders Grid */}
@@ -219,18 +238,19 @@ export default function AdminOrders() {
                     <Printer size={14} />
                     <span>طباعة بدون سعر</span>
                   </button>
-                  {user?.role === 'admin' && (
+                  {user?.role === 'admin' && selectedOrder.status !== 'archived' && (
                     <button
                       onClick={() => handleDeleteOrder(selectedOrder.id)}
                       className="input-field animate-scale"
                       style={{ width: 'auto', padding: '6px 12px', backgroundColor: '#ef4444', color: 'white', border: 'none', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
                     >
-                      <span>حذف الطلبية</span>
+                      <span>أرشفة الطلبية</span>
                     </button>
                   )}
                 </div>
 
-                {selectedOrder.status !== 'delivered' && selectedOrder.status !== 'cancelled' && (
+                {((selectedOrder.status !== 'delivered' && selectedOrder.status !== 'cancelled' && selectedOrder.status !== 'archived') || 
+                  (selectedOrder.status === 'archived' && user?.role === 'admin')) && (
                   <select
                     className="input-field"
                     style={{ width: 'auto', padding: '4px 10px', fontSize: '0.8rem' }}
@@ -243,6 +263,9 @@ export default function AdminOrders() {
                     <option value="delivered">تم التسليم (Delivered)</option>
                     {user?.role === 'admin' && (
                       <option value="cancelled">ملغاة (Cancelled)</option>
+                    )}
+                    {user?.role === 'admin' && selectedOrder.status === 'archived' && (
+                      <option value="archived">مؤرشفة (Archived)</option>
                     )}
                   </select>
                 )}

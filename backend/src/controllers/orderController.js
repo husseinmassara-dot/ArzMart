@@ -203,7 +203,7 @@ exports.getOrders = async (req, res) => {
 
 exports.getUserOrders = async (req, res) => {
   try {
-    const orders = await db.allAsync('SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC', [req.user.id]);
+    const orders = await db.allAsync('SELECT * FROM orders WHERE user_id = ? AND status != "archived" ORDER BY id DESC', [req.user.id]);
     const formattedOrders = orders.map(o => ({
       ...o,
       items: JSON.parse(o.items)
@@ -281,8 +281,8 @@ exports.deleteOrder = async (req, res) => {
   // Restrict order deletion to general manager/admin only
   if (req.user.role !== 'admin') {
     return res.status(403).json({ 
-      error_ar: 'عذراً، حذف الطلبيات مسموح به للمدير العام فقط وليس للموظفين', 
-      error_en: 'Forbidden, only the general manager can delete orders' 
+      error_ar: 'عذراً، أرشفة الطلبيات مسموح بها للمدير العام فقط وليس للموظفين', 
+      error_en: 'Forbidden, only the general manager can archive orders' 
     });
   }
 
@@ -291,10 +291,25 @@ exports.deleteOrder = async (req, res) => {
     if (!order) {
       return res.status(404).json({ error_ar: 'الطلبية غير موجودة', error_en: 'Order not found' });
     }
-    await db.runAsync('DELETE FROM orders WHERE id = ?', [id]);
-    res.json({ message_ar: 'تم حذف الطلبية بنجاح', message_en: 'Order deleted successfully' });
+
+    // Restore stock if archiving from an active state
+    if (order.status !== 'cancelled' && order.status !== 'archived') {
+      try {
+        const items = JSON.parse(order.items || '[]');
+        for (const item of items) {
+          if (item.product_id && item.quantity) {
+            await db.runAsync('UPDATE products SET stock = stock + ? WHERE id = ?', [item.quantity, item.product_id]);
+          }
+        }
+      } catch (e) {
+        console.error('Error restoring stock for archived order:', e);
+      }
+    }
+
+    await db.runAsync('UPDATE orders SET status = "archived" WHERE id = ?', [id]);
+    res.json({ message_ar: 'تم نقل الطلبية إلى الأرشيف بنجاح', message_en: 'Order archived successfully' });
   } catch (err) {
-    res.status(500).json({ error_ar: 'خطأ في حذف الطلبية', error_en: 'Error deleting order' });
+    res.status(500).json({ error_ar: 'خطأ في أرشفة الطلبية', error_en: 'Error archiving order' });
   }
 };
 
@@ -304,11 +319,11 @@ exports.getReports = async (req, res) => {
     // Sales, cost of sales, and true profit summaries
     const stats = await db.getAsync(`
       SELECT 
-        COUNT(id) as total_orders,
+        COUNT(CASE WHEN status != 'archived' THEN 1 END) as total_orders,
         SUM(CASE WHEN status = 'delivered' THEN total_usd ELSE 0 END) as delivered_revenue_usd,
         SUM(CASE WHEN status = 'delivered' THEN total_lbp ELSE 0 END) as delivered_revenue_lbp,
         SUM(CASE WHEN status = 'delivered' THEN total_cost_usd ELSE 0 END) as delivered_cost_usd,
-        SUM(CASE WHEN status != 'delivered' THEN total_usd ELSE 0 END) as pending_revenue_usd,
+        SUM(CASE WHEN status != 'delivered' AND status != 'cancelled' AND status != 'archived' THEN total_usd ELSE 0 END) as pending_revenue_usd,
         COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_orders,
         COUNT(CASE WHEN status = 'delivered' THEN 1 END) as delivered_orders
       FROM orders
