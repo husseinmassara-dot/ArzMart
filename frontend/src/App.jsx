@@ -296,6 +296,18 @@ export default function App() {
         setCurrentView={setCurrentView} 
         searchVal={searchVal} 
         setSearchVal={setSearchVal} 
+        onLogoClick={() => {
+          setCurrentView('store');
+          setSelectedProduct(null);
+          setShowCheckout(false);
+          setSelectedCategory('');
+          setSearchVal('');
+          setMinPrice('');
+          setMaxPrice('');
+          setMinRating('');
+          setIsCartOpen(false);
+          window.history.pushState(null, '', '/');
+        }}
       />
 
       {/* 2. Congratulatory New User Discount Banner Modal */}

@@ -5,7 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useChat } from '../context/ChatContext';
 import { ShoppingCart, Moon, Sun, Globe, DollarSign, LogOut, User, Shield, MessageSquare, Fingerprint, Smartphone } from 'lucide-react';
 
-export default function Header({ currentView, setCurrentView, searchVal, setSearchVal }) {
+export default function Header({ currentView, setCurrentView, searchVal, setSearchVal, onLogoClick }) {
   const { lang, setLang, theme, setTheme, currency, toggleCurrency, settings, t, apiHost } = useApp();
   const { user, logout } = useAuth();
   const { cartItems, setIsCartOpen } = useCart();
@@ -46,7 +46,11 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
           onClick={(e) => {
             if (e.button === 1 || e.metaKey || e.ctrlKey) return;
             e.preventDefault();
-            setCurrentView('store');
+            if (onLogoClick) {
+              onLogoClick();
+            } else {
+              setCurrentView('store');
+            }
           }}
           style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', textDecoration: 'none' }}
         >
