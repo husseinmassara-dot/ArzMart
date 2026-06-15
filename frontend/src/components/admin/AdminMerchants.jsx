@@ -8,6 +8,7 @@ export default function AdminMerchants() {
   const { token } = useAuth();
 
   const [merchants, setMerchants] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
   
   // Form states
   const [isEditing, setIsEditing] = useState(false);
@@ -83,10 +84,27 @@ export default function AdminMerchants() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
+        setSelectedIds(prev => prev.filter(item => item !== id));
         fetchMerchants();
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(lang === 'ar' ? 'هل أنت متأكد من حذف الموردين المحددين؟' : 'Are you sure you want to delete selected merchants?')) return;
+    try {
+      await Promise.all(selectedIds.map(id =>
+        fetch(`${apiBase}/merchants/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ));
+      setSelectedIds([]);
+      fetchMerchants();
+    } catch (err) {
+      console.error('Bulk delete merchants error:', err);
     }
   };
 
@@ -142,11 +160,51 @@ export default function AdminMerchants() {
 
       {/* Merchants List */}
       <div className="dashboard-card" style={{ padding: '20px' }}>
-        <h4 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '16px' }}>قائمة التجار والموردين الحالية</h4>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+          <h4 style={{ fontSize: '1.1rem', fontWeight: '800', margin: 0 }}>قائمة التجار والموردين الحالية</h4>
+          {selectedIds.length > 0 && (
+            <button
+              onClick={handleBulkDelete}
+              style={{
+                backgroundColor: '#ef4444',
+                color: 'white',
+                border: 'none',
+                padding: '6px 14px',
+                borderRadius: '6px',
+                fontWeight: '700',
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'opacity 0.2s'
+              }}
+              onMouseEnter={(e) => e.target.style.opacity = '0.9'}
+              onMouseLeave={(e) => e.target.style.opacity = '1'}
+            >
+              <Trash2 size={14} />
+              <span>{lang === 'ar' ? `حذف المحدد (${selectedIds.length})` : `Delete Selected (${selectedIds.length})`}</span>
+            </button>
+          )}
+        </div>
 
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'start' }}>
           <thead>
             <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-light)', fontSize: '0.85rem' }}>
+              <th style={{ padding: '10px', width: '40px', textAlign: 'start' }}>
+                <input 
+                  type="checkbox"
+                  checked={merchants.length > 0 && selectedIds.length === merchants.length}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedIds(merchants.map(m => m.id));
+                    } else {
+                      setSelectedIds([]);
+                    }
+                  }}
+                  style={{ cursor: 'pointer' }}
+                />
+              </th>
               <th style={{ padding: '10px', textAlign: 'start' }}>الاسم</th>
               <th style={{ padding: '10px', textAlign: 'start' }}>الشركة</th>
               <th style={{ padding: '10px', textAlign: 'start' }}>الهاتف</th>
@@ -156,6 +214,20 @@ export default function AdminMerchants() {
           <tbody>
             {merchants.map((m) => (
               <tr key={m.id} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '0.9rem' }}>
+                <td style={{ padding: '10px' }}>
+                  <input 
+                    type="checkbox"
+                    checked={selectedIds.includes(m.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedIds(prev => [...prev, m.id]);
+                      } else {
+                        setSelectedIds(prev => prev.filter(item => item !== m.id));
+                      }
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  />
+                </td>
                 <td style={{ padding: '10px', fontWeight: '600' }}>
                   {m.name}
                 </td>
@@ -179,7 +251,7 @@ export default function AdminMerchants() {
             ))}
             {merchants.length === 0 && (
               <tr>
-                <td colSpan="4" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-light)', fontSize: '0.85rem' }}>
+                <td colSpan="5" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-light)', fontSize: '0.85rem' }}>
                   لا يوجد أي تجار أو موردين مسجلين بعد.
                 </td>
               </tr>

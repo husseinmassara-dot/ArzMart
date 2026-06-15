@@ -8,6 +8,7 @@ export default function AdminCategories() {
   const { token } = useAuth();
 
   const [categories, setCategories] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
   
   // Form states
   const [isEditing, setIsEditing] = useState(false);
@@ -88,10 +89,27 @@ export default function AdminCategories() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
+        setSelectedIds(prev => prev.filter(item => item !== id));
         fetchCategories();
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(lang === 'ar' ? 'هل أنت متأكد من حذف التصنيفات المحددة؟ سيؤدي ذلك لحذف المنتجات المرتبطة بها.' : 'Are you sure you want to delete selected categories? Linked products will lose their categories.')) return;
+    try {
+      await Promise.all(selectedIds.map(id =>
+        fetch(`${apiBase}/categories/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ));
+      setSelectedIds([]);
+      fetchCategories();
+    } catch (err) {
+      console.error('Bulk delete categories error:', err);
     }
   };
 
@@ -160,13 +178,53 @@ export default function AdminCategories() {
 
       {/* Categories List */}
       <div className="dashboard-card" style={{ overflowX: 'auto', padding: '20px' }}>
-        <h4 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '16px' }}>
-          {lang === 'ar' ? 'قائمة التصنيفات الحالية' : 'Current Categories List'}
-        </h4>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+          <h4 style={{ fontSize: '1.1rem', fontWeight: '800', margin: 0 }}>
+            {lang === 'ar' ? 'قائمة التصنيفات الحالية' : 'Current Categories List'}
+          </h4>
+          {selectedIds.length > 0 && (
+            <button
+              onClick={handleBulkDelete}
+              style={{
+                backgroundColor: '#ef4444',
+                color: 'white',
+                border: 'none',
+                padding: '6px 14px',
+                borderRadius: '6px',
+                fontWeight: '700',
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'opacity 0.2s'
+              }}
+              onMouseEnter={(e) => e.target.style.opacity = '0.9'}
+              onMouseLeave={(e) => e.target.style.opacity = '1'}
+            >
+              <Trash2 size={14} />
+              <span>{lang === 'ar' ? `حذف المحدد (${selectedIds.length})` : `Delete Selected (${selectedIds.length})`}</span>
+            </button>
+          )}
+        </div>
 
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'start' }}>
           <thead>
             <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-light)', fontSize: '0.85rem' }}>
+              <th style={{ padding: '10px', width: '40px', textAlign: 'start' }}>
+                <input 
+                  type="checkbox"
+                  checked={categories.length > 0 && selectedIds.length === categories.length}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedIds(categories.map(c => c.id));
+                    } else {
+                      setSelectedIds([]);
+                    }
+                  }}
+                  style={{ cursor: 'pointer' }}
+                />
+              </th>
               <th style={{ padding: '10px', textAlign: 'start' }}>أيقونة</th>
               <th style={{ padding: '10px', textAlign: 'start' }}>التصنيف</th>
               <th style={{ padding: '10px', textAlign: 'start' }}>التصنيف الأب</th>
@@ -181,6 +239,20 @@ export default function AdminCategories() {
               
               return (
                 <tr key={c.id} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '0.9rem' }}>
+                  <td style={{ padding: '10px' }}>
+                    <input 
+                      type="checkbox"
+                      checked={selectedIds.includes(c.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedIds(prev => [...prev, c.id]);
+                        } else {
+                          setSelectedIds(prev => prev.filter(id => id !== c.id));
+                        }
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    />
+                  </td>
                   <td style={{ padding: '10px' }}>
                     <img src={imageUrl} alt="" style={{ width: '30px', height: '30px', objectFit: 'contain', backgroundColor: 'white', borderRadius: '4px', border: '1px solid var(--border-color)' }} />
                   </td>

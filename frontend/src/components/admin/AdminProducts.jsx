@@ -10,6 +10,7 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [merchants, setMerchants] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
   
   // Form states
   const [isEditing, setIsEditing] = useState(false);
@@ -169,10 +170,27 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
+        setSelectedIds(prev => prev.filter(item => item !== id));
         fetchProducts();
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(lang === 'ar' ? 'هل أنت متأكد من حذف المنتجات المحددة؟' : 'Are you sure you want to delete selected products?')) return;
+    try {
+      await Promise.all(selectedIds.map(id =>
+        fetch(`${apiBase}/products/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ));
+      setSelectedIds([]);
+      fetchProducts();
+    } catch (err) {
+      console.error('Bulk delete products error:', err);
     }
   };
 
@@ -193,6 +211,10 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     setColorsInput('');
     setSizesList([{ name: '', price: '', type: 'absolute' }]);
   };
+
+  const displayedProducts = filterOutOfStock
+    ? products.filter(p => Number(p.stock) <= 0)
+    : products;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -426,11 +448,53 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
 
       {/* Products Table */}
       <div className="dashboard-card" style={{ overflowX: 'auto', padding: '20px' }}>
-        <h4 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '16px' }}>قائمة المنتجات الحالية</h4>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+          <h4 style={{ fontSize: '1.1rem', fontWeight: '800', margin: 0 }}>
+            {lang === 'ar' ? 'قائمة المنتجات الحالية' : 'Current Products List'}
+          </h4>
+          {selectedIds.length > 0 && (
+            <button
+              onClick={handleBulkDelete}
+              style={{
+                backgroundColor: '#ef4444',
+                color: 'white',
+                border: 'none',
+                padding: '6px 14px',
+                borderRadius: '6px',
+                fontWeight: '700',
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'opacity 0.2s'
+              }}
+              onMouseEnter={(e) => e.target.style.opacity = '0.9'}
+              onMouseLeave={(e) => e.target.style.opacity = '1'}
+            >
+              <Trash2 size={14} />
+              <span>{lang === 'ar' ? `حذف المحدد (${selectedIds.length})` : `Delete Selected (${selectedIds.length})`}</span>
+            </button>
+          )}
+        </div>
 
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'start' }}>
           <thead>
             <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-light)', fontSize: '0.85rem' }}>
+              <th style={{ padding: '10px', width: '40px', textAlign: 'start' }}>
+                <input 
+                  type="checkbox"
+                  checked={displayedProducts.length > 0 && selectedIds.length === displayedProducts.length}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedIds(displayedProducts.map(p => p.id));
+                    } else {
+                      setSelectedIds([]);
+                    }
+                  }}
+                  style={{ cursor: 'pointer' }}
+                />
+              </th>
               <th style={{ padding: '10px', textAlign: 'start' }}>الصورة</th>
               <th style={{ padding: '10px', textAlign: 'start' }}>الاسم</th>
               <th style={{ padding: '10px', textAlign: 'start' }}>التصنيف</th>
@@ -444,13 +508,27 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
             </tr>
           </thead>
           <tbody>
-            {(filterOutOfStock ? products.filter(p => p.stock === 0) : products).map((p) => {
+            {displayedProducts.map((p) => {
               const imageUrl = p.image_url 
                 ? (p.image_url.startsWith('http') || p.image_url.startsWith('data:') ? p.image_url : `${apiHost}${p.image_url}`)
                 : 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=50&q=80';
               
               return (
                 <tr key={p.id} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '0.9rem' }}>
+                  <td style={{ padding: '10px' }}>
+                    <input 
+                      type="checkbox"
+                      checked={selectedIds.includes(p.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedIds(prev => [...prev, p.id]);
+                        } else {
+                          setSelectedIds(prev => prev.filter(item => item !== p.id));
+                        }
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    />
+                  </td>
                   <td style={{ padding: '10px' }}>
                     <img src={imageUrl} alt="" style={{ width: '40px', height: '40px', objectFit: 'contain', backgroundColor: 'white', borderRadius: '4px', border: '1px solid var(--border-color)' }} />
                   </td>

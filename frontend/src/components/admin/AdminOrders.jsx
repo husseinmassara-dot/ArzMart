@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
-import { Printer, Eye, CheckCircle2 } from 'lucide-react';
+import { Printer, Eye, CheckCircle2, Trash2 } from 'lucide-react';
 
 export default function AdminOrders() {
   const { lang, formatPrice, apiBase, settings, apiHost } = useApp();
   const { token, user } = useAuth();
 
   const [orders, setOrders] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
   const [activeSubTab, setActiveSubTab] = useState('active'); // 'active', 'delivered', 'cancelled'
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [hidePricesInPrint, setHidePricesInPrint] = useState(false);
@@ -72,6 +73,7 @@ export default function AdminOrders() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
+        setSelectedIds(prev => prev.filter(item => item !== id));
         fetchOrders();
         setSelectedOrder(null);
       } else {
@@ -80,6 +82,50 @@ export default function AdminOrders() {
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleBulkDeleteOrders = async () => {
+    const isArchived = activeSubTab === 'archive';
+    const confirmMsg = isArchived 
+      ? (lang === 'ar' ? `هل أنت متأكد من حذف ${selectedIds.length} طلبيات نهائياً؟` : `Are you sure you want to permanently delete ${selectedIds.length} orders?`)
+      : (lang === 'ar' ? `هل أنت متأكد من حذف ${selectedIds.length} طلبيات ونقلها إلى الأرشيف؟` : `Are you sure you want to delete ${selectedIds.length} orders and move them to the archive?`);
+    
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      await Promise.all(selectedIds.map(id =>
+        fetch(`${apiBase}/orders/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ));
+      setSelectedIds([]);
+      fetchOrders();
+      setSelectedOrder(null);
+    } catch (err) {
+      console.error('Bulk delete orders error:', err);
+    }
+  };
+
+  const handleBulkUpdateStatus = async (newStatus) => {
+    if (!window.confirm(lang === 'ar' ? `هل أنت متأكد من تغيير حالة الطلبيات المحددة إلى ${newStatus === 'delivered' ? 'مسلمة' : newStatus === 'cancelled' ? 'ملغاة' : 'نشطة'}؟` : `Are you sure you want to change status of selected orders to ${newStatus}?`)) return;
+    try {
+      await Promise.all(selectedIds.map(id =>
+        fetch(`${apiBase}/orders/${id}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ status: newStatus })
+        })
+      ));
+      setSelectedIds([]);
+      fetchOrders();
+      setSelectedOrder(null);
+    } catch (err) {
+      console.error('Bulk update orders status error:', err);
     }
   };
 
@@ -169,7 +215,92 @@ export default function AdminOrders() {
         
         {/* Left Side: Orders List */}
         <div className="no-print dashboard-card" style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '0px' }}>
-          <h4 style={{ fontSize: '1rem', fontWeight: '800', marginBottom: '8px', padding: '0 4px' }}>قائمة الطلبيات</h4>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', padding: '0 4px', flexWrap: 'wrap', gap: '8px' }}>
+            <h4 style={{ fontSize: '1rem', fontWeight: '800', margin: 0 }}>قائمة الطلبيات</h4>
+            {filteredOrders.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <input
+                  type="checkbox"
+                  id="select-all-orders"
+                  checked={filteredOrders.length > 0 && selectedIds.length === filteredOrders.length}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedIds(filteredOrders.map(o => o.id));
+                    } else {
+                      setSelectedIds([]);
+                    }
+                  }}
+                  style={{ cursor: 'pointer' }}
+                />
+                <label htmlFor="select-all-orders" style={{ fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold' }}>
+                  {lang === 'ar' ? 'تحديد الكل' : 'Select All'}
+                </label>
+              </div>
+            )}
+          </div>
+
+          {selectedIds.length > 0 && (
+            <div style={{
+              display: 'flex',
+              gap: '8px',
+              padding: '8px',
+              backgroundColor: 'var(--bg-secondary)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '6px',
+              marginBottom: '10px',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              width: '100%'
+            }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>
+                {lang === 'ar' ? `المحدد (${selectedIds.length}):` : `Selected (${selectedIds.length}):`}
+              </span>
+              
+              <select
+                className="input-field"
+                style={{ width: 'auto', padding: '4px 8px', fontSize: '0.75rem', margin: 0, height: 'auto' }}
+                defaultValue=""
+                onChange={(e) => {
+                  if (e.target.value) {
+                    handleBulkUpdateStatus(e.target.value);
+                    e.target.value = "";
+                  }
+                }}
+              >
+                <option value="">{lang === 'ar' ? '-- تغيير الحالة إلى --' : '-- Change Status To --'}</option>
+                <option value="pending">{lang === 'ar' ? 'قيد الانتظار' : 'Pending'}</option>
+                <option value="processing">{lang === 'ar' ? 'قيد التحضير' : 'Processing'}</option>
+                <option value="shipped">{lang === 'ar' ? 'تم الشحن' : 'Shipped'}</option>
+                <option value="delivered">{lang === 'ar' ? 'تم التسليم' : 'Delivered'}</option>
+                {user?.role === 'admin' && (
+                  <option value="cancelled">{lang === 'ar' ? 'ملغاة' : 'Cancelled'}</option>
+                )}
+              </select>
+
+              {user?.role === 'admin' && (
+                <button
+                  onClick={handleBulkDeleteOrders}
+                  style={{
+                    backgroundColor: '#ef4444',
+                    color: 'white',
+                    border: 'none',
+                    padding: '4px 10px',
+                    borderRadius: '4px',
+                    fontSize: '0.75rem',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <Trash2 size={12} />
+                  <span>{lang === 'ar' ? 'حذف' : 'Delete'}</span>
+                </button>
+              )}
+            </div>
+          )}
+
           {filteredOrders.length === 0 ? (
             <div style={{ color: 'var(--text-light)', fontSize: '0.85rem', textAlign: 'center', padding: '20px' }}>
               لا يوجد طلبيات في هذا القسم حالياً.
@@ -191,13 +322,28 @@ export default function AdminOrders() {
                     transition: 'background-color 0.2s'
                   }}
                 >
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                      <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>{o.user_name}</strong>
-                      <span style={{ fontSize: '0.72rem', color: 'var(--text-light)', fontFamily: 'monospace' }}>({o.tracking_number})</span>
-                    </div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-light)' }}>
-                      {new Date(o.created_at).toLocaleDateString([], { day: 'numeric', month: 'short' })}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(o.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedIds(prev => [...prev, o.id]);
+                        } else {
+                          setSelectedIds(prev => prev.filter(item => item !== o.id));
+                        }
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>{o.user_name}</strong>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-light)', fontFamily: 'monospace' }}>({o.tracking_number})</span>
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-light)' }}>
+                        {new Date(o.created_at).toLocaleDateString([], { day: 'numeric', month: 'short' })}
+                      </div>
                     </div>
                   </div>
 
