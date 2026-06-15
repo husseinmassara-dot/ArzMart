@@ -27,6 +27,13 @@ exports.createCategory = async (req, res) => {
   const pid = parent_id && parent_id !== 'null' ? parseInt(parent_id) : null;
 
   try {
+    if (pid) {
+      const parentExists = await db.getAsync('SELECT id FROM categories WHERE id = ?', [pid]);
+      if (!parentExists) {
+        return res.status(400).json({ error_ar: 'التصنيف الأب المحدد غير موجود', error_en: 'The selected parent category does not exist' });
+      }
+    }
+
     const result = await db.runAsync(
       'INSERT INTO categories (name_ar, name_en, parent_id, image_url) VALUES (?, ?, ?, ?)',
       [name_ar, name_en, pid, imageUrl]
@@ -65,6 +72,26 @@ exports.updateCategory = async (req, res) => {
       return res.status(400).json({ error_ar: 'لا يمكن تعيين التصنيف كأب لنفسه', error_en: 'Category cannot be its own parent' });
     }
 
+    // Prevent circular dependencies (cycles of any depth)
+    if (pid) {
+      const parentExists = await db.getAsync('SELECT id FROM categories WHERE id = ?', [pid]);
+      if (!parentExists) {
+        return res.status(400).json({ error_ar: 'التصنيف الأب المحدد غير موجود', error_en: 'The selected parent category does not exist' });
+      }
+
+      let currentParentId = pid;
+      while (currentParentId) {
+        if (currentParentId === parseInt(id)) {
+          return res.status(400).json({
+            error_ar: 'لا يمكن تعيين هذا التصنيف كأب لأنه سيسبب حلقة دائرية مغلقة',
+            error_en: 'Cannot set this parent category as it would create a circular dependency'
+          });
+        }
+        const parent = await db.getAsync('SELECT parent_id FROM categories WHERE id = ?', [currentParentId]);
+        currentParentId = parent ? parent.parent_id : null;
+      }
+    }
+
     let imageUrl = category.image_url;
     if (req.file) {
       imageUrl = fileToBase64(req.file) || category.image_url;
@@ -101,10 +128,11 @@ exports.deleteCategory = async (req, res) => {
       return res.status(404).json({ error_ar: 'التصنيف غير موجود', error_en: 'Category not found' });
     }
 
-    // Delete category
-    await db.runAsync('DELETE FROM categories WHERE id = ?', [id]);
-    // Set parent_id to null for sub-categories or delete them (we use ON DELETE CASCADE in definition, but double safeguard)
+    // Set parent_id to null for sub-categories first to prevent ON DELETE CASCADE from deleting them
     await db.runAsync('UPDATE categories SET parent_id = NULL WHERE parent_id = ?', [id]);
+
+    // Now delete the category safely
+    await db.runAsync('DELETE FROM categories WHERE id = ?', [id]);
 
     res.json({ message_ar: 'تم حذف التصنيف بنجاح', message_en: 'Category deleted successfully' });
   } catch (err) {

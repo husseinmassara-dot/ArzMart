@@ -18,6 +18,9 @@ export default function AdminCategories() {
   const [parentId, setParentId] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
 
+  const [formError, setFormError] = useState('');
+  const [formSuccess, setFormSuccess] = useState('');
+
   const fetchCategories = async () => {
     try {
       const res = await fetch(`${apiBase}/categories`);
@@ -41,6 +44,8 @@ export default function AdminCategories() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!nameAr || !nameEn) return;
+    setFormError('');
+    setFormSuccess('');
 
     const formData = new FormData();
     formData.append('name_ar', nameAr);
@@ -64,11 +69,17 @@ export default function AdminCategories() {
       });
 
       if (res.ok) {
+        setFormSuccess(isEditing ? 'تم تعديل التصنيف بنجاح ✓' : 'تم إضافة التصنيف بنجاح ✓');
         resetForm();
         fetchCategories();
+        setTimeout(() => setFormSuccess(''), 3000);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        setFormError(errData.error_ar || errData.error || `فشل الحفظ (${res.status})`);
       }
     } catch (err) {
       console.error('Submit category error:', err);
+      setFormError('خطأ في الاتصال بالخادم');
     }
   };
 
@@ -146,13 +157,38 @@ export default function AdminCategories() {
             <label className="input-label">التصنيف الرئيسي (Parent Category - إن وجد)</label>
             <select className="input-field" value={parentId} onChange={(e) => setParentId(e.target.value)}>
               <option value="">-- تصنيف رئيسي (Top Level) --</option>
-              {categories
-                .filter(c => c.id !== editingId) // Don't allow selecting self
-                .map(c => (
-                  <option key={c.id} value={c.id}>
-                    {lang === 'ar' ? c.name_ar : c.name_en}
-                  </option>
-                ))}
+              {(() => {
+                const parents = categories.filter(c => !c.parent_id && c.id !== editingId);
+                const children = categories.filter(c => c.parent_id && c.id !== editingId);
+                
+                const list = [];
+                parents.forEach(p => {
+                  list.push({ ...p, depth: 0 });
+                  const subcats = children.filter(c => c.parent_id === p.id);
+                  subcats.forEach(s => {
+                    list.push({ ...s, depth: 1 });
+                    const subsub = children.filter(c => c.parent_id === s.id);
+                    subsub.forEach(ss => {
+                      list.push({ ...ss, depth: 2 });
+                    });
+                  });
+                });
+                
+                categories.forEach(c => {
+                  if (c.id !== editingId && !list.some(item => item.id === c.id)) {
+                    list.push({ ...c, depth: 0 });
+                  }
+                });
+                
+                return list.map(c => {
+                  const indent = '　'.repeat(c.depth) + (c.depth > 0 ? '↳ ' : '');
+                  return (
+                    <option key={c.id} value={c.id}>
+                      {indent}{lang === 'ar' ? c.name_ar : c.name_en}
+                    </option>
+                  );
+                });
+              })()}
             </select>
           </div>
           <div>
@@ -163,7 +199,7 @@ export default function AdminCategories() {
             <input type="file" accept="image/*" onChange={handleFileChange} className="input-field" style={{ padding: '6px' }} />
           </div>
 
-          <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '10px', marginTop: '10px' }}>
+          <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
             <button type="submit" className="input-field" style={{ width: 'auto', padding: '10px 24px', backgroundColor: 'var(--accent-blue)', color: 'white', border: 'none', fontWeight: '700', cursor: 'pointer' }}>
               {isEditing ? (lang === 'ar' ? 'حفظ التعديلات' : 'Save Changes') : (lang === 'ar' ? 'إضافة التصنيف' : 'Add Category')}
             </button>
@@ -171,6 +207,16 @@ export default function AdminCategories() {
               <button type="button" onClick={resetForm} className="input-field" style={{ width: 'auto', padding: '10px 24px', backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: 'none', fontWeight: '600', cursor: 'pointer' }}>
                 {lang === 'ar' ? 'إلغاء' : 'Cancel'}
               </button>
+            )}
+            {formError && (
+              <span style={{ color: '#ef4444', fontWeight: '600', fontSize: '0.9rem', padding: '8px 12px', backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: '6px', border: '1px solid rgba(239,68,68,0.3)' }}>
+                ⚠️ {formError}
+              </span>
+            )}
+            {formSuccess && (
+              <span style={{ color: '#10b981', fontWeight: '600', fontSize: '0.9rem', padding: '8px 12px', backgroundColor: 'rgba(16,185,129,0.1)', borderRadius: '6px', border: '1px solid rgba(16,185,129,0.3)' }}>
+                {formSuccess}
+              </span>
             )}
           </div>
         </form>
