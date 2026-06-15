@@ -3,13 +3,14 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { Trash2, Edit3, Image } from 'lucide-react';
 
-export default function AdminProducts() {
+export default function AdminProducts({ filterOutOfStock = false, onClearFilter = null }) {
   const { lang, formatPrice, apiBase, apiHost } = useApp();
   const { token } = useAuth();
 
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [merchants, setMerchants] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
   
   // Form states
   const [isEditing, setIsEditing] = useState(false);
@@ -24,9 +25,10 @@ export default function AdminProducts() {
   const [categoryId, setCategoryId] = useState('');
   const [merchantId, setMerchantId] = useState('');
   const [stock, setStock] = useState('10');
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
   const [colorsInput, setColorsInput] = useState('');
-  const [sizesInput, setSizesInput] = useState('');
+  const [sizesList, setSizesList] = useState([{ name: '', price: '', type: 'absolute' }]);
 
   const fetchProducts = async () => {
     try {
@@ -73,7 +75,9 @@ export default function AdminProducts() {
   }, []);
 
   const handleFileChange = (e) => {
-    setSelectedFile(e.target.files[0]);
+    if (e.target.files) {
+      setSelectedFiles(prev => [...prev, ...Array.from(e.target.files)]);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -91,11 +95,18 @@ export default function AdminProducts() {
     formData.append('category_id', categoryId || 'null');
     formData.append('merchant_id', merchantId || 'null');
     formData.append('stock', stock);
-    if (selectedFile) {
-      formData.append('product_image', selectedFile);
-    }
+    selectedFiles.forEach((file) => {
+      formData.append('product_images', file);
+    });
+    formData.append('existing_images', JSON.stringify(existingImages));
     const colorsArray = colorsInput ? colorsInput.split(',').map(c => c.trim()).filter(Boolean) : [];
-    const sizesArray = sizesInput ? sizesInput.split(',').map(s => s.trim()).filter(Boolean) : [];
+    const sizesArray = sizesList.map(opt => {
+      if (!opt.name) return null;
+      if (!opt.price) return opt.name;
+      if (opt.type === 'relative') return `${opt.name} (+${opt.price})`;
+      if (opt.type === 'negative') return `${opt.name} (-${opt.price})`;
+      return `${opt.name} ($${opt.price})`;
+    }).filter(Boolean);
     formData.append('colors', JSON.stringify(colorsArray));
     formData.append('sizes', JSON.stringify(sizesArray));
 
@@ -134,9 +145,26 @@ export default function AdminProducts() {
     setCategoryId(product.category_id || '');
     setMerchantId(product.merchant_id || '');
     setStock(product.stock);
-    setSelectedFile(null);
+    setExistingImages(product.images || (product.image_url ? [product.image_url] : []));
+    setSelectedFiles([]);
     setColorsInput((product.colors || []).join(', '));
-    setSizesInput((product.sizes || []).join(', '));
+    let parsedSizes = [];
+    if (product.sizes && Array.isArray(product.sizes)) {
+      parsedSizes = product.sizes.map(s => {
+        const priceRegex = /\(\s*([+-]?\s*\$?\s*[0-9.]+)\s*\$?_?\)/;
+        const match = s.match(priceRegex);
+        if (match) {
+          const name = s.replace(/\s*\(\s*[+-]?\s*\$?\s*[0-9.]+\s*\$?_?\)/g, '').trim();
+          const priceVal = match[1].replace(/[+\-$]/g, '').trim();
+          let type = 'absolute';
+          if (s.includes('+')) type = 'relative';
+          else if (s.includes('-')) type = 'negative';
+          return { name, price: priceVal, type };
+        }
+        return { name: s, price: '', type: 'absolute' };
+      });
+    }
+    setSizesList(parsedSizes.length > 0 ? parsedSizes : [{ name: '', price: '', type: 'absolute' }]);
   };
 
   const handleDelete = async (id) => {
@@ -147,10 +175,27 @@ export default function AdminProducts() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
+        setSelectedIds(prev => prev.filter(item => item !== id));
         fetchProducts();
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(lang === 'ar' ? 'هل أنت متأكد من حذف المنتجات المحددة؟' : 'Are you sure you want to delete selected products?')) return;
+    try {
+      await Promise.all(selectedIds.map(id =>
+        fetch(`${apiBase}/products/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ));
+      setSelectedIds([]);
+      fetchProducts();
+    } catch (err) {
+      console.error('Bulk delete products error:', err);
     }
   };
 
@@ -167,10 +212,15 @@ export default function AdminProducts() {
     setCategoryId('');
     setMerchantId('');
     setStock('10');
-    setSelectedFile(null);
+    setSelectedFiles([]);
+    setExistingImages([]);
     setColorsInput('');
-    setSizesInput('');
+    setSizesList([{ name: '', price: '', type: 'absolute' }]);
   };
+
+  const displayedProducts = filterOutOfStock
+    ? products.filter(p => Number(p.stock) <= 0)
+    : products;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -242,13 +292,223 @@ export default function AdminProducts() {
             <label className="input-label">{lang === 'ar' ? 'الألوان المتاحة (مفصولة بفاصلة)' : 'Available Colors (comma-separated)'}</label>
             <input type="text" className="input-field" placeholder={lang === 'ar' ? 'مثال: أحمر, أزرق, أسود' : 'e.g. Red, Blue, Black'} value={colorsInput} onChange={(e) => setColorsInput(e.target.value)} />
           </div>
-          <div>
-            <label className="input-label">{lang === 'ar' ? 'القياسات المتاحة (مفصولة بفاصلة)' : 'Available Sizes (comma-separated)'}</label>
-            <input type="text" className="input-field" placeholder={lang === 'ar' ? 'مثال: S, M, L, XL' : 'e.g. S, M, L, XL, 39, 40'} value={sizesInput} onChange={(e) => setSizesInput(e.target.value)} />
+          <div style={{ gridColumn: '1 / -1', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '16px', backgroundColor: 'var(--bg-secondary)', marginTop: '8px' }}>
+            <span className="input-label" style={{ display: 'block', fontWeight: '700', fontSize: '0.95rem', marginBottom: '12px', color: 'var(--text-primary)' }}>
+              {lang === 'ar' ? 'خيارات المنتج وتحديد الأسعار يدوياً (مثل الأحجام أو السعات)' : 'Product Options & Price Details (e.g. Sizes or Storage)'}
+            </span>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {sizesList.map((item, index) => (
+                <div key={index} style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  {/* Option Name */}
+                  <div style={{ flex: '1', minWidth: '150px' }}>
+                    <input 
+                      type="text" 
+                      placeholder={lang === 'ar' ? 'اسم الخيار (مثال: 512GB أو 5L)' : 'Option Name (e.g. 512GB or 5L)'} 
+                      className="input-field" 
+                      style={{ margin: 0 }}
+                      value={item.name} 
+                      onChange={(e) => {
+                        const newList = [...sizesList];
+                        newList[index].name = e.target.value;
+                        setSizesList(newList);
+                      }} 
+                    />
+                  </div>
+
+                  {/* Price Type */}
+                  <div style={{ width: '160px' }}>
+                    <select 
+                      className="input-field" 
+                      style={{ margin: 0, padding: '8px' }}
+                      value={item.type} 
+                      onChange={(e) => {
+                        const newList = [...sizesList];
+                        newList[index].type = e.target.value;
+                        setSizesList(newList);
+                      }}
+                    >
+                      <option value="absolute">{lang === 'ar' ? 'سعر يدوي مباشر ($)' : 'Absolute Price ($)'}</option>
+                      <option value="relative">{lang === 'ar' ? 'زيادة نسبية (+)' : 'Price Increase (+)'}</option>
+                      <option value="negative">{lang === 'ar' ? 'خصم نسبي (-)' : 'Price Decrease (-)'}</option>
+                    </select>
+                  </div>
+
+                  {/* Price Value */}
+                  <div style={{ width: '120px' }}>
+                    <input 
+                      type="number" 
+                      step="0.01" 
+                      placeholder={lang === 'ar' ? 'السعر/الفارق' : 'Price/Offset'} 
+                      className="input-field" 
+                      style={{ margin: 0 }}
+                      value={item.price} 
+                      onChange={(e) => {
+                        const newList = [...sizesList];
+                        newList[index].price = e.target.value;
+                        setSizesList(newList);
+                      }} 
+                    />
+                  </div>
+
+                  {/* Delete Button */}
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      const newList = sizesList.filter((_, i) => i !== index);
+                      setSizesList(newList.length > 0 ? newList : [{ name: '', price: '', type: 'absolute' }]);
+                    }}
+                    style={{
+                      border: 'none',
+                      backgroundColor: '#fee2e2',
+                      color: '#ef4444',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      fontWeight: '600',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {lang === 'ar' ? 'حذف' : 'Delete'}
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Add Option Button */}
+            <button 
+              type="button" 
+              onClick={() => setSizesList([...sizesList, { name: '', price: '', type: 'absolute' }])}
+              style={{
+                marginTop: '12px',
+                padding: '6px 16px',
+                borderRadius: '6px',
+                backgroundColor: 'var(--accent-blue)',
+                color: 'white',
+                border: 'none',
+                fontWeight: '600',
+                cursor: 'pointer',
+                fontSize: '0.85rem'
+              }}
+            >
+              {lang === 'ar' ? '+ إضافة خيار جديد' : '+ Add New Option'}
+            </button>
           </div>
-          <div style={{ gridColumn: 'span 1' }}>
-            <label className="input-label">صورة المنتج (Product Image)</label>
-            <input type="file" accept="image/*" onChange={handleFileChange} className="input-field" style={{ padding: '6px' }} />
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label className="input-label" style={{ fontWeight: '700', fontSize: '0.95rem' }}>
+              {lang === 'ar' ? 'صور المنتج (Product Images) - يمكنك اختيار أكثر من صورة' : 'Product Images - You can select multiple images'}
+            </label>
+            <input 
+              type="file" 
+              accept="image/*" 
+              multiple 
+              onChange={handleFileChange} 
+              className="input-field" 
+              style={{ padding: '8px' }} 
+            />
+            
+            {/* Image Previews Container */}
+            {(existingImages.length > 0 || selectedFiles.length > 0) && (
+              <div style={{ 
+                display: 'flex', 
+                gap: '12px', 
+                flexWrap: 'wrap', 
+                marginTop: '12px',
+                padding: '12px',
+                border: '1px dashed var(--border-color)',
+                borderRadius: '8px',
+                backgroundColor: 'var(--bg-secondary)'
+              }}>
+                {/* Existing Images */}
+                {existingImages.map((imgUrl, index) => {
+                  const fullUrl = imgUrl.startsWith('http') || imgUrl.startsWith('data:') 
+                    ? imgUrl 
+                    : `${apiHost}${imgUrl}`;
+                  return (
+                    <div key={`existing-${index}`} style={{ position: 'relative', width: '80px', height: '80px' }}>
+                      <img 
+                        src={fullUrl} 
+                        alt="" 
+                        style={{ width: '100%', height: '100%', objectFit: 'contain', backgroundColor: 'white', borderRadius: '6px', border: '1px solid var(--border-color)' }} 
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setExistingImages(prev => prev.filter((_, i) => i !== index))}
+                        style={{
+                          position: 'absolute',
+                          top: '-6px',
+                          right: '-6px',
+                          backgroundColor: '#ef4444',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '18px',
+                          height: '18px',
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  );
+                })}
+
+                {/* Newly Selected Files */}
+                {selectedFiles.map((file, index) => {
+                  const objectUrl = URL.createObjectURL(file);
+                  return (
+                    <div key={`new-${index}`} style={{ position: 'relative', width: '80px', height: '80px' }}>
+                      <img 
+                        src={objectUrl} 
+                        alt="" 
+                        style={{ width: '100%', height: '100%', objectFit: 'contain', backgroundColor: 'white', borderRadius: '6px', border: '1px solid var(--border-color)', opacity: 0.8 }} 
+                      />
+                      <span style={{
+                        position: 'absolute',
+                        bottom: '2px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        backgroundColor: 'rgba(0,0,0,0.6)',
+                        color: 'white',
+                        fontSize: '9px',
+                        padding: '1px 4px',
+                        borderRadius: '4px',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {lang === 'ar' ? 'جديد' : 'New'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== index))}
+                        style={{
+                          position: 'absolute',
+                          top: '-6px',
+                          right: '-6px',
+                          backgroundColor: '#ef4444',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '18px',
+                          height: '18px',
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '10px', marginTop: '10px' }}>
@@ -264,17 +524,102 @@ export default function AdminProducts() {
         </form>
       </div>
 
+      {filterOutOfStock && (
+        <div className="animate-scale" style={{
+          backgroundColor: 'rgba(217,119,6,0.1)',
+          border: '1px solid #d97706',
+          padding: '12px 20px',
+          borderRadius: '12px',
+          color: '#d97706',
+          fontWeight: '700',
+          fontSize: '0.95rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>⚠️</span>
+            <span>{lang === 'ar' ? 'عرض السلع المنتهية من المخزون فقط' : 'Showing out of stock items only'}</span>
+          </div>
+          {onClearFilter && (
+            <button
+              onClick={onClearFilter}
+              style={{
+                backgroundColor: '#d97706',
+                color: 'white',
+                border: 'none',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                fontSize: '0.8rem',
+                transition: 'opacity 0.2s'
+              }}
+              onMouseEnter={(e) => e.target.style.opacity = '0.9'}
+              onMouseLeave={(e) => e.target.style.opacity = '1'}
+            >
+              {lang === 'ar' ? 'عرض جميع المنتجات' : 'Show All Products'}
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Products Table */}
       <div className="dashboard-card" style={{ overflowX: 'auto', padding: '20px' }}>
-        <h4 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '16px' }}>قائمة المنتجات الحالية</h4>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+          <h4 style={{ fontSize: '1.1rem', fontWeight: '800', margin: 0 }}>
+            {lang === 'ar' ? 'قائمة المنتجات الحالية' : 'Current Products List'}
+          </h4>
+          {selectedIds.length > 0 && (
+            <button
+              onClick={handleBulkDelete}
+              style={{
+                backgroundColor: '#ef4444',
+                color: 'white',
+                border: 'none',
+                padding: '6px 14px',
+                borderRadius: '6px',
+                fontWeight: '700',
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'opacity 0.2s'
+              }}
+              onMouseEnter={(e) => e.target.style.opacity = '0.9'}
+              onMouseLeave={(e) => e.target.style.opacity = '1'}
+            >
+              <Trash2 size={14} />
+              <span>{lang === 'ar' ? `حذف المحدد (${selectedIds.length})` : `Delete Selected (${selectedIds.length})`}</span>
+            </button>
+          )}
+        </div>
 
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'start' }}>
           <thead>
             <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-light)', fontSize: '0.85rem' }}>
+              <th style={{ padding: '10px', width: '40px', textAlign: 'start' }}>
+                <input 
+                  type="checkbox"
+                  checked={displayedProducts.length > 0 && selectedIds.length === displayedProducts.length}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedIds(displayedProducts.map(p => p.id));
+                    } else {
+                      setSelectedIds([]);
+                    }
+                  }}
+                  style={{ cursor: 'pointer' }}
+                />
+              </th>
               <th style={{ padding: '10px', textAlign: 'start' }}>الصورة</th>
               <th style={{ padding: '10px', textAlign: 'start' }}>الاسم</th>
               <th style={{ padding: '10px', textAlign: 'start' }}>التصنيف</th>
               <th style={{ padding: '10px', textAlign: 'start' }}>المورد</th>
+              <th style={{ padding: '10px', textAlign: 'start' }}>الألوان</th>
+              <th style={{ padding: '10px', textAlign: 'start' }}>القياسات</th>
               <th style={{ padding: '10px', textAlign: 'start' }}>سعر البيع</th>
               <th style={{ padding: '10px', textAlign: 'start' }}>سعر التكلفة</th>
               <th style={{ padding: '10px', textAlign: 'start' }}>المخزون</th>
@@ -282,13 +627,27 @@ export default function AdminProducts() {
             </tr>
           </thead>
           <tbody>
-            {products.map((p) => {
+            {displayedProducts.map((p) => {
               const imageUrl = p.image_url 
                 ? (p.image_url.startsWith('http') || p.image_url.startsWith('data:') ? p.image_url : `${apiHost}${p.image_url}`)
                 : 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=50&q=80';
               
               return (
                 <tr key={p.id} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '0.9rem' }}>
+                  <td style={{ padding: '10px' }}>
+                    <input 
+                      type="checkbox"
+                      checked={selectedIds.includes(p.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedIds(prev => [...prev, p.id]);
+                        } else {
+                          setSelectedIds(prev => prev.filter(item => item !== p.id));
+                        }
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    />
+                  </td>
                   <td style={{ padding: '10px' }}>
                     <img src={imageUrl} alt="" style={{ width: '40px', height: '40px', objectFit: 'contain', backgroundColor: 'white', borderRadius: '4px', border: '1px solid var(--border-color)' }} />
                   </td>
@@ -300,6 +659,12 @@ export default function AdminProducts() {
                   </td>
                   <td style={{ padding: '10px', color: 'var(--text-light)' }}>
                     {p.merchant_name || '-'}
+                  </td>
+                  <td style={{ padding: '10px', color: 'var(--text-light)', fontSize: '0.8rem' }}>
+                    {p.colors && p.colors.length > 0 ? p.colors.join(', ') : '-'}
+                  </td>
+                  <td style={{ padding: '10px', color: 'var(--text-light)', fontSize: '0.8rem' }}>
+                    {p.sizes && p.sizes.length > 0 ? p.sizes.join(', ') : '-'}
                   </td>
                   <td style={{ padding: '10px', fontWeight: '700', color: 'var(--accent-blue)' }}>
                     {formatPrice(p.price_usd)}

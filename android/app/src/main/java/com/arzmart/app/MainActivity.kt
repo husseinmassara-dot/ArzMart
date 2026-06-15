@@ -16,7 +16,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val IS_PRODUCTION = true // اجعلها true عند رفع التطبيق للإنتاج ومشاركة الرابط
-        private const val PRODUCTION_URL = "https://arz-mart.vercel.app" // ضع رابط الاستضافة الجديد هنا
+        private const val PRODUCTION_URL = "https://arzmart.com" // ضع رابط الاستضافة الجديد هنا
     }
 
     private lateinit var executor: Executor

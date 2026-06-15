@@ -10,6 +10,7 @@ export default function AdminCoupons() {
   const [coupons, setCoupons] = useState([]);
   const [code, setCode] = useState('');
   const [discountPercent, setDiscountPercent] = useState('');
+  const [selectedIds, setSelectedIds] = useState([]);
 
   const fetchCoupons = async () => {
     try {
@@ -67,10 +68,27 @@ export default function AdminCoupons() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
+        setSelectedIds(prev => prev.filter(item => item !== id));
         fetchCoupons();
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(lang === 'ar' ? 'هل أنت متأكد من حذف الكوبونات المحددة؟' : 'Are you sure you want to delete selected coupons?')) return;
+    try {
+      await Promise.all(selectedIds.map(id =>
+        fetch(`${apiBase}/coupons/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ));
+      setSelectedIds([]);
+      fetchCoupons();
+    } catch (err) {
+      console.error('Bulk delete coupons error:', err);
     }
   };
 
@@ -129,11 +147,51 @@ export default function AdminCoupons() {
 
       {/* Coupons List */}
       <div className="dashboard-card" style={{ padding: '20px' }}>
-        <h4 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '16px' }}>الكوبونات النشطة حالياً</h4>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+          <h4 style={{ fontSize: '1.1rem', fontWeight: '800', margin: 0 }}>الكوبونات النشطة حالياً</h4>
+          {selectedIds.length > 0 && (
+            <button
+              onClick={handleBulkDelete}
+              style={{
+                backgroundColor: '#ef4444',
+                color: 'white',
+                border: 'none',
+                padding: '6px 14px',
+                borderRadius: '6px',
+                fontWeight: '700',
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'opacity 0.2s'
+              }}
+              onMouseEnter={(e) => e.target.style.opacity = '0.9'}
+              onMouseLeave={(e) => e.target.style.opacity = '1'}
+            >
+              <Trash2 size={14} />
+              <span>{lang === 'ar' ? `حذف المحدد (${selectedIds.length})` : `Delete Selected (${selectedIds.length})`}</span>
+            </button>
+          )}
+        </div>
 
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'start' }}>
           <thead>
             <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-light)', fontSize: '0.85rem' }}>
+              <th style={{ padding: '10px', width: '40px', textAlign: 'start' }}>
+                <input 
+                  type="checkbox"
+                  checked={coupons.length > 0 && selectedIds.length === coupons.length}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedIds(coupons.map(c => c.id));
+                    } else {
+                      setSelectedIds([]);
+                    }
+                  }}
+                  style={{ cursor: 'pointer' }}
+                />
+              </th>
               <th style={{ padding: '10px', textAlign: 'start' }}>الرمز</th>
               <th style={{ padding: '10px', textAlign: 'center' }}>الخصم %</th>
               <th style={{ padding: '10px', textAlign: 'center' }}>العمليات</th>
@@ -142,6 +200,20 @@ export default function AdminCoupons() {
           <tbody>
             {coupons.map((c) => (
               <tr key={c.id} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '0.9rem' }}>
+                <td style={{ padding: '10px' }}>
+                  <input 
+                    type="checkbox"
+                    checked={selectedIds.includes(c.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedIds(prev => [...prev, c.id]);
+                      } else {
+                        setSelectedIds(prev => prev.filter(item => item !== c.id));
+                      }
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  />
+                </td>
                 <td style={{ padding: '10px', fontWeight: '700', color: 'var(--accent-blue)' }}>
                   {c.code}
                 </td>
@@ -157,7 +229,7 @@ export default function AdminCoupons() {
             ))}
             {coupons.length === 0 && (
               <tr>
-                <td colSpan="3" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-light)', fontSize: '0.85rem' }}>
+                <td colSpan="4" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-light)', fontSize: '0.85rem' }}>
                   لا يوجد أي كوبونات خصم مسجلة حالياً.
                 </td>
               </tr>

@@ -124,3 +124,17 @@ exports.updateBanners = async (req, res) => {
     res.status(500).json({ error_ar: 'خطأ أثناء تحديث البانرات الإعلانية', error_en: 'Error updating banners' });
   }
 };
+
+exports.trackHit = async (req, res) => {
+  const { visitor_id, url } = req.body;
+  if (!visitor_id) {
+    return res.status(400).json({ error: 'visitor_id is required' });
+  }
+  try {
+    await db.runAsync('INSERT INTO page_views (visitor_id, url) VALUES (?, ?)', [visitor_id, url || '']);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error tracking page hit:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+};

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { useCart } from '../context/CartContext';
+import { useCart, getOptionPrice } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { X, CheckCircle } from 'lucide-react';
 
 export default function Checkout({ onClose }) {
-  const { lang, formatPrice, settings, t, token, apiBase } = useApp();
+  const { lang, formatPrice, settings, t, apiBase } = useApp();
+  const { token } = useAuth();
   const { cartItems, subtotal, deliveryFee, total, clearCart } = useCart();
 
   const [phone, setPhone] = useState('');
@@ -34,7 +36,7 @@ export default function Checkout({ onClose }) {
     if (!couponCode.trim()) return;
 
     try {
-      const code = couponCode.toUpperCase().trim();
+      const code = couponCode.toUpperCase().replace(/\s+/g, '');
       
       if (code === 'WELCOME10') {
         if (!token) {
@@ -401,7 +403,7 @@ export default function Checkout({ onClose }) {
                       {item.quantity}x {lang === 'ar' ? item.product.name_ar : item.product.name_en}
                     </span>
                     <span style={{ fontWeight: '600' }}>
-                      {formatPrice(item.product.price_usd * item.quantity)}
+                      {formatPrice(getOptionPrice(item.selectedSize, item.product.price_usd) * item.quantity)}
                     </span>
                   </div>
                   {(item.selectedColor || item.selectedSize) && (

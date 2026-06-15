@@ -1,14 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { useCart } from '../context/CartContext';
-import { Star, ShoppingCart, X } from 'lucide-react';
+import { useCart, getOptionPrice } from '../context/CartContext';
+import { Star, ShoppingCart, X, Images } from 'lucide-react';
+
+function getOptionName(optionString) {
+  if (!optionString) return '';
+  return optionString.replace(/\s*\(\s*[+-]?\s*\$?\s*[0-9.]+\s*\$?_?\)/g, '').trim();
+}
 
 export default function ProductDetails({ product, onClose, onRefresh }) {
   const { lang, formatPrice, t, apiBase, apiHost } = useApp();
   const { addToCart } = useCart();
   const [qty, setQty] = useState(1);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [userRating, setUserRating] = useState(5);
   const [ratingSubmitted, setRatingSubmitted] = useState(false);
+  const [fullProduct, setFullProduct] = useState(product); // Will be replaced with fresh fetch
+  const [loadingImages, setLoadingImages] = useState(false);
   const [selectedColor, setSelectedColor] = useState(() => {
     return (product && product.colors && product.colors.length > 0) ? product.colors[0] : null;
   });
@@ -16,22 +24,62 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
     return (product && product.sizes && product.sizes.length > 0) ? product.sizes[0] : null;
   });
 
+  // Fetch full product data (with all images) when modal opens
+  useEffect(() => {
+    if (!product?.id) return;
+    setActiveImageIndex(0);
+    setLoadingImages(true);
+    fetch(`${apiBase}/products/${product.id}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data) setFullProduct(data);
+      })
+      .catch(() => {/* fallback to passed product */})
+      .finally(() => setLoadingImages(false));
+  }, [product?.id, apiBase]);
+
   if (!product) return null;
 
-  const name = lang === 'ar' ? product.name_ar : product.name_en;
-  const desc = lang === 'ar' ? product.description_ar : product.description_en;
-  const categoryName = lang === 'ar' ? product.category_name_ar : product.category_name_en;
-  
-  const rating = product.rating || 0;
-  const hasDiscount = product.old_price_usd && product.old_price_usd > product.price_usd;
+  // Use fullProduct (fetched fresh) or fallback to passed product
+  const displayProduct = fullProduct || product;
 
-  const imageUrl = product.image_url 
-    ? (product.image_url.startsWith('http') || product.image_url.startsWith('data:') ? product.image_url : `${apiHost}${product.image_url}`)
-    : 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80';
+  const name = lang === 'ar' ? displayProduct.name_ar : displayProduct.name_en;
+  const desc = lang === 'ar' ? displayProduct.description_ar : displayProduct.description_en;
+  const categoryName = lang === 'ar' ? displayProduct.category_name_ar : displayProduct.category_name_en;
+  
+  const rating = displayProduct.rating || 0;
+  
+  const currentPrice = getOptionPrice(selectedSize, displayProduct.price_usd);
+  let adjustedOldPrice = displayProduct.old_price_usd;
+  if (displayProduct.old_price_usd && selectedSize) {
+    const relativeMatch = selectedSize.match(/\(\s*([+-])\s*\$?\s*([0-9.]+)\s*\$?_?\)/);
+    if (relativeMatch) {
+      const sign = relativeMatch[1];
+      const offset = parseFloat(relativeMatch[2]);
+      adjustedOldPrice = sign === '-' ? (displayProduct.old_price_usd - offset) : (displayProduct.old_price_usd + offset);
+    } else {
+      const priceDifference = currentPrice - displayProduct.price_usd;
+      adjustedOldPrice = displayProduct.old_price_usd + priceDifference;
+    }
+  }
+  const hasDiscount = adjustedOldPrice && adjustedOldPrice > currentPrice;
+
+  // Use displayProduct.images (fresh from API) for gallery — falls back gracefully
+  const imagesList = displayProduct.images && displayProduct.images.length > 0
+    ? displayProduct.images
+    : (displayProduct.image_url ? [displayProduct.image_url] : []);
+
+  const getFullImageUrl = (img) => {
+    if (!img) return 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80';
+    return img.startsWith('http') || img.startsWith('data:') ? img : `${apiHost}${img}`;
+  };
+
+  const safeIndex = Math.min(activeImageIndex, Math.max(0, imagesList.length - 1));
+  const activeImageUrl = getFullImageUrl(imagesList[safeIndex]);
 
   const handleRatingSubmit = async () => {
     try {
-      const res = await fetch(`${apiBase}/products/${product.id}/rate`, {
+      const res = await fetch(`${apiBase}/products/${displayProduct.id}/rate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rating: userRating })
@@ -44,6 +92,7 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
       console.error('Submit rating error:', err);
     }
   };
+
 
   return (
     <div className="no-print" style={{
@@ -107,26 +156,130 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
           gap: '24px',
           marginTop: '16px'
         }}>
-          {/* Product Image */}
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: '1px solid var(--border-color)',
-            minHeight: '260px'
-          }}>
-            <img 
-              src={imageUrl} 
-              alt={name} 
-              style={{
-                maxWidth: '100%',
-                maxHeight: '300px',
-                objectFit: 'contain'
-              }}
-            />
+          {/* Product Image Gallery */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px solid var(--border-color)',
+              minHeight: '260px',
+              position: 'relative'
+            }}>
+              {loadingImages ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', color: 'var(--text-light)' }}>
+                  <div style={{ width: '32px', height: '32px', border: '3px solid var(--border-color)', borderTopColor: 'var(--accent-blue)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                  <span style={{ fontSize: '0.8rem' }}>{lang === 'ar' ? 'جارٍ تحميل الصور...' : 'Loading images...'}</span>
+                </div>
+              ) : (
+                <img 
+                  src={activeImageUrl} 
+                  alt={name} 
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '260px',
+                    objectFit: 'contain',
+                    transition: 'opacity 0.2s'
+                  }}
+                />
+              )}
+              {/* Prev & Next Arrows */}
+              {imagesList.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setActiveImageIndex(prev => (prev === 0 ? imagesList.length - 1 : prev - 1))}
+                    style={{
+                      position: 'absolute',
+                      left: '8px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      backgroundColor: 'rgba(0,0,0,0.5)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '32px',
+                      height: '32px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      zIndex: 2
+                    }}
+                  >
+                    ❮
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveImageIndex(prev => (prev === imagesList.length - 1 ? 0 : prev + 1))}
+                    style={{
+                      position: 'absolute',
+                      right: '8px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      backgroundColor: 'rgba(0,0,0,0.5)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '32px',
+                      height: '32px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      zIndex: 2
+                    }}
+                  >
+                    ❯
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Thumbnails Row */}
+            {imagesList.length > 1 && (
+              <div style={{
+                display: 'flex',
+                gap: '8px',
+                justifyContent: 'center',
+                overflowX: 'auto',
+                padding: '4px 0'
+              }}>
+                {imagesList.map((img, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setActiveImageIndex(idx)}
+                    style={{
+                      border: activeImageIndex === idx ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)',
+                      borderRadius: '6px',
+                      padding: '2px',
+                      backgroundColor: 'white',
+                      width: '50px',
+                      height: '50px',
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <img 
+                      src={getFullImageUrl(img)} 
+                      alt="" 
+                      style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Details Content */}
@@ -157,7 +310,7 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
                 {rating.toFixed(1)}
               </span>
               <span style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>
-                ({product.rating_count || 0} {t('rating_stars')})
+                ({displayProduct.rating_count || 0} {t('rating_stars')})
               </span>
             </div>
 
@@ -165,11 +318,11 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', margin: '8px 0' }}>
               {hasDiscount && (
                 <span className="old-price" style={{ fontSize: '1rem' }}>
-                  {formatPrice(product.old_price_usd)}
+                  {formatPrice(adjustedOldPrice)}
                 </span>
               )}
               <span className="new-price" style={{ fontSize: '1.6rem' }}>
-                {formatPrice(product.price_usd)}
+                {formatPrice(currentPrice)}
               </span>
             </div>
 
@@ -189,13 +342,13 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
             </div>
 
             {/* Color Selector */}
-            {product.colors && product.colors.length > 0 && (
+            {displayProduct.colors && displayProduct.colors.length > 0 && (
               <div style={{ margin: '12px 0' }}>
                 <span className="input-label" style={{ display: 'block', marginBottom: '6px' }}>
                   {lang === 'ar' ? 'اللون المتاح:' : 'Available Color:'}
                 </span>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {product.colors.map(color => (
+                  {displayProduct.colors.map(color => (
                     <button
                       key={color}
                       type="button"
@@ -220,33 +373,69 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
             )}
 
             {/* Size Selector */}
-            {product.sizes && product.sizes.length > 0 && (
+            {displayProduct.sizes && displayProduct.sizes.length > 0 && (
               <div style={{ margin: '12px 0' }}>
                 <span className="input-label" style={{ display: 'block', marginBottom: '6px' }}>
-                  {lang === 'ar' ? 'القياس المتاح:' : 'Available Size:'}
+                  {lang === 'ar' ? 'الخيار المتاح:' : 'Available Option:'}
                 </span>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {product.sizes.map(size => (
-                    <button
-                      key={size}
-                      type="button"
-                      onClick={() => setSelectedSize(size)}
-                      style={{
-                        padding: '6px 16px',
-                        borderRadius: '20px',
-                        border: selectedSize === size ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)',
-                        backgroundColor: selectedSize === size ? 'var(--accent-blue)' : 'var(--bg-secondary)',
-                        color: selectedSize === size ? 'white' : 'var(--text-primary)',
-                        fontSize: '0.85rem',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      {size}
-                    </button>
-                  ))}
-                </div>
+                {displayProduct.sizes.length >= 4 ? (
+                  <select
+                    value={selectedSize}
+                    onChange={(e) => setSelectedSize(e.target.value)}
+                    className="input-field"
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      backgroundColor: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--border-color)',
+                      fontSize: '0.9rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      outline: 'none'
+                    }}
+                  >
+                    {displayProduct.sizes.map(size => {
+                      const optPrice = getOptionPrice(size, displayProduct.price_usd);
+                      const priceDiff = optPrice - displayProduct.price_usd;
+                      let priceLabel = '';
+                      if (priceDiff > 0) {
+                        priceLabel = ` (+${formatPrice(priceDiff)})`;
+                      } else if (priceDiff < 0) {
+                        priceLabel = ` (-${formatPrice(Math.abs(priceDiff))})`;
+                      }
+                      return (
+                        <option key={size} value={size}>
+                          {getOptionName(size)}{priceLabel}
+                        </option>
+                      );
+                    })}
+                  </select>
+                ) : (
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {displayProduct.sizes.map(size => (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => setSelectedSize(size)}
+                        style={{
+                          padding: '6px 16px',
+                          borderRadius: '20px',
+                          border: selectedSize === size ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)',
+                          backgroundColor: selectedSize === size ? 'var(--accent-blue)' : 'var(--bg-secondary)',
+                          color: selectedSize === size ? 'white' : 'var(--text-primary)',
+                          fontSize: '0.85rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        {getOptionName(size)}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -264,10 +453,10 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
                   </button>
                   <span style={{ fontWeight: '700', minWidth: '24px', textAlign: 'center' }}>{qty}</span>
                   <button 
-                    onClick={() => setQty(q => Math.min(product.stock, q + 1))}
-                    disabled={qty >= product.stock}
+                    onClick={() => setQty(q => Math.min(displayProduct.stock, q + 1))}
+                    disabled={qty >= displayProduct.stock}
                     className="input-field"
-                    style={{ width: '36px', height: '36px', padding: 0, cursor: qty >= product.stock ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
+                    style={{ width: '36px', height: '36px', padding: 0, cursor: qty >= displayProduct.stock ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
                   >
                     +
                   </button>
@@ -278,17 +467,17 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
                 <span className="input-label" style={{ margin: 0, opacity: 0 }}>Action</span>
                 <button
                   onClick={() => {
-                    addToCart(product, qty, selectedColor, selectedSize);
+                    addToCart(displayProduct, qty, selectedColor, selectedSize);
                     onClose();
                   }}
-                  disabled={product.stock <= 0}
+                  disabled={displayProduct.stock <= 0}
                   className="input-field"
                   style={{
-                    backgroundColor: product.stock > 0 ? 'var(--accent-blue)' : 'var(--border-color)',
-                    color: product.stock > 0 ? 'white' : 'var(--text-light)',
+                    backgroundColor: displayProduct.stock > 0 ? 'var(--accent-blue)' : 'var(--border-color)',
+                    color: displayProduct.stock > 0 ? 'white' : 'var(--text-light)',
                     border: 'none',
                     fontWeight: '700',
-                    cursor: product.stock > 0 ? 'pointer' : 'not-allowed',
+                    cursor: displayProduct.stock > 0 ? 'pointer' : 'not-allowed',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',

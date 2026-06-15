@@ -4,7 +4,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useChat } from '../../context/ChatContext';
 import { 
   Package, Folder, ShoppingBag, Users, BarChart3, Settings, Tag, ShieldAlert,
-  DollarSign, TrendingUp, AlertTriangle, ArrowRight, MessageSquare, Send, Store
+  DollarSign, TrendingUp, AlertTriangle, ArrowRight, MessageSquare, Send, Store,
+  ExternalLink
 } from 'lucide-react';
 
 // Sub-components
@@ -22,7 +23,18 @@ export default function AdminDashboard({ setCurrentView }) {
   const { token, hasPermission } = useAuth();
   const { chatUsers, activeChatUserId, setActiveChatUserId, messages, sendMessage } = useChat();
 
-  const [activeTab, setActiveTab] = useState('products');
+  const [activeTab, setActiveTab] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('tab') || 'products';
+  });
+  const [openInNewTab, setOpenInNewTab] = useState(() => {
+    const saved = localStorage.getItem('admin_open_new_tab');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const [filterProductsOutOfStock, setFilterProductsOutOfStock] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('filter') === 'outofstock';
+  });
   const [stats, setStats] = useState({
     total_orders: 0,
     delivered_revenue_usd: 0,
@@ -51,6 +63,19 @@ export default function AdminDashboard({ setCurrentView }) {
     fetchStats();
   }, [activeTab]);
 
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab') || 'products';
+      setActiveTab(tab);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+
   const handleSendAdminMessage = (e) => {
     e.preventDefault();
     if (!chatInput.trim() || !activeChatUserId) return;
@@ -70,6 +95,24 @@ export default function AdminDashboard({ setCurrentView }) {
     { id: 'settings', name: t('settings'), icon: Settings, perm: 'settings' }
   ];
 
+  const handleTabClick = (e, tabId) => {
+    // Let browser handle middle click, ctrl+click, command+click
+    if (e.button === 1 || e.metaKey || e.ctrlKey) {
+      return;
+    }
+    if (openInNewTab) {
+      // Allow browser to open the link in a new tab/window
+      return;
+    }
+    e.preventDefault();
+    setActiveTab(tabId);
+    setActiveChatUserId(null);
+    setFilterProductsOutOfStock(false);
+    
+    // Update browser URL
+    window.history.pushState(null, '', `/?view=admin&tab=${tabId}`);
+  };
+
   return (
     <div style={{ display: 'flex', minHeight: 'calc(100vh - 70px)', direction: lang === 'ar' ? 'rtl' : 'ltr' }}>
       
@@ -87,8 +130,13 @@ export default function AdminDashboard({ setCurrentView }) {
           <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-primary)' }}>
             {t('admin_title')}
           </h3>
-          <button 
-            onClick={() => setCurrentView('store')}
+          <a 
+            href="/"
+            onClick={(e) => {
+              if (e.button === 1 || e.metaKey || e.ctrlKey) return;
+              e.preventDefault();
+              setCurrentView('store');
+            }}
             style={{
               marginTop: '10px',
               display: 'flex',
@@ -99,12 +147,73 @@ export default function AdminDashboard({ setCurrentView }) {
               color: 'var(--accent-blue)',
               cursor: 'pointer',
               fontWeight: '700',
-              fontSize: '0.85rem'
+              fontSize: '0.85rem',
+              textDecoration: 'none'
             }}
           >
             <span>{t('go_to_store')}</span>
             <ArrowRight size={14} style={{ transform: lang === 'ar' ? 'rotate(180deg)' : 'none' }} />
-          </button>
+          </a>
+
+          {/* Page Opening Behavior Switch */}
+          <div style={{
+            marginTop: '16px',
+            padding: '10px',
+            backgroundColor: 'var(--bg-tertiary)',
+            borderRadius: '8px',
+            border: '1px solid var(--border-color)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px'
+          }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--text-secondary)' }}>
+              {lang === 'ar' ? 'طريقة فتح الصفحات:' : 'Open Pages In:'}
+            </span>
+            <div style={{ display: 'flex', gap: '4px', backgroundColor: 'var(--bg-primary)', padding: '2px', borderRadius: '6px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpenInNewTab(true);
+                  localStorage.setItem('admin_open_new_tab', 'true');
+                }}
+                style={{
+                  flex: 1,
+                  padding: '5px 2px',
+                  fontSize: '0.7rem',
+                  fontWeight: '700',
+                  borderRadius: '4px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  backgroundColor: openInNewTab ? 'var(--accent-blue)' : 'transparent',
+                  color: openInNewTab ? 'white' : 'var(--text-secondary)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                {lang === 'ar' ? 'تبويب جديد' : 'New Tab'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpenInNewTab(false);
+                  localStorage.setItem('admin_open_new_tab', 'false');
+                }}
+                style={{
+                  flex: 1,
+                  padding: '5px 2px',
+                  fontSize: '0.7rem',
+                  fontWeight: '700',
+                  borderRadius: '4px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  backgroundColor: !openInNewTab ? 'var(--accent-blue)' : 'transparent',
+                  color: !openInNewTab ? 'white' : 'var(--text-secondary)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                {lang === 'ar' ? 'نفس الصفحة' : 'Same Page'}
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Menu Items */}
@@ -116,30 +225,66 @@ export default function AdminDashboard({ setCurrentView }) {
             const isActive = activeTab === item.id;
 
             return (
-              <button
+              <a
                 key={item.id}
-                onClick={() => {
-                  setActiveTab(item.id);
-                  setActiveChatUserId(null);
-                }}
+                href={`/?view=admin&tab=${item.id}`}
+                onClick={(e) => handleTabClick(e, item.id)}
+                target={openInNewTab ? "_blank" : undefined}
+                rel={openInNewTab ? "noopener noreferrer" : undefined}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '10px',
+                  justifyContent: 'space-between',
                   padding: '10px 14px',
                   borderRadius: '8px',
-                  border: 'none',
                   backgroundColor: isActive ? 'var(--accent-blue)' : 'transparent',
                   color: isActive ? 'white' : 'var(--text-primary)',
                   cursor: 'pointer',
-                  textAlign: 'start',
+                  textDecoration: 'none',
                   fontWeight: '600',
-                  fontSize: '0.9rem'
+                  fontSize: '0.9rem',
+                  transition: 'background-color 0.2s'
                 }}
               >
-                <Icon size={18} />
-                <span>{item.name}</span>
-              </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Icon size={18} />
+                  <span>{item.name}</span>
+                </div>
+                
+                {/* External link indicator */}
+                {!openInNewTab && (
+                  <span 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                    style={{ display: 'flex', alignItems: 'center' }}
+                  >
+                    <a
+                      href={`/?view=admin&tab=${item.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: isActive ? 'rgba(255,255,255,0.7)' : 'var(--text-light)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '2px',
+                        borderRadius: '4px',
+                        transition: 'color 0.25s, background-color 0.25s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = isActive ? 'white' : 'var(--accent-blue)';
+                        e.currentTarget.style.backgroundColor = isActive ? 'rgba(255,255,255,0.1)' : 'var(--bg-tertiary)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = isActive ? 'rgba(255,255,255,0.7)' : 'var(--text-light)';
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }}
+                    >
+                      <ExternalLink size={14} />
+                    </a>
+                  </span>
+                )}
+              </a>
             );
           })}
         </nav>
@@ -153,7 +298,33 @@ export default function AdminDashboard({ setCurrentView }) {
           <section className="no-print dashboard-grid animate-fade">
             
             {/* Earnings USD */}
-            <div className="dashboard-card" style={{ borderLeft: '4px solid #10b981' }}>
+            <div 
+              className="dashboard-card" 
+              style={{ 
+                borderLeft: '4px solid #10b981',
+                cursor: hasPermission('reports') ? 'pointer' : 'default',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+              }}
+              onClick={() => {
+                if (hasPermission('reports')) {
+                  if (openInNewTab) {
+                    window.open('/?view=admin&tab=reports', '_blank');
+                  } else {
+                    setActiveTab('reports');
+                  }
+                }
+              }}
+              onMouseEnter={(e) => {
+                if (hasPermission('reports')) {
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '600' }}>المبيعات (USD)</span>
@@ -168,7 +339,33 @@ export default function AdminDashboard({ setCurrentView }) {
             </div>
 
             {/* Pending Orders */}
-            <div className="dashboard-card" style={{ borderLeft: '4px solid var(--accent-blue)' }}>
+            <div 
+              className="dashboard-card" 
+              style={{ 
+                borderLeft: '4px solid var(--accent-blue)',
+                cursor: hasPermission('orders') ? 'pointer' : 'default',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+              }}
+              onClick={() => {
+                if (hasPermission('orders')) {
+                  if (openInNewTab) {
+                    window.open('/?view=admin&tab=orders', '_blank');
+                  } else {
+                    setActiveTab('orders');
+                  }
+                }
+              }}
+              onMouseEnter={(e) => {
+                if (hasPermission('orders')) {
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '600' }}>الطلبات الجديدة</span>
@@ -183,7 +380,34 @@ export default function AdminDashboard({ setCurrentView }) {
             </div>
 
             {/* Stock Warning */}
-            <div className="dashboard-card" style={{ borderLeft: '4px solid #d97706' }}>
+            <div 
+              className="dashboard-card" 
+              style={{ 
+                borderLeft: '4px solid #d97706',
+                cursor: hasPermission('products') ? 'pointer' : 'default',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+              }}
+              onClick={() => {
+                if (hasPermission('products')) {
+                  if (openInNewTab) {
+                    window.open('/?view=admin&tab=products&filter=outofstock', '_blank');
+                  } else {
+                    setFilterProductsOutOfStock(true);
+                    setActiveTab('products');
+                  }
+                }
+              }}
+              onMouseEnter={(e) => {
+                if (hasPermission('products')) {
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '600' }}>السلع المنتهية</span>
@@ -197,12 +421,95 @@ export default function AdminDashboard({ setCurrentView }) {
               </div>
             </div>
 
+            {/* Unique Visitors */}
+            {hasPermission('reports') && (
+              <div 
+                className="dashboard-card" 
+                style={{ 
+                  borderLeft: '4px solid #8b5cf6',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+                }}
+                onClick={() => {
+                  if (openInNewTab) {
+                    window.open('/?view=admin&tab=reports', '_blank');
+                  } else {
+                    setActiveTab('reports');
+                  }
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '600' }}>الزوار الفريدون (Unique Visitors)</span>
+                    <h3 style={{ fontSize: '1.5rem', fontWeight: '800', margin: '4px 0', color: '#8b5cf6' }}>
+                      {stats.unique_visitors || 0}
+                    </h3>
+                  </div>
+                  <div style={{ backgroundColor: 'rgba(139,92,246,0.1)', padding: '10px', borderRadius: '50%' }}>
+                    <Users size={22} color="#8b5cf6" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Page Views */}
+            {hasPermission('reports') && (
+              <div 
+                className="dashboard-card" 
+                style={{ 
+                  borderLeft: '4px solid var(--accent-red-gold)',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+                }}
+                onClick={() => {
+                  if (openInNewTab) {
+                    window.open('/?view=admin&tab=reports', '_blank');
+                  } else {
+                    setActiveTab('reports');
+                  }
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '600' }}>مشاهدات الصفحات (Page Views)</span>
+                    <h3 style={{ fontSize: '1.5rem', fontWeight: '800', margin: '4px 0', color: 'var(--accent-red-gold)' }}>
+                      {stats.total_views || 0}
+                    </h3>
+                  </div>
+                  <div style={{ backgroundColor: 'rgba(217,119,6,0.1)', padding: '10px', borderRadius: '50%' }}>
+                    <BarChart3 size={22} color="var(--accent-red-gold)" />
+                  </div>
+                </div>
+              </div>
+            )}
+
           </section>
         )}
 
         {/* Dynamic Panel Renderer */}
         <div style={{ minHeight: '400px' }}>
-          {activeTab === 'products' && hasPermission('products') && <AdminProducts />}
+          {activeTab === 'products' && hasPermission('products') && (
+            <AdminProducts 
+              filterOutOfStock={filterProductsOutOfStock} 
+              onClearFilter={() => setFilterProductsOutOfStock(false)} 
+            />
+          )}
           {activeTab === 'categories' && hasPermission('categories') && <AdminCategories />}
           {activeTab === 'orders' && hasPermission('orders') && <AdminOrders />}
           {activeTab === 'merchants' && hasPermission('merchants') && <AdminMerchants />}
@@ -216,8 +523,25 @@ export default function AdminDashboard({ setCurrentView }) {
             <div style={{ display: 'flex', gap: '20px', height: '620px', border: '1px solid var(--border-color)', borderRadius: '12px', overflow: 'hidden', backgroundColor: 'var(--bg-secondary)', animation: 'fadeIn 0.3s ease-out' }}>
               {/* Users list for chat selection */}
               <div style={{ width: '280px', borderInlineEnd: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: 'var(--bg-tertiary)' }}>
-                <div style={{ padding: '16px', borderBottom: '1px solid var(--border-color)', fontWeight: '800', fontSize: '0.95rem' }}>
-                  {lang === 'ar' ? 'محادثات العملاء' : 'Customer Chats'}
+                <div style={{ padding: '16px', borderBottom: '1px solid var(--border-color)', fontWeight: '800', fontSize: '0.95rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>{lang === 'ar' ? 'محادثات العملاء' : 'Customer Chats'}</span>
+                  <button
+                    type="button"
+                    onClick={() => window.open('/?view=admin&tab=chats', '_blank')}
+                    style={{
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      color: 'var(--accent-blue)',
+                      fontSize: '0.75rem',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    {lang === 'ar' ? 'فتح في صفحة منفصلة ↗️' : 'Open in separate tab ↗️'}
+                  </button>
                 </div>
                 <div style={{ flex: '1', overflowY: 'auto', padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {chatUsers.length === 0 ? (

@@ -31,8 +31,8 @@ router.delete('/categories/:id', authenticateToken, requirePermission('categorie
 // --- Product Routes ---
 router.get('/products', productController.getProducts);
 router.get('/products/:id', productController.getProductById);
-router.post('/products', authenticateToken, requirePermission('products'), upload.single('product_image'), productController.createProduct);
-router.put('/products/:id', authenticateToken, requirePermission('products'), upload.single('product_image'), productController.updateProduct);
+router.post('/products', authenticateToken, requirePermission('products'), upload.array('product_images', 10), productController.createProduct);
+router.put('/products/:id', authenticateToken, requirePermission('products'), upload.array('product_images', 10), productController.updateProduct);
 router.delete('/products/:id', authenticateToken, requirePermission('products'), productController.deleteProduct);
 router.post('/products/:id/rate', productController.rateProduct);
 
@@ -53,7 +53,7 @@ router.put('/orders/:id/status', authenticateToken, requirePermission('orders'),
 router.delete('/orders/:id', authenticateToken, requireAdmin, orderController.deleteOrder);
 
 // --- Coupon Routes ---
-router.get('/coupons', authenticateToken, requirePermission('coupons'), couponController.getCoupons);
+router.get('/coupons', authenticateToken, couponController.getCoupons);
 router.post('/coupons', authenticateToken, requirePermission('coupons'), couponController.createCoupon);
 router.delete('/coupons/:id', authenticateToken, requirePermission('coupons'), couponController.deleteCoupon);
 
@@ -61,6 +61,8 @@ router.delete('/coupons/:id', authenticateToken, requirePermission('coupons'), c
 router.get('/settings', settingsController.getSettings);
 router.put('/settings', authenticateToken, requirePermission('settings'), upload.single('logo'), settingsController.updateSettings);
 router.put('/settings/banners', authenticateToken, requirePermission('settings'), upload.any(), settingsController.updateBanners);
+router.post('/analytics/hit', settingsController.trackHit);
+router.get('/reports', authenticateToken, requirePermission('reports'), orderController.getReports);
 
 // --- Chat Routes ---
 router.post('/chat/send', authenticateToken, chatController.sendMessage);

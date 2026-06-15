@@ -36,7 +36,36 @@ exports.createOrder = async (req, res) => {
         });
       }
 
-      const itemCost = product.price_usd * item.quantity;
+      // Resolve size-specific price
+      let itemPrice = product.price_usd;
+      if (item.selectedSize && product.sizes) {
+        try {
+          const parsedSizes = JSON.parse(product.sizes || '[]');
+          const matchingSizeOption = parsedSizes.find(s => {
+            const cleanS = s.replace(/\s+/g, '').toUpperCase();
+            const cleanSelected = item.selectedSize.replace(/\s+/g, '').toUpperCase();
+            return cleanS.startsWith(cleanSelected) || cleanSelected.startsWith(cleanS);
+          });
+          if (matchingSizeOption) {
+            const priceRegex = /\(\s*[+-]?\s*\$?\s*([0-9.]+)\s*\$?_?\)/;
+            const match = matchingSizeOption.match(priceRegex);
+            if (match) {
+              const val = parseFloat(match[1]);
+              const isRelative = matchingSizeOption.includes('+') || matchingSizeOption.includes('-');
+              if (isRelative) {
+                const isNegative = matchingSizeOption.includes('-');
+                itemPrice = isNegative ? (product.price_usd - val) : (product.price_usd + val);
+              } else {
+                itemPrice = val;
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Error parsing size price offset on backend:', e);
+        }
+      }
+
+      const itemCost = itemPrice * item.quantity;
       const itemCostPrice = product.cost_price_usd * item.quantity;
 
       subtotalUsd += itemCost;
@@ -47,7 +76,7 @@ exports.createOrder = async (req, res) => {
         name_ar: product.name_ar,
         name_en: product.name_en,
         image_url: product.image_url,
-        price_usd: product.price_usd,
+        price_usd: itemPrice,
         cost_price_usd: product.cost_price_usd,
         quantity: item.quantity,
         merchant_name: product.merchant_name || '',
@@ -174,7 +203,7 @@ exports.getOrders = async (req, res) => {
 
 exports.getUserOrders = async (req, res) => {
   try {
-    const orders = await db.allAsync('SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC', [req.user.id]);
+    const orders = await db.allAsync("SELECT * FROM orders WHERE user_id = ? AND status != 'archived' ORDER BY id DESC", [req.user.id]);
     const formattedOrders = orders.map(o => ({
       ...o,
       items: JSON.parse(o.items)
@@ -206,14 +235,36 @@ exports.updateOrderStatus = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
-  if (!['pending', 'processing', 'shipped', 'delivered'].includes(status)) {
+  if (!['pending', 'processing', 'shipped', 'delivered', 'cancelled'].includes(status)) {
     return res.status(400).json({ error_ar: 'حالة الطلب غير صالحة', error_en: 'Invalid order status' });
+  }
+
+  // Cancelled status is restricted to general manager/admin only
+  if (status === 'cancelled' && req.user.role !== 'admin') {
+    return res.status(403).json({ 
+      error_ar: 'عذراً، إلغاء الطلبيات مسموح به للمدير العام فقط وليس للموظفين', 
+      error_en: 'Forbidden, only the general manager can cancel orders' 
+    });
   }
 
   try {
     const order = await db.getAsync('SELECT * FROM orders WHERE id = ?', [id]);
     if (!order) {
       return res.status(404).json({ error_ar: 'الطلبية غير موجودة', error_en: 'Order not found' });
+    }
+
+    // Restore stock if status changes to cancelled
+    if (status === 'cancelled' && order.status !== 'cancelled') {
+      try {
+        const items = JSON.parse(order.items || '[]');
+        for (const item of items) {
+          if (item.product_id && item.quantity) {
+            await db.runAsync('UPDATE products SET stock = stock + ? WHERE id = ?', [item.quantity, item.product_id]);
+          }
+        }
+      } catch (e) {
+        console.error('Error restoring stock for cancelled order:', e);
+      }
     }
 
     await db.runAsync('UPDATE orders SET status = ? WHERE id = ?', [status, id]);
@@ -226,28 +277,58 @@ exports.updateOrderStatus = async (req, res) => {
 
 exports.deleteOrder = async (req, res) => {
   const { id } = req.params;
+
+  // Restrict order deletion to general manager/admin only
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ 
+      error_ar: 'عذراً، أرشفة الطلبيات مسموح بها للمدير العام فقط وليس للموظفين', 
+      error_en: 'Forbidden, only the general manager can archive orders' 
+    });
+  }
+
   try {
     const order = await db.getAsync('SELECT * FROM orders WHERE id = ?', [id]);
     if (!order) {
       return res.status(404).json({ error_ar: 'الطلبية غير موجودة', error_en: 'Order not found' });
     }
-    await db.runAsync('DELETE FROM orders WHERE id = ?', [id]);
-    res.json({ message_ar: 'تم حذف الطلبية بنجاح', message_en: 'Order deleted successfully' });
+
+    // Restore stock if archiving from an active state
+    if (order.status !== 'cancelled' && order.status !== 'archived') {
+      try {
+        const items = JSON.parse(order.items || '[]');
+        for (const item of items) {
+          if (item.product_id && item.quantity) {
+            await db.runAsync('UPDATE products SET stock = stock + ? WHERE id = ?', [item.quantity, item.product_id]);
+          }
+        }
+      } catch (e) {
+        console.error('Error restoring stock for archived order:', e);
+      }
+    }
+
+    if (order.status === 'archived') {
+      await db.runAsync("DELETE FROM orders WHERE id = ?", [id]);
+      return res.json({ message_ar: 'تم حذف الطلبية نهائياً بنجاح', message_en: 'Order permanently deleted successfully' });
+    }
+
+    await db.runAsync("UPDATE orders SET status = 'archived' WHERE id = ?", [id]);
+    res.json({ message_ar: 'تم نقل الطلبية إلى الأرشيف بنجاح', message_en: 'Order archived successfully' });
   } catch (err) {
     res.status(500).json({ error_ar: 'خطأ في حذف الطلبية', error_en: 'Error deleting order' });
   }
 };
+
 
 exports.getReports = async (req, res) => {
   try {
     // Sales, cost of sales, and true profit summaries
     const stats = await db.getAsync(`
       SELECT 
-        COUNT(id) as total_orders,
+        COUNT(CASE WHEN status != 'archived' THEN 1 END) as total_orders,
         SUM(CASE WHEN status = 'delivered' THEN total_usd ELSE 0 END) as delivered_revenue_usd,
         SUM(CASE WHEN status = 'delivered' THEN total_lbp ELSE 0 END) as delivered_revenue_lbp,
         SUM(CASE WHEN status = 'delivered' THEN total_cost_usd ELSE 0 END) as delivered_cost_usd,
-        SUM(CASE WHEN status != 'delivered' THEN total_usd ELSE 0 END) as pending_revenue_usd,
+        SUM(CASE WHEN status != 'delivered' AND status != 'cancelled' AND status != 'archived' THEN total_usd ELSE 0 END) as pending_revenue_usd,
         COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_orders,
         COUNT(CASE WHEN status = 'delivered' THEN 1 END) as delivered_orders
       FROM orders
@@ -289,6 +370,23 @@ exports.getReports = async (req, res) => {
       FROM products
     `);
 
+    let totalViews = 0;
+    let uniqueVisitors = 0;
+    try {
+      const viewsStats = await db.getAsync(`
+        SELECT 
+          COUNT(id) as total_views,
+          COUNT(DISTINCT visitor_id) as unique_visitors
+        FROM page_views
+      `);
+      if (viewsStats) {
+        totalViews = viewsStats.total_views || 0;
+        uniqueVisitors = viewsStats.unique_visitors || 0;
+      }
+    } catch (e) {
+      console.error('Error fetching page views stats:', e);
+    }
+
     res.json({
       summary: {
         total_orders: stats.total_orders || 0,
@@ -298,7 +396,9 @@ exports.getReports = async (req, res) => {
         pending_orders: stats.pending_orders || 0,
         delivered_orders: stats.delivered_orders || 0,
         estimated_profit_usd: netProfitUsd, // Exact net profit in USD
-        estimated_profit_lbp: netProfitLbp  // Exact net profit in LBP
+        estimated_profit_lbp: netProfitLbp,  // Exact net profit in LBP
+        total_views: totalViews,
+        unique_visitors: uniqueVisitors
       },
       dailySales,
       monthlySales,

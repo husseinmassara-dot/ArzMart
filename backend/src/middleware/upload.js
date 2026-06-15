@@ -21,7 +21,7 @@ const storage = multer.diskStorage({
     let dest = path.join(__dirname, '../../uploads');
     if (file.fieldname === 'category_image') {
       dest = path.join(__dirname, '../../uploads/categories');
-    } else if (file.fieldname === 'product_image') {
+    } else if (file.fieldname === 'product_image' || file.fieldname === 'product_images') {
       dest = path.join(__dirname, '../../uploads/products');
     } else if (file.fieldname === 'banner_image' || file.fieldname.startsWith('banner_image_')) {
       dest = path.join(__dirname, '../../uploads/banners');

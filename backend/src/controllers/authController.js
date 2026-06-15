@@ -4,22 +4,59 @@ const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../middleware/auth');
 
 exports.register = async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, full_name, phone, email } = req.body;
 
-  if (!username || !password) {
-    return res.status(400).json({ error_ar: 'الرجاء إدخال اسم المستخدم وكلمة المرور', error_en: 'Please enter username and password' });
+  if (!username || !password || !full_name || !phone || !email) {
+    return res.status(400).json({ 
+      error_ar: 'الرجاء ملء جميع الحقول المطلوبة لإنشاء الحساب بأمان', 
+      error_en: 'Please fill out all required fields for secure account registration' 
+    });
+  }
+
+  const cleanUsername = username.trim();
+  const cleanPassword = password;
+  const cleanFullName = full_name.trim();
+  const cleanPhone = phone.trim();
+  const cleanEmail = email.trim();
+
+  if (cleanUsername.length < 3) {
+    return res.status(400).json({
+      error_ar: 'اسم المستخدم يجب أن يكون من ٣ حروف على الأقل',
+      error_en: 'Username must be at least 3 characters'
+    });
+  }
+
+  if (cleanPassword.length < 6) {
+    return res.status(400).json({
+      error_ar: 'كلمة المرور يجب أن تكون من ٦ خانات على الأقل لضمان الأمان',
+      error_en: 'Password must be at least 6 characters for security'
+    });
+  }
+
+  if (cleanPhone.length < 7) {
+    return res.status(400).json({
+      error_ar: 'الرجاء إدخال رقم هاتف صحيح (٧ أرقام على الأقل)',
+      error_en: 'Please enter a valid phone number (at least 7 digits)'
+    });
+  }
+
+  if (!cleanEmail.includes('@') || cleanEmail.length < 5) {
+    return res.status(400).json({
+      error_ar: 'الرجاء إدخال بريد إلكتروني صحيح',
+      error_en: 'Please enter a valid email address'
+    });
   }
 
   try {
-    const existingUser = await db.getAsync('SELECT * FROM users WHERE username = ?', [username.trim()]);
+    const existingUser = await db.getAsync('SELECT * FROM users WHERE username = ?', [cleanUsername]);
     if (existingUser) {
       return res.status(400).json({ error_ar: 'اسم المستخدم مسجل مسبقاً', error_en: 'Username is already taken' });
     }
 
-    const hashedPassword = bcrypt.hashSync(password, 10);
+    const hashedPassword = bcrypt.hashSync(cleanPassword, 10);
     const result = await db.runAsync(
-      "INSERT INTO users (username, password, role, permissions) VALUES (?, ?, 'user', '[]')",
-      [username.trim(), hashedPassword]
+      "INSERT INTO users (username, password, role, permissions, phone, email, full_name) VALUES (?, ?, 'user', '[]', ?, ?, ?)",
+      [cleanUsername, hashedPassword, cleanPhone, cleanEmail, cleanFullName]
     );
 
     // Return success + one-time 10% discount promo code
@@ -30,8 +67,11 @@ exports.register = async (req, res) => {
       discount_code: 'WELCOME10',
       user: {
         id: result.lastID,
-        username: username.trim(),
-        role: 'user'
+        username: cleanUsername,
+        role: 'user',
+        phone: cleanPhone,
+        email: cleanEmail,
+        full_name: cleanFullName
       }
     });
   } catch (err) {

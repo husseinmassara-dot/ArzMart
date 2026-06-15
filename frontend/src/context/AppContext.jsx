@@ -85,13 +85,17 @@ const translations = {
     currency: 'العملة',
     rate_product: 'تقييم هذا المنتج',
     submit: 'إرسال',
-    print_invoice: 'طباعة الفاتورة',
+    print_invoice: 'طباعة تفاصيل الطلب',
     print_order_no_price: 'طباعة بدون سعر',
     print_report: 'طباعة التقرير',
     congrats_title: 'تهانينا الحارة! 🎉',
     congrats_desc: 'لقد حصلت على كود خصم بقيمة ١٠٪ على طلبيتك الأولى بمناسبة انضمامك إلينا.',
     congrats_code: 'رمز الخصم هو: WELCOME10',
-    privacy_policy: 'سياسة الخصوصية'
+    privacy_policy: 'سياسة الخصوصية',
+    pwa_install_title: 'تثبيت تطبيق أرز مارت',
+    pwa_install_desc: 'تسوّق أسرع وتابع طلباتك بكل سهولة من شاشتك الرئيسية!',
+    pwa_install_btn: 'تثبيت التطبيق الآن',
+    pwa_install_ios_hint: 'اضغط على زر المشاركة 📥 ثم اختر "إضافة إلى الشاشة الرئيسية"'
   },
   en: {
     appName: 'Arz-Mart',
@@ -175,18 +179,22 @@ const translations = {
     currency: 'Currency',
     rate_product: 'Rate this product',
     submit: 'Submit',
-    print_invoice: 'Print Invoice',
+    print_invoice: 'Print Order Details',
     print_order_no_price: 'Print Without Price',
     print_report: 'Print Report',
     congrats_title: 'Congratulations! 🎉',
     congrats_desc: 'You received a 10% discount promo code for your first purchase as a welcome gift.',
     congrats_code: 'Discount Code: WELCOME10',
-    privacy_policy: 'Privacy Policy'
+    privacy_policy: 'Privacy Policy',
+    pwa_install_title: 'Install Arz-Mart Store',
+    pwa_install_desc: 'Shop faster and track your orders easily from your home screen!',
+    pwa_install_btn: 'Install App Now',
+    pwa_install_ios_hint: 'Tap the Share button 📥 then select "Add to Home Screen"'
   }
 };
 
 export const AppProvider = ({ children }) => {
-  const [lang, setLang] = useState(localStorage.getItem('lang') || 'ar');
+  const [lang, setLang] = useState(localStorage.getItem('lang') || 'en');
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [currency, setCurrency] = useState(localStorage.getItem('currency') || 'USD'); // 'USD' or 'LBP'
   const [settings, setSettings] = useState({
@@ -200,13 +208,9 @@ export const AppProvider = ({ children }) => {
     contact_email: 'info@arz-mart.com'
   });
 
-  const apiHost = import.meta.env.VITE_API_URL || (
-    (window.location.hostname === 'localhost' || 
-     window.location.hostname === '127.0.0.1' || 
-     window.location.hostname.startsWith('192.168.'))
-      ? `http://${window.location.hostname}:5000`
-      : 'https://arz-mart1.onrender.com'
-  );
+  const apiHost = import.meta.env.VITE_API_URL || (import.meta.env.DEV 
+    ? (window.AndroidApp ? 'http://192.168.1.104:5000' : 'http://localhost:5000')
+    : 'https://api.arzmart.com');
 
   const apiBase = `${apiHost}/api`;
 
