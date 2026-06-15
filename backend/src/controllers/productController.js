@@ -54,9 +54,26 @@ exports.getProducts = async (req, res) => {
       const rating = p.rating_count > 0 ? (p.rating_sum / p.rating_count) : 0;
       let parsedColors = [];
       let parsedSizes = [];
+      let parsedImages = [];
       try { parsedColors = JSON.parse(p.colors || '[]'); } catch (e) { parsedColors = []; }
       try { parsedSizes = JSON.parse(p.sizes || '[]'); } catch (e) { parsedSizes = []; }
-      return { ...p, rating, colors: parsedColors, sizes: parsedSizes };
+      try {
+        if (p.image_url && p.image_url.startsWith('[')) {
+          parsedImages = JSON.parse(p.image_url);
+        } else if (p.image_url) {
+          parsedImages = [p.image_url];
+        }
+      } catch (e) {
+        parsedImages = p.image_url ? [p.image_url] : [];
+      }
+      return { 
+        ...p, 
+        rating, 
+        colors: parsedColors, 
+        sizes: parsedSizes,
+        images: parsedImages,
+        image_url: parsedImages[0] || ''
+      };
     });
 
     if (min_rating) {
@@ -90,9 +107,26 @@ exports.getProductById = async (req, res) => {
     const rating = product.rating_count > 0 ? (product.rating_sum / product.rating_count) : 0;
     let parsedColors = [];
     let parsedSizes = [];
+    let parsedImages = [];
     try { parsedColors = JSON.parse(product.colors || '[]'); } catch (e) { parsedColors = []; }
     try { parsedSizes = JSON.parse(product.sizes || '[]'); } catch (e) { parsedSizes = []; }
-    res.json({ ...product, rating, colors: parsedColors, sizes: parsedSizes });
+    try {
+      if (product.image_url && product.image_url.startsWith('[')) {
+        parsedImages = JSON.parse(product.image_url);
+      } else if (product.image_url) {
+        parsedImages = [product.image_url];
+      }
+    } catch (e) {
+      parsedImages = product.image_url ? [product.image_url] : [];
+    }
+    res.json({ 
+      ...product, 
+      rating, 
+      colors: parsedColors, 
+      sizes: parsedSizes,
+      images: parsedImages,
+      image_url: parsedImages[0] || ''
+    });
   } catch (err) {
     console.error('Get product by ID error:', err);
     res.status(500).json({ error_ar: 'خطأ في جلب تفاصيل المنتج', error_en: 'Error fetching product details' });
@@ -101,7 +135,12 @@ exports.getProductById = async (req, res) => {
 
 exports.createProduct = async (req, res) => {
   const { name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, stock, colors, sizes } = req.body;
-  const imageUrl = req.file ? fileToBase64(req.file) : '';
+  
+  let imageUrls = [];
+  if (req.files && req.files.length > 0) {
+    imageUrls = req.files.map(file => fileToBase64(file)).filter(Boolean);
+  }
+  const imageUrl = JSON.stringify(imageUrls);
 
   if (!name_ar || !name_en || !price_usd) {
     return res.status(400).json({ error_ar: 'الرجاء إدخال الحقول المطلوبة (الاسم والسعر)', error_en: 'Please enter required fields (name and price)' });
@@ -135,7 +174,8 @@ exports.createProduct = async (req, res) => {
         old_price_usd: oldPrice,
         category_id: cid,
         merchant_id: mid,
-        image_url: imageUrl,
+        image_url: imageUrls[0] || '',
+        images: imageUrls,
         stock: productStock,
         colors: JSON.parse(colorsStr),
         sizes: JSON.parse(sizesStr)
@@ -149,7 +189,7 @@ exports.createProduct = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
   const { id } = req.params;
-  const { name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, stock, colors, sizes } = req.body;
+  const { name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, stock, colors, sizes, existing_images } = req.body;
 
   try {
     const product = await db.getAsync('SELECT * FROM products WHERE id = ?', [id]);
@@ -157,10 +197,36 @@ exports.updateProduct = async (req, res) => {
       return res.status(404).json({ error_ar: 'المنتج غير موجود', error_en: 'Product not found' });
     }
 
-    let imageUrl = product.image_url;
-    if (req.file) {
-      imageUrl = fileToBase64(req.file) || product.image_url;
+    let imageUrls = [];
+    const hasExistingField = req.body.hasOwnProperty('existing_images');
+    if (hasExistingField) {
+      try {
+        imageUrls = typeof existing_images === 'string'
+          ? JSON.parse(existing_images)
+          : (existing_images || []);
+      } catch (e) {
+        imageUrls = [];
+      }
     }
+
+    if (req.files && req.files.length > 0) {
+      const newUrls = req.files.map(file => fileToBase64(file)).filter(Boolean);
+      imageUrls = [...imageUrls, ...newUrls];
+    }
+
+    if (!hasExistingField && (!req.files || req.files.length === 0)) {
+      try {
+        if (product.image_url && product.image_url.startsWith('[')) {
+          imageUrls = JSON.parse(product.image_url);
+        } else if (product.image_url) {
+          imageUrls = [product.image_url];
+        }
+      } catch (e) {
+        imageUrls = product.image_url ? [product.image_url] : [];
+      }
+    }
+
+    const imageUrl = JSON.stringify(imageUrls);
 
     const cid = category_id && category_id !== 'null' ? parseInt(category_id) : null;
     const mid = merchant_id && merchant_id !== 'null' ? parseInt(merchant_id) : null;
@@ -190,7 +256,8 @@ exports.updateProduct = async (req, res) => {
         old_price_usd: oldPrice,
         category_id: cid,
         merchant_id: mid,
-        image_url: imageUrl,
+        image_url: imageUrls[0] || '',
+        images: imageUrls,
         stock: productStock,
         colors: JSON.parse(colorsStr),
         sizes: JSON.parse(sizesStr)

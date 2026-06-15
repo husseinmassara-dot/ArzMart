@@ -12,6 +12,7 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
   const { lang, formatPrice, t, apiBase, apiHost } = useApp();
   const { addToCart } = useCart();
   const [qty, setQty] = useState(1);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [userRating, setUserRating] = useState(5);
   const [ratingSubmitted, setRatingSubmitted] = useState(false);
   const [selectedColor, setSelectedColor] = useState(() => {
@@ -44,9 +45,16 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
   }
   const hasDiscount = adjustedOldPrice && adjustedOldPrice > currentPrice;
 
-  const imageUrl = product.image_url 
-    ? (product.image_url.startsWith('http') || product.image_url.startsWith('data:') ? product.image_url : `${apiHost}${product.image_url}`)
-    : 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80';
+  const imagesList = product.images && product.images.length > 0
+    ? product.images
+    : (product.image_url ? [product.image_url] : []);
+
+  const getFullImageUrl = (img) => {
+    if (!img) return 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80';
+    return img.startsWith('http') || img.startsWith('data:') ? img : `${apiHost}${img}`;
+  };
+
+  const activeImageUrl = getFullImageUrl(imagesList[activeImageIndex]);
 
   const handleRatingSubmit = async () => {
     try {
@@ -126,26 +134,124 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
           gap: '24px',
           marginTop: '16px'
         }}>
-          {/* Product Image */}
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: '1px solid var(--border-color)',
-            minHeight: '260px'
-          }}>
-            <img 
-              src={imageUrl} 
-              alt={name} 
-              style={{
-                maxWidth: '100%',
-                maxHeight: '300px',
-                objectFit: 'contain'
-              }}
-            />
+          {/* Product Image Gallery */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px solid var(--border-color)',
+              minHeight: '260px',
+              position: 'relative'
+            }}>
+              <img 
+                src={activeImageUrl} 
+                alt={name} 
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '260px',
+                  objectFit: 'contain',
+                  transition: 'opacity 0.2s'
+                }}
+              />
+              
+              {/* Prev & Next Arrows */}
+              {imagesList.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setActiveImageIndex(prev => (prev === 0 ? imagesList.length - 1 : prev - 1))}
+                    style={{
+                      position: 'absolute',
+                      left: '8px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      backgroundColor: 'rgba(0,0,0,0.5)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '32px',
+                      height: '32px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      zIndex: 2
+                    }}
+                  >
+                    ❮
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveImageIndex(prev => (prev === imagesList.length - 1 ? 0 : prev + 1))}
+                    style={{
+                      position: 'absolute',
+                      right: '8px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      backgroundColor: 'rgba(0,0,0,0.5)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '32px',
+                      height: '32px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      zIndex: 2
+                    }}
+                  >
+                    ❯
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Thumbnails Row */}
+            {imagesList.length > 1 && (
+              <div style={{
+                display: 'flex',
+                gap: '8px',
+                justifyContent: 'center',
+                overflowX: 'auto',
+                padding: '4px 0'
+              }}>
+                {imagesList.map((img, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setActiveImageIndex(idx)}
+                    style={{
+                      border: activeImageIndex === idx ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)',
+                      borderRadius: '6px',
+                      padding: '2px',
+                      backgroundColor: 'white',
+                      width: '50px',
+                      height: '50px',
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <img 
+                      src={getFullImageUrl(img)} 
+                      alt="" 
+                      style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Details Content */}

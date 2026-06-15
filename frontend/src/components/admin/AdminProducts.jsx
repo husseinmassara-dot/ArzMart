@@ -25,7 +25,8 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
   const [categoryId, setCategoryId] = useState('');
   const [merchantId, setMerchantId] = useState('');
   const [stock, setStock] = useState('10');
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
   const [colorsInput, setColorsInput] = useState('');
   const [sizesList, setSizesList] = useState([{ name: '', price: '', type: 'absolute' }]);
 
@@ -74,7 +75,9 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
   }, []);
 
   const handleFileChange = (e) => {
-    setSelectedFile(e.target.files[0]);
+    if (e.target.files) {
+      setSelectedFiles(prev => [...prev, ...Array.from(e.target.files)]);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -92,9 +95,10 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     formData.append('category_id', categoryId || 'null');
     formData.append('merchant_id', merchantId || 'null');
     formData.append('stock', stock);
-    if (selectedFile) {
-      formData.append('product_image', selectedFile);
-    }
+    selectedFiles.forEach((file) => {
+      formData.append('product_images', file);
+    });
+    formData.append('existing_images', JSON.stringify(existingImages));
     const colorsArray = colorsInput ? colorsInput.split(',').map(c => c.trim()).filter(Boolean) : [];
     const sizesArray = sizesList.map(opt => {
       if (!opt.name) return null;
@@ -141,7 +145,8 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     setCategoryId(product.category_id || '');
     setMerchantId(product.merchant_id || '');
     setStock(product.stock);
-    setSelectedFile(null);
+    setExistingImages(product.images || (product.image_url ? [product.image_url] : []));
+    setSelectedFiles([]);
     setColorsInput((product.colors || []).join(', '));
     let parsedSizes = [];
     if (product.sizes && Array.isArray(product.sizes)) {
@@ -207,7 +212,8 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     setCategoryId('');
     setMerchantId('');
     setStock('10');
-    setSelectedFile(null);
+    setSelectedFiles([]);
+    setExistingImages([]);
     setColorsInput('');
     setSizesList([{ name: '', price: '', type: 'absolute' }]);
   };
@@ -387,9 +393,122 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
               {lang === 'ar' ? '+ إضافة خيار جديد' : '+ Add New Option'}
             </button>
           </div>
-          <div style={{ gridColumn: 'span 1' }}>
-            <label className="input-label">صورة المنتج (Product Image)</label>
-            <input type="file" accept="image/*" onChange={handleFileChange} className="input-field" style={{ padding: '6px' }} />
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label className="input-label" style={{ fontWeight: '700', fontSize: '0.95rem' }}>
+              {lang === 'ar' ? 'صور المنتج (Product Images) - يمكنك اختيار أكثر من صورة' : 'Product Images - You can select multiple images'}
+            </label>
+            <input 
+              type="file" 
+              accept="image/*" 
+              multiple 
+              onChange={handleFileChange} 
+              className="input-field" 
+              style={{ padding: '8px' }} 
+            />
+            
+            {/* Image Previews Container */}
+            {(existingImages.length > 0 || selectedFiles.length > 0) && (
+              <div style={{ 
+                display: 'flex', 
+                gap: '12px', 
+                flexWrap: 'wrap', 
+                marginTop: '12px',
+                padding: '12px',
+                border: '1px dashed var(--border-color)',
+                borderRadius: '8px',
+                backgroundColor: 'var(--bg-secondary)'
+              }}>
+                {/* Existing Images */}
+                {existingImages.map((imgUrl, index) => {
+                  const fullUrl = imgUrl.startsWith('http') || imgUrl.startsWith('data:') 
+                    ? imgUrl 
+                    : `${apiHost}${imgUrl}`;
+                  return (
+                    <div key={`existing-${index}`} style={{ position: 'relative', width: '80px', height: '80px' }}>
+                      <img 
+                        src={fullUrl} 
+                        alt="" 
+                        style={{ width: '100%', height: '100%', objectFit: 'contain', backgroundColor: 'white', borderRadius: '6px', border: '1px solid var(--border-color)' }} 
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setExistingImages(prev => prev.filter((_, i) => i !== index))}
+                        style={{
+                          position: 'absolute',
+                          top: '-6px',
+                          right: '-6px',
+                          backgroundColor: '#ef4444',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '18px',
+                          height: '18px',
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  );
+                })}
+
+                {/* Newly Selected Files */}
+                {selectedFiles.map((file, index) => {
+                  const objectUrl = URL.createObjectURL(file);
+                  return (
+                    <div key={`new-${index}`} style={{ position: 'relative', width: '80px', height: '80px' }}>
+                      <img 
+                        src={objectUrl} 
+                        alt="" 
+                        style={{ width: '100%', height: '100%', objectFit: 'contain', backgroundColor: 'white', borderRadius: '6px', border: '1px solid var(--border-color)', opacity: 0.8 }} 
+                      />
+                      <span style={{
+                        position: 'absolute',
+                        bottom: '2px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        backgroundColor: 'rgba(0,0,0,0.6)',
+                        color: 'white',
+                        fontSize: '9px',
+                        padding: '1px 4px',
+                        borderRadius: '4px',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {lang === 'ar' ? 'جديد' : 'New'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== index))}
+                        style={{
+                          position: 'absolute',
+                          top: '-6px',
+                          right: '-6px',
+                          backgroundColor: '#ef4444',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '18px',
+                          height: '18px',
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '10px', marginTop: '10px' }}>

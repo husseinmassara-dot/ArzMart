@@ -31,8 +31,8 @@ router.delete('/categories/:id', authenticateToken, requirePermission('categorie
 // --- Product Routes ---
 router.get('/products', productController.getProducts);
 router.get('/products/:id', productController.getProductById);
-router.post('/products', authenticateToken, requirePermission('products'), upload.single('product_image'), productController.createProduct);
-router.put('/products/:id', authenticateToken, requirePermission('products'), upload.single('product_image'), productController.updateProduct);
+router.post('/products', authenticateToken, requirePermission('products'), upload.array('product_images', 10), productController.createProduct);
+router.put('/products/:id', authenticateToken, requirePermission('products'), upload.array('product_images', 10), productController.updateProduct);
 router.delete('/products/:id', authenticateToken, requirePermission('products'), productController.deleteProduct);
 router.post('/products/:id/rate', productController.rateProduct);
 
