@@ -1315,11 +1315,7 @@ export default function App() {
                 </div>
 
                 {/* Products Grid */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-                  gap: '24px'
-                }}>
+                <div className="categories-grid">
                   {products.map((p) => (
                     <ProductCard 
                       key={p.id} 
