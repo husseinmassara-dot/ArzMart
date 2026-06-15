@@ -46,7 +46,18 @@ if (isPostgres) {
     }
   });
 } else {
-  const dbPath = path.join(__dirname, '../../database.sqlite');
+  const fs = require('fs');
+  const persistentDir = '/home/hussein/.gemini/antigravity/worktrees/arz_mart_data';
+  if (!fs.existsSync(persistentDir)) {
+    try {
+      fs.mkdirSync(persistentDir, { recursive: true });
+    } catch (e) {
+      console.error('Failed to create persistent dir:', e);
+    }
+  }
+  const dbPath = fs.existsSync(persistentDir)
+    ? path.join(persistentDir, 'database.sqlite')
+    : path.join(__dirname, '../../database.sqlite');
   console.log(`[Database] Connecting to SQLite: ${dbPath}`);
   sqliteDb = new sqlite3.Database(dbPath, (err) => {
     if (err) {

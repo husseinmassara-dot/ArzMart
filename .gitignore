@@ -38,3 +38,7 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.swp
+
+# Uploads directory (dynamic/media files)
+backend/uploads
+backend/uploads/

@@ -13,6 +13,59 @@ app.use(cors({ origin: '*' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use((req, res, next) => {
+  console.log(`[HTTP] ${req.method} ${req.url}`);
+  next();
+});
+
+// Setup persistent uploads symlink
+const persistentDir = '/home/hussein/.gemini/antigravity/worktrees/arz_mart_data';
+const persistentUploads = path.join(persistentDir, 'uploads');
+const localUploads = path.join(__dirname, '../uploads');
+
+if (!fs.existsSync(persistentDir)) {
+  try {
+    fs.mkdirSync(persistentDir, { recursive: true });
+  } catch (e) {
+    console.error('Failed to create persistent dir:', e);
+  }
+}
+
+if (fs.existsSync(persistentDir)) {
+  if (!fs.existsSync(persistentUploads)) {
+    try {
+      fs.mkdirSync(persistentUploads, { recursive: true });
+    } catch (e) {
+      console.error('Failed to create persistent uploads dir:', e);
+    }
+  }
+
+  // Ensure subdirectories exist
+  ['categories', 'products', 'banners'].forEach(sub => {
+    const subPath = path.join(persistentUploads, sub);
+    if (!fs.existsSync(subPath)) {
+      try {
+        fs.mkdirSync(subPath, { recursive: true });
+      } catch (e) {}
+    }
+  });
+
+  try {
+    if (fs.existsSync(localUploads)) {
+      const stat = fs.lstatSync(localUploads);
+      if (!stat.isSymbolicLink()) {
+        fs.rmSync(localUploads, { recursive: true, force: true });
+      }
+    }
+    if (!fs.existsSync(localUploads)) {
+      fs.symlinkSync(persistentUploads, localUploads, 'dir');
+      console.log('[Uploads] Symlinked local uploads to persistent directory.');
+    }
+  } catch (err) {
+    console.error('[Uploads] Failed to symlink uploads directory:', err);
+  }
+}
+
 // Serve uploaded images static folder
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 

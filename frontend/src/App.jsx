@@ -986,11 +986,38 @@ export default function App() {
                     className="input-field"
                   >
                     <option value="">{t('all_categories')}</option>
-                    {categories.map(c => (
-                      <option key={c.id} value={c.id}>
-                        {lang === 'ar' ? c.name_ar : c.name_en}
-                      </option>
-                    ))}
+                    {(() => {
+                      const parents = categories.filter(c => !c.parent_id);
+                      const children = categories.filter(c => c.parent_id);
+                      
+                      const list = [];
+                      parents.forEach(p => {
+                        list.push({ ...p, depth: 0 });
+                        const subcats = children.filter(c => c.parent_id === p.id);
+                        subcats.forEach(s => {
+                          list.push({ ...s, depth: 1 });
+                          const subsub = children.filter(c => c.parent_id === s.id);
+                          subsub.forEach(ss => {
+                            list.push({ ...ss, depth: 2 });
+                          });
+                        });
+                      });
+                      
+                      categories.forEach(c => {
+                        if (!list.some(item => item.id === c.id)) {
+                          list.push({ ...c, depth: 0 });
+                        }
+                      });
+                      
+                      return list.map(c => {
+                        const indent = '　'.repeat(c.depth) + (c.depth > 0 ? '↳ ' : '');
+                        return (
+                          <option key={c.id} value={c.id}>
+                            {indent}{lang === 'ar' ? c.name_ar : c.name_en}
+                          </option>
+                        );
+                      });
+                    })()}
                   </select>
                 </div>
 
@@ -1040,12 +1067,8 @@ export default function App() {
                   {lang === 'ar' ? 'تصفح أقسام المتجر' : 'Browse Store Categories'}
                 </h2>
                 
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                  gap: '24px'
-                }}>
-                  {categories.map((cat) => {
+                <div className="categories-grid">
+                  {categories.filter(c => !c.parent_id).map((cat) => {
                     const catName = lang === 'ar' ? cat.name_ar : cat.name_en;
                     
                     // Assign realistic category background image
@@ -1142,25 +1165,53 @@ export default function App() {
                   paddingBottom: '12px'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <button
-                      onClick={() => {
-                        setSelectedCategory('');
-                        clearFilters();
-                      }}
-                      className="input-field"
-                      style={{
-                        width: 'auto',
-                        padding: '6px 14px',
-                        backgroundColor: 'var(--bg-tertiary)',
-                        color: 'var(--text-primary)',
-                        border: '1px solid var(--border-color)',
-                        cursor: 'pointer',
-                        fontWeight: '700',
-                        fontSize: '0.85rem'
-                      }}
-                    >
-                      {lang === 'ar' ? '← العودة للأقسام' : '← Back to Categories'}
-                    </button>
+                    {(() => {
+                      const currentCat = categories.find(c => c.id === parseInt(selectedCategory));
+                      if (currentCat && currentCat.parent_id) {
+                        return (
+                          <button
+                            onClick={() => setSelectedCategory(currentCat.parent_id)}
+                            className="input-field"
+                            style={{
+                              width: 'auto',
+                              padding: '6px 14px',
+                              backgroundColor: 'var(--bg-tertiary)',
+                              color: 'var(--text-primary)',
+                              border: '1px solid var(--border-color)',
+                              cursor: 'pointer',
+                              fontWeight: '700',
+                              fontSize: '0.85rem'
+                            }}
+                          >
+                            {lang === 'ar' 
+                              ? `← العودة إلى ${currentCat.parent_name_ar || 'السابق'}` 
+                              : `← Back to ${currentCat.parent_name_en || 'Parent'}`}
+                          </button>
+                        );
+                      } else {
+                        return (
+                          <button
+                            onClick={() => {
+                              setSelectedCategory('');
+                              clearFilters();
+                            }}
+                            className="input-field"
+                            style={{
+                              width: 'auto',
+                              padding: '6px 14px',
+                              backgroundColor: 'var(--bg-tertiary)',
+                              color: 'var(--text-primary)',
+                              border: '1px solid var(--border-color)',
+                              cursor: 'pointer',
+                              fontWeight: '700',
+                              fontSize: '0.85rem'
+                            }}
+                          >
+                            {lang === 'ar' ? '← العودة للأقسام' : '← Back to Categories'}
+                          </button>
+                        );
+                      }
+                    })()}
                     
                     <h2 style={{ fontSize: '1.3rem', fontWeight: '800' }}>
                       {selectedCategory !== '' ? (

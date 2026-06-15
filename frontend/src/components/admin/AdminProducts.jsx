@@ -266,11 +266,38 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
             <label className="input-label">التصنيف (Category)</label>
             <select className="input-field" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
               <option value="">-- اختر التصنيف --</option>
-              {categories.map(c => (
-                <option key={c.id} value={c.id}>
-                  {lang === 'ar' ? `${c.name_ar} ${c.parent_name_ar ? `(${c.parent_name_ar})` : ''}` : `${c.name_en} ${c.parent_name_en ? `(${c.parent_name_en})` : ''}`}
-                </option>
-              ))}
+              {(() => {
+                const parents = categories.filter(c => !c.parent_id);
+                const children = categories.filter(c => c.parent_id);
+                
+                const list = [];
+                parents.forEach(p => {
+                  list.push({ ...p, depth: 0 });
+                  const subcats = children.filter(c => c.parent_id === p.id);
+                  subcats.forEach(s => {
+                    list.push({ ...s, depth: 1 });
+                    const subsub = children.filter(c => c.parent_id === s.id);
+                    subsub.forEach(ss => {
+                      list.push({ ...ss, depth: 2 });
+                    });
+                  });
+                });
+                
+                categories.forEach(c => {
+                  if (!list.some(item => item.id === c.id)) {
+                    list.push({ ...c, depth: 0 });
+                  }
+                });
+                
+                return list.map(c => {
+                  const indent = '　'.repeat(c.depth) + (c.depth > 0 ? '↳ ' : '');
+                  return (
+                    <option key={c.id} value={c.id}>
+                      {indent}{lang === 'ar' ? c.name_ar : c.name_en}
+                    </option>
+                  );
+                });
+              })()}
             </select>
           </div>
           <div>
