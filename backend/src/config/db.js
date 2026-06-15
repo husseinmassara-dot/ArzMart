@@ -395,6 +395,15 @@ async function initializeDatabasePostgres() {
 
     console.log('[Database] PostgreSQL tables created successfully. Checking seeding...');
 
+    // Clean up legacy Base64 images to prevent huge payload sizes
+    try {
+      await pgPool.query("UPDATE categories SET image_url = '' WHERE image_url LIKE 'data:%'");
+      await pgPool.query("UPDATE products SET image_url = '' WHERE image_url LIKE 'data:%'");
+      console.log('[Database] Cleaned up legacy Base64 images from PostgreSQL.');
+    } catch (e) {
+      console.error('[Database] Failed to clean up legacy Base64 images from PostgreSQL:', e);
+    }
+
     // Seed settings
     const settingsCount = await pgPool.query('SELECT COUNT(*) FROM settings');
     if (parseInt(settingsCount.rows[0].count) === 0) {
@@ -665,6 +674,10 @@ function initializeDatabase() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    // Clean up legacy Base64 images to prevent huge payload sizes
+    db.run("UPDATE categories SET image_url = '' WHERE image_url LIKE 'data:%'");
+    db.run("UPDATE products SET image_url = '' WHERE image_url LIKE 'data:%'");
 
     // Seed default settings if empty
     db.get('SELECT COUNT(*) as count FROM settings', [], (err, row) => {
