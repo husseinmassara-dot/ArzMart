@@ -1225,6 +1225,7 @@ export default function App() {
                       )}
                     </h2>
                   </div>
+                </div>
 
                   {/* Sub-categories cards if active has children */}
                   {selectedCategory !== '' && categories.filter(c => c.parent_id === parseInt(selectedCategory)).length > 0 && (
@@ -1312,7 +1313,6 @@ export default function App() {
                       </div>
                     </div>
                   )}
-                </div>
 
                 {/* Products Grid */}
                 <div className="categories-grid">
