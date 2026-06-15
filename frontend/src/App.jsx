@@ -1226,28 +1226,90 @@ export default function App() {
                     </h2>
                   </div>
 
-                  {/* Sub-categories tabs if active has children */}
+                  {/* Sub-categories cards if active has children */}
                   {selectedCategory !== '' && categories.filter(c => c.parent_id === parseInt(selectedCategory)).length > 0 && (
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      {categories.filter(c => c.parent_id === parseInt(selectedCategory)).map((sub) => (
-                        <button
-                          key={sub.id}
-                          onClick={() => setSelectedCategory(sub.id)}
-                          className="input-field"
-                          style={{
-                            width: 'auto',
-                            padding: '4px 12px',
-                            fontSize: '0.75rem',
-                            backgroundColor: 'var(--accent-blue)',
-                            color: 'white',
-                            border: 'none',
-                            cursor: 'pointer',
-                            fontWeight: '600'
-                          }}
-                        >
-                          {lang === 'ar' ? sub.name_ar : sub.name_en}
-                        </button>
-                      ))}
+                    <div style={{ margin: '24px 0 40px 0' }} className="animate-fade">
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '16px', color: 'var(--text-primary)' }}>
+                        {lang === 'ar' ? 'الأقسام الفرعية' : 'Subcategories'}
+                      </h3>
+                      <div className="categories-grid" style={{ marginBottom: '24px' }}>
+                        {categories.filter(c => c.parent_id === parseInt(selectedCategory)).map((sub) => {
+                          const subName = lang === 'ar' ? sub.name_ar : sub.name_en;
+                          
+                          let bgImg = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=500&q=80';
+                          if (sub.name_en.toLowerCase().includes('soap') || sub.name_en.toLowerCase().includes('care')) {
+                            bgImg = 'https://images.unsplash.com/photo-1607006342466-4aa8d8d32be5?auto=format&fit=crop&w=500&q=80';
+                          } else if (sub.name_en.toLowerCase().includes('oil')) {
+                            bgImg = 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=500&q=80';
+                          }
+
+                          const imageUrl = sub.image_url 
+                            ? (sub.image_url.startsWith('http') || sub.image_url.startsWith('data:') ? sub.image_url : `${apiHost}${sub.image_url}`)
+                            : bgImg;
+
+                          return (
+                            <div
+                              key={sub.id}
+                              onClick={() => setSelectedCategory(sub.id)}
+                              className="dashboard-card"
+                              style={{
+                                height: '180px',
+                                position: 'relative',
+                                overflow: 'hidden',
+                                borderRadius: '16px',
+                                cursor: 'pointer',
+                                padding: '0',
+                                border: '1px solid var(--border-color)',
+                                boxShadow: 'var(--shadow-sm)',
+                                transition: 'transform 0.3s ease, box-shadow 0.3s ease'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'translateY(-6px)';
+                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                              }}
+                            >
+                              {/* Background Cover image */}
+                              <div style={{
+                                width: '100%',
+                                height: '100%',
+                                backgroundImage: `linear-gradient(to top, rgba(10, 14, 23, 0.95) 0%, rgba(10, 14, 23, 0.2) 60%, rgba(10, 14, 23, 0) 100%), url(${imageUrl})`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center'
+                              }} 
+                              />
+
+                              {/* Title text overlay */}
+                              <div style={{
+                                position: 'absolute',
+                                bottom: '0',
+                                left: '0',
+                                right: '0',
+                                padding: '16px',
+                                color: 'white',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '4px',
+                                zIndex: 5
+                              }}>
+                                <h4 style={{ fontSize: '1.15rem', fontWeight: '800', margin: '0', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
+                                  {subName}
+                                </h4>
+                                <span style={{ 
+                                  fontSize: '0.75rem', 
+                                  color: 'var(--accent-red-gold)', 
+                                  fontWeight: '700'
+                                }}>
+                                  {lang === 'ar' ? 'تصفح المنتجات ←' : 'Browse products →'}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                 </div>
