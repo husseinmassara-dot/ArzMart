@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { useCart, getOptionPrice } from '../context/CartContext';
-import { Star, ShoppingCart, X } from 'lucide-react';
+import { Star, ShoppingCart, X, Images } from 'lucide-react';
 
 function getOptionName(optionString) {
   if (!optionString) return '';
@@ -15,6 +15,8 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [userRating, setUserRating] = useState(5);
   const [ratingSubmitted, setRatingSubmitted] = useState(false);
+  const [fullProduct, setFullProduct] = useState(product); // Will be replaced with fresh fetch
+  const [loadingImages, setLoadingImages] = useState(false);
   const [selectedColor, setSelectedColor] = useState(() => {
     return (product && product.colors && product.colors.length > 0) ? product.colors[0] : null;
   });
@@ -22,43 +24,62 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
     return (product && product.sizes && product.sizes.length > 0) ? product.sizes[0] : null;
   });
 
+  // Fetch full product data (with all images) when modal opens
+  useEffect(() => {
+    if (!product?.id) return;
+    setActiveImageIndex(0);
+    setLoadingImages(true);
+    fetch(`${apiBase}/products/${product.id}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data) setFullProduct(data);
+      })
+      .catch(() => {/* fallback to passed product */})
+      .finally(() => setLoadingImages(false));
+  }, [product?.id, apiBase]);
+
   if (!product) return null;
 
-  const name = lang === 'ar' ? product.name_ar : product.name_en;
-  const desc = lang === 'ar' ? product.description_ar : product.description_en;
-  const categoryName = lang === 'ar' ? product.category_name_ar : product.category_name_en;
+  // Use fullProduct (fetched fresh) or fallback to passed product
+  const displayProduct = fullProduct || product;
+
+  const name = lang === 'ar' ? displayProduct.name_ar : displayProduct.name_en;
+  const desc = lang === 'ar' ? displayProduct.description_ar : displayProduct.description_en;
+  const categoryName = lang === 'ar' ? displayProduct.category_name_ar : displayProduct.category_name_en;
   
-  const rating = product.rating || 0;
+  const rating = displayProduct.rating || 0;
   
-  const currentPrice = getOptionPrice(selectedSize, product.price_usd);
-  let adjustedOldPrice = product.old_price_usd;
-  if (product.old_price_usd && selectedSize) {
+  const currentPrice = getOptionPrice(selectedSize, displayProduct.price_usd);
+  let adjustedOldPrice = displayProduct.old_price_usd;
+  if (displayProduct.old_price_usd && selectedSize) {
     const relativeMatch = selectedSize.match(/\(\s*([+-])\s*\$?\s*([0-9.]+)\s*\$?_?\)/);
     if (relativeMatch) {
       const sign = relativeMatch[1];
       const offset = parseFloat(relativeMatch[2]);
-      adjustedOldPrice = sign === '-' ? (product.old_price_usd - offset) : (product.old_price_usd + offset);
+      adjustedOldPrice = sign === '-' ? (displayProduct.old_price_usd - offset) : (displayProduct.old_price_usd + offset);
     } else {
-      const priceDifference = currentPrice - product.price_usd;
-      adjustedOldPrice = product.old_price_usd + priceDifference;
+      const priceDifference = currentPrice - displayProduct.price_usd;
+      adjustedOldPrice = displayProduct.old_price_usd + priceDifference;
     }
   }
   const hasDiscount = adjustedOldPrice && adjustedOldPrice > currentPrice;
 
-  const imagesList = product.images && product.images.length > 0
-    ? product.images
-    : (product.image_url ? [product.image_url] : []);
+  // Use displayProduct.images (fresh from API) for gallery — falls back gracefully
+  const imagesList = displayProduct.images && displayProduct.images.length > 0
+    ? displayProduct.images
+    : (displayProduct.image_url ? [displayProduct.image_url] : []);
 
   const getFullImageUrl = (img) => {
     if (!img) return 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80';
     return img.startsWith('http') || img.startsWith('data:') ? img : `${apiHost}${img}`;
   };
 
-  const activeImageUrl = getFullImageUrl(imagesList[activeImageIndex]);
+  const safeIndex = Math.min(activeImageIndex, Math.max(0, imagesList.length - 1));
+  const activeImageUrl = getFullImageUrl(imagesList[safeIndex]);
 
   const handleRatingSubmit = async () => {
     try {
-      const res = await fetch(`${apiBase}/products/${product.id}/rate`, {
+      const res = await fetch(`${apiBase}/products/${displayProduct.id}/rate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rating: userRating })
@@ -71,6 +92,7 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
       console.error('Submit rating error:', err);
     }
   };
+
 
   return (
     <div className="no-print" style={{
@@ -147,17 +169,23 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
               minHeight: '260px',
               position: 'relative'
             }}>
-              <img 
-                src={activeImageUrl} 
-                alt={name} 
-                style={{
-                  maxWidth: '100%',
-                  maxHeight: '260px',
-                  objectFit: 'contain',
-                  transition: 'opacity 0.2s'
-                }}
-              />
-              
+              {loadingImages ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', color: 'var(--text-light)' }}>
+                  <div style={{ width: '32px', height: '32px', border: '3px solid var(--border-color)', borderTopColor: 'var(--accent-blue)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                  <span style={{ fontSize: '0.8rem' }}>{lang === 'ar' ? 'جارٍ تحميل الصور...' : 'Loading images...'}</span>
+                </div>
+              ) : (
+                <img 
+                  src={activeImageUrl} 
+                  alt={name} 
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '260px',
+                    objectFit: 'contain',
+                    transition: 'opacity 0.2s'
+                  }}
+                />
+              )}
               {/* Prev & Next Arrows */}
               {imagesList.length > 1 && (
                 <>
@@ -282,7 +310,7 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
                 {rating.toFixed(1)}
               </span>
               <span style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>
-                ({product.rating_count || 0} {t('rating_stars')})
+                ({displayProduct.rating_count || 0} {t('rating_stars')})
               </span>
             </div>
 
@@ -314,13 +342,13 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
             </div>
 
             {/* Color Selector */}
-            {product.colors && product.colors.length > 0 && (
+            {displayProduct.colors && displayProduct.colors.length > 0 && (
               <div style={{ margin: '12px 0' }}>
                 <span className="input-label" style={{ display: 'block', marginBottom: '6px' }}>
                   {lang === 'ar' ? 'اللون المتاح:' : 'Available Color:'}
                 </span>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {product.colors.map(color => (
+                  {displayProduct.colors.map(color => (
                     <button
                       key={color}
                       type="button"
@@ -345,12 +373,12 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
             )}
 
             {/* Size Selector */}
-            {product.sizes && product.sizes.length > 0 && (
+            {displayProduct.sizes && displayProduct.sizes.length > 0 && (
               <div style={{ margin: '12px 0' }}>
                 <span className="input-label" style={{ display: 'block', marginBottom: '6px' }}>
                   {lang === 'ar' ? 'الخيار المتاح:' : 'Available Option:'}
                 </span>
-                {product.sizes.length >= 4 ? (
+                {displayProduct.sizes.length >= 4 ? (
                   <select
                     value={selectedSize}
                     onChange={(e) => setSelectedSize(e.target.value)}
@@ -368,9 +396,9 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
                       outline: 'none'
                     }}
                   >
-                    {product.sizes.map(size => {
-                      const optPrice = getOptionPrice(size, product.price_usd);
-                      const priceDiff = optPrice - product.price_usd;
+                    {displayProduct.sizes.map(size => {
+                      const optPrice = getOptionPrice(size, displayProduct.price_usd);
+                      const priceDiff = optPrice - displayProduct.price_usd;
                       let priceLabel = '';
                       if (priceDiff > 0) {
                         priceLabel = ` (+${formatPrice(priceDiff)})`;
@@ -386,7 +414,7 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
                   </select>
                 ) : (
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    {product.sizes.map(size => (
+                    {displayProduct.sizes.map(size => (
                       <button
                         key={size}
                         type="button"
@@ -425,10 +453,10 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
                   </button>
                   <span style={{ fontWeight: '700', minWidth: '24px', textAlign: 'center' }}>{qty}</span>
                   <button 
-                    onClick={() => setQty(q => Math.min(product.stock, q + 1))}
-                    disabled={qty >= product.stock}
+                    onClick={() => setQty(q => Math.min(displayProduct.stock, q + 1))}
+                    disabled={qty >= displayProduct.stock}
                     className="input-field"
-                    style={{ width: '36px', height: '36px', padding: 0, cursor: qty >= product.stock ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
+                    style={{ width: '36px', height: '36px', padding: 0, cursor: qty >= displayProduct.stock ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
                   >
                     +
                   </button>
@@ -439,17 +467,17 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
                 <span className="input-label" style={{ margin: 0, opacity: 0 }}>Action</span>
                 <button
                   onClick={() => {
-                    addToCart(product, qty, selectedColor, selectedSize);
+                    addToCart(displayProduct, qty, selectedColor, selectedSize);
                     onClose();
                   }}
-                  disabled={product.stock <= 0}
+                  disabled={displayProduct.stock <= 0}
                   className="input-field"
                   style={{
-                    backgroundColor: product.stock > 0 ? 'var(--accent-blue)' : 'var(--border-color)',
-                    color: product.stock > 0 ? 'white' : 'var(--text-light)',
+                    backgroundColor: displayProduct.stock > 0 ? 'var(--accent-blue)' : 'var(--border-color)',
+                    color: displayProduct.stock > 0 ? 'white' : 'var(--text-light)',
                     border: 'none',
                     fontWeight: '700',
-                    cursor: product.stock > 0 ? 'pointer' : 'not-allowed',
+                    cursor: displayProduct.stock > 0 ? 'pointer' : 'not-allowed',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',

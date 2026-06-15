@@ -17,7 +17,10 @@ export default function ProductCard({ product, onDetailsClick }) {
 
   const imageUrl = product.image_url 
     ? (product.image_url.startsWith('http') || product.image_url.startsWith('data:') ? product.image_url : `${apiHost}${product.image_url}`)
-    : 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=400&q=80'; // Realistic store item fallback
+    : 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=400&q=80';
+
+  // Count how many images this product has
+  const imageCount = product.images && product.images.length > 1 ? product.images.length : null;
 
   return (
     <div 
@@ -75,6 +78,27 @@ export default function ProductCard({ product, onDetailsClick }) {
             zIndex: 10
           }}>
             % {Math.round(((product.old_price_usd - product.price_usd) / product.old_price_usd) * 100)} -
+          </span>
+        )}
+        {/* Multi-image badge */}
+        {imageCount && (
+          <span style={{
+            position: 'absolute',
+            bottom: '8px',
+            right: '8px',
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            color: 'white',
+            padding: '2px 7px',
+            fontSize: '0.7rem',
+            fontWeight: '600',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '3px',
+            backdropFilter: 'blur(4px)',
+            zIndex: 10
+          }}>
+            🖼️ {imageCount}
           </span>
         )}
       </div>

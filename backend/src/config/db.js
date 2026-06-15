@@ -445,20 +445,20 @@ async function initializeDatabasePostgres() {
       console.log('[Database] Seeded merchants.');
     }
 
-    // Seed Categories / Migration check
+    // Seed Categories — only on FIRST RUN (empty DB), never overwrite user data
     const categoriesCount = await pgPool.query('SELECT COUNT(*) FROM categories');
     const pgCount = parseInt(categoriesCount.rows[0].count);
-    if (pgCount !== newGeneralCategories.length) {
-      console.log(`[Database] PostgreSQL categories count (${pgCount}) doesn't match expected (${newGeneralCategories.length}). Migrating database categories...`);
-      await pgPool.query("DELETE FROM products");
-      await pgPool.query("DELETE FROM categories");
+    if (pgCount === 0 && newGeneralCategories.length > 0) {
+      console.log('[Database] First run: seeding initial categories...');
       for (const cat of newGeneralCategories) {
         await pgPool.query(
           'INSERT INTO categories (name_ar, name_en, parent_id, image_url) VALUES ($1, $2, null, $3)',
           [cat.name_ar, cat.name_en, cat.image_url]
         );
       }
-      console.log('[Database] Seeded new general categories.');
+      console.log('[Database] Seeded initial categories.');
+    } else {
+      console.log(`[Database] Found ${pgCount} existing categories — skipping seed to preserve user data.`);
     }
   } catch (err) {
     console.error('[Database] Sequential PostgreSQL initialization failed:', err);
@@ -724,20 +724,19 @@ function initializeDatabase() {
       }
     });
 
-    // Seed Categories / Migration check
+    // Seed Categories — only on FIRST RUN (empty DB), never overwrite user data
     db.get('SELECT COUNT(*) as count FROM categories', [], (err, row) => {
       const sqliteCount = row ? parseInt(row.count) : 0;
-      if (sqliteCount !== newGeneralCategories.length) {
-        console.log(`[Database] SQLite categories count (${sqliteCount}) doesn't match expected (${newGeneralCategories.length}). Migrating database categories...`);
+      if (sqliteCount === 0 && newGeneralCategories.length > 0) {
+        console.log('[Database] First run: seeding initial categories...');
         db.serialize(() => {
-          db.run("DELETE FROM products");
-          db.run("DELETE FROM categories", [], () => {
-            newGeneralCategories.forEach(cat => {
-              db.run('INSERT INTO categories (name_ar, name_en, parent_id, image_url) VALUES (?, ?, null, ?)', [cat.name_ar, cat.name_en, cat.image_url]);
-            });
-            console.log('[Database] SQLite general catalog migration completed successfully.');
+          newGeneralCategories.forEach(cat => {
+            db.run('INSERT INTO categories (name_ar, name_en, parent_id, image_url) VALUES (?, ?, null, ?)', [cat.name_ar, cat.name_en, cat.image_url]);
           });
+          console.log('[Database] SQLite initial categories seeded successfully.');
         });
+      } else {
+        console.log(`[Database] Found ${sqliteCount} existing categories — skipping seed to preserve user data.`);
       }
     });
   });
