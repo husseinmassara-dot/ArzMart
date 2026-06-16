@@ -138,3 +138,28 @@ exports.trackHit = async (req, res) => {
     res.status(500).json({ error: 'Database error' });
   }
 };
+
+exports.backupDatabase = async (req, res) => {
+  try {
+    const tables = ['settings', 'users', 'categories', 'merchants', 'products', 'orders', 'chats', 'coupons', 'notifications', 'page_views'];
+    const backupData = {};
+    for (const table of tables) {
+      try {
+        const rows = await db.allAsync(`SELECT * FROM ${table}`);
+        backupData[table] = rows;
+      } catch (tableErr) {
+        console.error(`Error backing up table ${table}:`, tableErr);
+        backupData[table] = [];
+      }
+    }
+    
+    const dateStr = new Date().toISOString().slice(0, 10);
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename=arz_mart_backup_${dateStr}.json`);
+    res.json(backupData);
+  } catch (err) {
+    console.error('Backup database error:', err);
+    res.status(500).json({ error_ar: 'خطأ أثناء إنشاء نسخة احتياطية للموقع', error_en: 'Error creating site backup' });
+  }
+};
+

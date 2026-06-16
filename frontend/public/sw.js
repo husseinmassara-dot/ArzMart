@@ -35,7 +35,32 @@ self.addEventListener('activate', (event) => {
 
 // Fetch Event - Network-First Strategy for HTML/pages, Cache-First/Network-Fallback for other GET requests
 self.addEventListener('fetch', (event) => {
-  // Bypass API requests, non-GET requests, and Chrome extensions/external sources
+  const isTargetApi = event.request.method === 'GET' && (
+    event.request.url.includes('/api/products') ||
+    event.request.url.includes('/api/categories') ||
+    event.request.url.includes('/api/settings')
+  );
+
+  if (isTargetApi) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          return caches.match(event.request);
+        })
+    );
+    return;
+  }
+
+  // Bypass other API requests, non-GET requests, and Chrome extensions/external sources
   if (
     event.request.method !== 'GET' || 
     event.request.url.includes('/api/') ||

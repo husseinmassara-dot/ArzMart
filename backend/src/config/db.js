@@ -395,6 +395,7 @@ async function initializeDatabasePostgres() {
 
     console.log('[Database] PostgreSQL tables created successfully. Checking seeding...');
 
+
     // Seed settings
     const settingsCount = await pgPool.query('SELECT COUNT(*) FROM settings');
     if (parseInt(settingsCount.rows[0].count) === 0) {
@@ -665,6 +666,7 @@ function initializeDatabase() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
 
     // Seed default settings if empty
     db.get('SELECT COUNT(*) as count FROM settings', [], (err, row) => {

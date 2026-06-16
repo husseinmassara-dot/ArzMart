@@ -17,6 +17,7 @@ const merchantController = require('../controllers/merchantController');
 router.post('/auth/register', authController.register);
 router.post('/auth/login', authController.login);
 router.get('/auth/profile', authenticateToken, authController.getProfile);
+router.delete('/auth/delete-account', authenticateToken, authController.deleteAccount);
 
 // --- User Management (Admin Only) ---
 router.get('/admin/users', authenticateToken, requirePermission('users'), authController.getUsers);
@@ -63,6 +64,7 @@ router.put('/settings', authenticateToken, requirePermission('settings'), upload
 router.put('/settings/banners', authenticateToken, requirePermission('settings'), upload.any(), settingsController.updateBanners);
 router.post('/analytics/hit', settingsController.trackHit);
 router.get('/reports', authenticateToken, requirePermission('reports'), orderController.getReports);
+router.get('/admin/backup', authenticateToken, requireAdmin, settingsController.backupDatabase);
 
 // --- Chat Routes ---
 router.post('/chat/send', authenticateToken, chatController.sendMessage);
