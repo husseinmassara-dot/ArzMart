@@ -7,7 +7,7 @@ exports.getCategories = async (req, res) => {
       SELECT c.*, p.name_ar as parent_name_ar, p.name_en as parent_name_en 
       FROM categories c
       LEFT JOIN categories p ON c.parent_id = p.id
-      ORDER BY c.id DESC
+      ORDER BY c.sort_order ASC, c.id ASC
     `);
     res.json(categories);
   } catch (err) {
@@ -15,6 +15,7 @@ exports.getCategories = async (req, res) => {
     res.status(500).json({ error_ar: 'خطأ في جلب التصنيفات', error_en: 'Error fetching categories' });
   }
 };
+
 
 exports.createCategory = async (req, res) => {
   const { name_ar, name_en, parent_id } = req.body;
@@ -138,5 +139,22 @@ exports.deleteCategory = async (req, res) => {
   } catch (err) {
     console.error('Delete category error:', err);
     res.status(500).json({ error_ar: 'خطأ في حذف التصنيف', error_en: 'Error deleting category' });
+  }
+};
+
+exports.reorderCategories = async (req, res) => {
+  const { order } = req.body; // array of { id, sort_order }
+  if (!Array.isArray(order) || order.length === 0) {
+    return res.status(400).json({ error_ar: 'بيانات الترتيب غير صحيحة', error_en: 'Invalid order data' });
+  }
+
+  try {
+    await Promise.all(order.map(({ id, sort_order }) =>
+      db.runAsync('UPDATE categories SET sort_order = ? WHERE id = ?', [sort_order, id])
+    ));
+    res.json({ message_ar: 'تم حفظ ترتيب التصنيفات بنجاح', message_en: 'Category order saved successfully' });
+  } catch (err) {
+    console.error('Reorder categories error:', err);
+    res.status(500).json({ error_ar: 'خطأ في حفظ الترتيب', error_en: 'Error saving order' });
   }
 };

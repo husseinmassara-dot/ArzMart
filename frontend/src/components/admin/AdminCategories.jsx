@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
-import { Trash2, Edit3, Image } from 'lucide-react';
+import { Trash2, Edit3, Image, GripVertical, Save, ArrowUpDown } from 'lucide-react';
 
 const compressImage = (file, maxWidth = 400, maxHeight = 400, quality = 0.7) => {
   return new Promise((resolve) => {
@@ -64,7 +64,14 @@ export default function AdminCategories() {
 
   const [categories, setCategories] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
-  
+  const [orderChanged, setOrderChanged] = useState(false);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const [saveOrderMsg, setSaveOrderMsg] = useState('');
+
+  // Drag state (refs to avoid re-renders)
+  const dragIndexRef = useRef(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
+
   // Form states
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -82,6 +89,7 @@ export default function AdminCategories() {
       if (res.ok) {
         const data = await res.json();
         setCategories(data);
+        setOrderChanged(false);
       }
     } catch (err) {
       console.error(err);
@@ -92,6 +100,76 @@ export default function AdminCategories() {
     fetchCategories();
   }, []);
 
+  // ─── Drag & Drop handlers ───────────────────────────────────────────────────
+  const handleDragStart = (e, index) => {
+    dragIndexRef.current = index;
+    e.dataTransfer.effectAllowed = 'move';
+    // ghost image
+    e.dataTransfer.setDragImage(e.currentTarget, 20, 20);
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (index !== dragIndexRef.current) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDrop = (e, dropIndex) => {
+    e.preventDefault();
+    const dragIndex = dragIndexRef.current;
+    if (dragIndex === null || dragIndex === dropIndex) {
+      setDragOverIndex(null);
+      return;
+    }
+
+    const newList = [...categories];
+    const [removed] = newList.splice(dragIndex, 1);
+    newList.splice(dropIndex, 0, removed);
+
+    dragIndexRef.current = null;
+    setDragOverIndex(null);
+    setCategories(newList);
+    setOrderChanged(true);
+  };
+
+  const handleDragEnd = () => {
+    dragIndexRef.current = null;
+    setDragOverIndex(null);
+  };
+
+  const handleSaveOrder = async () => {
+    setSavingOrder(true);
+    setSaveOrderMsg('');
+    try {
+      const order = categories.map((c, idx) => ({ id: c.id, sort_order: idx }));
+      const res = await fetch(`${apiBase}/categories-reorder`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ order })
+      });
+      if (res.ok) {
+        setSaveOrderMsg('✓ تم حفظ الترتيب بنجاح');
+        setOrderChanged(false);
+        setTimeout(() => setSaveOrderMsg(''), 3000);
+      } else {
+        setSaveOrderMsg('⚠️ فشل حفظ الترتيب');
+        setTimeout(() => setSaveOrderMsg(''), 3000);
+      }
+    } catch (err) {
+      console.error(err);
+      setSaveOrderMsg('⚠️ خطأ في الاتصال');
+      setTimeout(() => setSaveOrderMsg(''), 3000);
+    } finally {
+      setSavingOrder(false);
+    }
+  };
+
+  // ─── Form handlers ──────────────────────────────────────────────────────────
   const handleFileChange = (e) => {
     setSelectedFile(e.target.files[0]);
   };
@@ -111,7 +189,7 @@ export default function AdminCategories() {
       formData.append('category_image', compressed);
     }
 
-    const url = isEditing 
+    const url = isEditing
       ? `${apiBase}/categories/${editingId}`
       : `${apiBase}/categories`;
 
@@ -191,15 +269,15 @@ export default function AdminCategories() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      
+
       {/* Category Form */}
       <div className="dashboard-card" style={{ padding: '20px' }}>
         <h4 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '16px' }}>
-          {isEditing 
-            ? (lang === 'ar' ? 'تعديل بيانات التصنيف' : 'Edit Category Details') 
+          {isEditing
+            ? (lang === 'ar' ? 'تعديل بيانات التصنيف' : 'Edit Category Details')
             : (lang === 'ar' ? 'إضافة تصنيف جديد' : 'Add New Category')}
         </h4>
-        
+
         <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
           <div>
             <label className="input-label">الاسم (العربية) *</label>
@@ -216,7 +294,7 @@ export default function AdminCategories() {
               {(() => {
                 const parents = categories.filter(c => !c.parent_id && c.id !== editingId);
                 const children = categories.filter(c => c.parent_id && c.id !== editingId);
-                
+
                 const list = [];
                 parents.forEach(p => {
                   list.push({ ...p, depth: 0 });
@@ -229,13 +307,13 @@ export default function AdminCategories() {
                     });
                   });
                 });
-                
+
                 categories.forEach(c => {
                   if (c.id !== editingId && !list.some(item => item.id === c.id)) {
                     list.push({ ...c, depth: 0 });
                   }
                 });
-                
+
                 return list.map(c => {
                   const indent = '　'.repeat(c.depth) + (c.depth > 0 ? '↳ ' : '');
                   return (
@@ -281,40 +359,97 @@ export default function AdminCategories() {
       {/* Categories List */}
       <div className="dashboard-card" style={{ overflowX: 'auto', padding: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
-          <h4 style={{ fontSize: '1.1rem', fontWeight: '800', margin: 0 }}>
-            {lang === 'ar' ? 'قائمة التصنيفات الحالية' : 'Current Categories List'}
-          </h4>
-          {selectedIds.length > 0 && (
-            <button
-              onClick={handleBulkDelete}
-              style={{
-                backgroundColor: '#ef4444',
-                color: 'white',
-                border: 'none',
-                padding: '6px 14px',
-                borderRadius: '6px',
-                fontWeight: '700',
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <h4 style={{ fontSize: '1.1rem', fontWeight: '800', margin: 0 }}>
+              {lang === 'ar' ? 'قائمة التصنيفات الحالية' : 'Current Categories List'}
+            </h4>
+            <span style={{
+              fontSize: '0.78rem',
+              color: 'var(--text-light)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              backgroundColor: 'var(--bg-tertiary)',
+              padding: '4px 10px',
+              borderRadius: '20px'
+            }}>
+              <ArrowUpDown size={12} />
+              {lang === 'ar' ? 'اسحب الصفوف لتغيير الترتيب' : 'Drag rows to reorder'}
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            {/* Save order button */}
+            {orderChanged && (
+              <button
+                onClick={handleSaveOrder}
+                disabled={savingOrder}
+                style={{
+                  backgroundColor: '#10b981',
+                  color: 'white',
+                  border: 'none',
+                  padding: '7px 16px',
+                  borderRadius: '8px',
+                  fontWeight: '700',
+                  fontSize: '0.85rem',
+                  cursor: savingOrder ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  opacity: savingOrder ? 0.7 : 1,
+                  boxShadow: '0 2px 8px rgba(16,185,129,0.35)',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <Save size={14} />
+                <span>{savingOrder ? 'جاري الحفظ...' : (lang === 'ar' ? 'حفظ الترتيب' : 'Save Order')}</span>
+              </button>
+            )}
+            {saveOrderMsg && (
+              <span style={{
                 fontSize: '0.85rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                transition: 'opacity 0.2s'
-              }}
-              onMouseEnter={(e) => e.target.style.opacity = '0.9'}
-              onMouseLeave={(e) => e.target.style.opacity = '1'}
-            >
-              <Trash2 size={14} />
-              <span>{lang === 'ar' ? `حذف المحدد (${selectedIds.length})` : `Delete Selected (${selectedIds.length})`}</span>
-            </button>
-          )}
+                fontWeight: '600',
+                color: saveOrderMsg.startsWith('✓') ? '#10b981' : '#ef4444',
+                padding: '6px 12px',
+                backgroundColor: saveOrderMsg.startsWith('✓') ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                borderRadius: '6px',
+                border: `1px solid ${saveOrderMsg.startsWith('✓') ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`
+              }}>
+                {saveOrderMsg}
+              </span>
+            )}
+            {selectedIds.length > 0 && (
+              <button
+                onClick={handleBulkDelete}
+                style={{
+                  backgroundColor: '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  padding: '6px 14px',
+                  borderRadius: '6px',
+                  fontWeight: '700',
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'opacity 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+              >
+                <Trash2 size={14} />
+                <span>{lang === 'ar' ? `حذف المحدد (${selectedIds.length})` : `Delete Selected (${selectedIds.length})`}</span>
+              </button>
+            )}
+          </div>
         </div>
 
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'start' }}>
           <thead>
             <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-light)', fontSize: '0.85rem' }}>
+              <th style={{ padding: '10px', width: '36px', textAlign: 'center' }}></th>
               <th style={{ padding: '10px', width: '40px', textAlign: 'start' }}>
-                <input 
+                <input
                   type="checkbox"
                   checked={categories.length > 0 && selectedIds.length === categories.length}
                   onChange={(e) => {
@@ -334,15 +469,41 @@ export default function AdminCategories() {
             </tr>
           </thead>
           <tbody>
-            {categories.map((c) => {
-              const imageUrl = c.image_url 
+            {categories.map((c, index) => {
+              const imageUrl = c.image_url
                 ? (c.image_url.startsWith('http') || c.image_url.startsWith('data:') ? c.image_url : `${apiHost}${c.image_url}`)
                 : 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=50&q=80';
-              
+
+              const isDragOver = dragOverIndex === index;
+              const isDragging = dragIndexRef.current === index;
+
               return (
-                <tr key={c.id} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '0.9rem' }}>
+                <tr
+                  key={c.id}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDrop={(e) => handleDrop(e, index)}
+                  onDragEnd={handleDragEnd}
+                  style={{
+                    borderBottom: isDragOver
+                      ? '2px solid var(--accent-blue)'
+                      : '1px solid var(--border-color)',
+                    fontSize: '0.9rem',
+                    opacity: isDragging ? 0.4 : 1,
+                    backgroundColor: isDragOver
+                      ? 'rgba(59,130,246,0.06)'
+                      : 'transparent',
+                    transition: 'background-color 0.15s, opacity 0.15s, border-color 0.15s',
+                    cursor: 'grab'
+                  }}
+                >
+                  {/* Drag handle */}
+                  <td style={{ padding: '10px', textAlign: 'center', color: 'var(--text-light)' }}>
+                    <GripVertical size={16} style={{ cursor: 'grab', opacity: 0.6 }} />
+                  </td>
                   <td style={{ padding: '10px' }}>
-                    <input 
+                    <input
                       type="checkbox"
                       checked={selectedIds.includes(c.id)}
                       onChange={(e) => {
@@ -362,16 +523,24 @@ export default function AdminCategories() {
                     {lang === 'ar' ? c.name_ar : c.name_en}
                   </td>
                   <td style={{ padding: '10px', color: 'var(--text-light)' }}>
-                    {c.parent_id 
-                      ? (lang === 'ar' ? c.parent_name_ar : c.parent_name_en) 
+                    {c.parent_id
+                      ? (lang === 'ar' ? c.parent_name_ar : c.parent_name_en)
                       : (lang === 'ar' ? 'رئيسي' : 'Top Level')}
                   </td>
                   <td style={{ padding: '10px', textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                      <button onClick={() => handleEdit(c)} style={{ border: 'none', backgroundColor: 'transparent', color: 'var(--accent-blue)', cursor: 'pointer' }}>
+                      <button
+                        onClick={() => handleEdit(c)}
+                        style={{ border: 'none', backgroundColor: 'transparent', color: 'var(--accent-blue)', cursor: 'pointer' }}
+                        title={lang === 'ar' ? 'تعديل' : 'Edit'}
+                      >
                         <Edit3 size={16} />
                       </button>
-                      <button onClick={() => handleDelete(c.id)} style={{ border: 'none', backgroundColor: 'transparent', color: '#ef4444', cursor: 'pointer' }}>
+                      <button
+                        onClick={() => handleDelete(c.id)}
+                        style={{ border: 'none', backgroundColor: 'transparent', color: '#ef4444', cursor: 'pointer' }}
+                        title={lang === 'ar' ? 'حذف' : 'Delete'}
+                      >
                         <Trash2 size={16} />
                       </button>
                     </div>
