@@ -5,7 +5,7 @@ import { useChat } from '../../context/ChatContext';
 import { 
   Package, Folder, ShoppingBag, Users, BarChart3, Settings, Tag, ShieldAlert,
   DollarSign, TrendingUp, AlertTriangle, ArrowRight, MessageSquare, Send, Store,
-  ExternalLink, Database
+  ExternalLink, Database, Upload, X
 } from 'lucide-react';
 
 // Sub-components
@@ -44,6 +44,11 @@ export default function AdminDashboard({ setCurrentView }) {
   });
 
   const [chatInput, setChatInput] = useState('');
+  const [showDbModal, setShowDbModal] = useState(false);
+  const [restoreFile, setRestoreFile] = useState(null);
+  const [isRestoring, setIsRestoring] = useState(false);
+  const [restoreError, setRestoreError] = useState('');
+  const [restoreSuccess, setRestoreSuccess] = useState('');
 
   const fetchStats = async () => {
     try {
@@ -83,6 +88,62 @@ export default function AdminDashboard({ setCurrentView }) {
     } catch (err) {
       console.error('Download backup error:', err);
       alert(lang === 'ar' ? `فشل تحميل النسخة الاحتياطية: ${err.message}` : `Failed to download backup: ${err.message}`);
+    }
+  };
+
+  const handleRestore = async (e) => {
+    e.preventDefault();
+    if (!restoreFile) return;
+
+    const confirmMsg = lang === 'ar' 
+      ? '⚠️ تنبيه حرج: سيقوم هذا الإجراء بمسح كافة البيانات والمنتجات والطلبيات الحالية واستبدالها بالنسخة الاحتياطية. هل أنت متأكد من رغبتك بالاستمرار؟'
+      : '⚠️ CRITICAL WARNING: This action will completely wipe all current data, products, and orders, replacing them with the backup data. Are you sure you want to proceed?';
+    
+    if (!window.confirm(confirmMsg)) return;
+
+    setIsRestoring(true);
+    setRestoreError('');
+    setRestoreSuccess('');
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const jsonData = JSON.parse(event.target.result);
+          const res = await fetch(`${apiBase}/admin/restore`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(jsonData)
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            setRestoreSuccess(lang === 'ar' ? data.message_ar : data.message_en);
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
+          } else {
+            const errData = await res.json().catch(() => ({}));
+            setRestoreError(errData.error_ar || errData.error_en || 'Restore failed');
+          }
+        } catch (parseErr) {
+          setRestoreError(lang === 'ar' ? 'ملف النسخة الاحتياطية غير صالح أو ليس بتنسيق JSON صحيح' : 'The backup file is invalid or not in correct JSON format');
+        } finally {
+          setIsRestoring(false);
+        }
+      };
+      reader.onerror = () => {
+        setRestoreError(lang === 'ar' ? 'خطأ في قراءة ملف النسخة الاحتياطية' : 'Error reading the backup file');
+        setIsRestoring(false);
+      };
+      reader.readAsText(restoreFile);
+    } catch (err) {
+      console.error('Restore error:', err);
+      setRestoreError(lang === 'ar' ? 'حدث خطأ غير متوقع أثناء الاستعادة' : 'An unexpected error occurred during restore');
+      setIsRestoring(false);
     }
   };
 
@@ -322,7 +383,7 @@ export default function AdminDashboard({ setCurrentView }) {
             <div style={{ padding: '0 10px', marginTop: 'auto' }}>
               <button
                 type="button"
-                onClick={handleDownloadBackup}
+                onClick={() => setShowDbModal(true)}
                 style={{
                   width: '100%',
                   padding: '10px 14px',
@@ -343,7 +404,7 @@ export default function AdminDashboard({ setCurrentView }) {
                 onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
               >
                 <Database size={16} />
-                <span>{lang === 'ar' ? 'نسخ احتياطي للموقع' : 'Download Backup'}</span>
+                <span>{lang === 'ar' ? 'نسخ احتياطي واستعادة' : 'Backup & Restore'}</span>
               </button>
             </div>
           </>
@@ -720,6 +781,227 @@ export default function AdminDashboard({ setCurrentView }) {
       </main>
 
 
+      {/* Backup & Restore Modal */}
+      {showDbModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '20px'
+        }}>
+          <div className="dashboard-card animate-fade" style={{
+            maxWidth: '650px',
+            width: '100%',
+            padding: '24px',
+            position: 'relative',
+            backgroundColor: 'var(--bg-secondary)',
+            border: '1px solid var(--border-color)',
+            boxShadow: 'var(--shadow-xl)',
+            borderRadius: '16px'
+          }}>
+            {/* Close Button */}
+            <button
+              onClick={() => {
+                setShowDbModal(false);
+                setRestoreFile(null);
+                setRestoreError('');
+                setRestoreSuccess('');
+              }}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: lang === 'ar' ? 'auto' : '16px',
+                left: lang === 'ar' ? '16px' : 'auto',
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-light)',
+                cursor: 'pointer',
+                padding: '4px',
+                borderRadius: '50%',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            >
+              <X size={20} />
+            </button>
+
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+              <Database size={22} color="var(--accent-red-gold)" style={{ transform: lang === 'ar' ? 'scaleX(-1)' : 'none' }} />
+              <span>{lang === 'ar' ? 'إدارة النسخ الاحتياطي والاستعادة للموقع' : 'Site Backup & Restore Management'}</span>
+            </h3>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px', marginTop: '10px' }}>
+              
+              {/* Left Column: Backup */}
+              <div style={{
+                padding: '16px',
+                borderRadius: '12px',
+                border: '1px solid var(--border-color)',
+                backgroundColor: 'var(--bg-tertiary)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                gap: '16px'
+              }}>
+                <div>
+                  <h4 style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Database size={18} color="var(--accent-blue)" />
+                    <span>{lang === 'ar' ? 'نسخ احتياطي (Backup)' : 'Create Backup'}</span>
+                  </h4>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', lineHeight: '1.4' }}>
+                    {lang === 'ar'
+                      ? 'قم بتحميل ملف JSON يحتوي على كامل قاعدة بيانات الموقع تشمل المنتجات، التصنيفات، الصور، المستخدمين، الطلبيات والإعدادات لحفظها بأمان.'
+                      : 'Download a JSON file containing the complete database: products, categories, base64 images, users, orders, and configuration.'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleDownloadBackup}
+                  className="input-field"
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    backgroundColor: 'var(--accent-blue)',
+                    color: 'white',
+                    border: 'none',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    borderRadius: '8px',
+                    textAlign: 'center'
+                  }}
+                >
+                  {lang === 'ar' ? 'تحميل النسخة الاحتياطية' : 'Download JSON Backup'}
+                </button>
+              </div>
+
+              {/* Right Column: Restore */}
+              <div style={{
+                padding: '16px',
+                borderRadius: '12px',
+                border: '1px solid var(--border-color)',
+                backgroundColor: 'var(--bg-tertiary)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                gap: '16px'
+              }}>
+                <div>
+                  <h4 style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--accent-red-gold)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Upload size={18} color="var(--accent-red-gold)" />
+                    <span>{lang === 'ar' ? 'استعادة قاعدة البيانات (Restore)' : 'Restore Backup'}</span>
+                  </h4>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', lineHeight: '1.4' }}>
+                    {lang === 'ar'
+                      ? 'اختر ملف نسخة احتياطية (JSON) تم تحميله سابقاً لاستعادة كامل محتوى وبيانات المتجر لآخر نقطة حفظ.'
+                      : 'Select a previously downloaded backup JSON file to restore the entire store database back to that point.'}
+                  </p>
+                </div>
+
+                <form onSubmit={handleRestore} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <input
+                    type="file"
+                    accept=".json"
+                    onChange={(e) => {
+                      setRestoreFile(e.target.files[0]);
+                      setRestoreError('');
+                      setRestoreSuccess('');
+                    }}
+                    style={{
+                      fontSize: '0.75rem',
+                      width: '100%',
+                      padding: '6px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-color)',
+                      backgroundColor: 'var(--bg-primary)',
+                      color: 'var(--text-primary)'
+                    }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={!restoreFile || isRestoring}
+                    className="input-field"
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      backgroundColor: 'var(--accent-red-gold, #d97706)',
+                      color: 'white',
+                      border: 'none',
+                      fontWeight: '700',
+                      cursor: restoreFile && !isRestoring ? 'pointer' : 'not-allowed',
+                      opacity: restoreFile && !isRestoring ? 1 : 0.6,
+                      borderRadius: '8px',
+                      textAlign: 'center'
+                    }}
+                  >
+                    {isRestoring 
+                      ? (lang === 'ar' ? 'جاري الاستعادة...' : 'Restoring...') 
+                      : (lang === 'ar' ? 'بدء استعادة البيانات' : 'Restore Backup Now')}
+                  </button>
+                </form>
+              </div>
+
+            </div>
+
+            {/* Error & Success Messages */}
+            {restoreError && (
+              <div style={{
+                marginTop: '16px',
+                padding: '10px 14px',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                color: '#ef4444',
+                fontSize: '0.8rem',
+                fontWeight: '600',
+                borderRadius: '8px'
+              }}>
+                ⚠️ {restoreError}
+              </div>
+            )}
+
+            {restoreSuccess && (
+              <div style={{
+                marginTop: '16px',
+                padding: '10px 14px',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                color: '#10b981',
+                fontSize: '0.8rem',
+                fontWeight: '600',
+                borderRadius: '8px'
+              }}>
+                ✅ {restoreSuccess}
+              </div>
+            )}
+
+            {/* General Warning */}
+            <div style={{
+              marginTop: '16px',
+              padding: '10px 14px',
+              backgroundColor: 'rgba(217, 119, 6, 0.05)',
+              border: '1px solid rgba(217, 119, 6, 0.2)',
+              borderRadius: '8px',
+              fontSize: '0.75rem',
+              color: 'var(--text-light)',
+              lineHeight: '1.4'
+            }}>
+              <strong>{lang === 'ar' ? '⚠️ تحذير أمني هام:' : '⚠️ Important Security Warning:'}</strong>{' '}
+              {lang === 'ar'
+                ? 'استعادة نسخة احتياطية ستقوم بحذف جميع البيانات والمنتجات والحسابات والطلبيات الحالية. لا تقم بهذا الإجراء إلا إذا كنت متأكداً تماماً.'
+                : 'Restoring a backup will completely delete all current data, products, accounts, and orders. Do not perform this action unless you are absolutely sure.'}
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }

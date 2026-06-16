@@ -66,6 +66,7 @@ router.put('/settings/banners', authenticateToken, requirePermission('settings')
 router.post('/analytics/hit', settingsController.trackHit);
 router.get('/reports', authenticateToken, requirePermission('reports'), orderController.getReports);
 router.get('/admin/backup', authenticateToken, requireAdmin, settingsController.backupDatabase);
+router.post('/admin/restore', authenticateToken, requireAdmin, settingsController.restoreDatabase);
 
 // --- Chat Routes ---
 router.post('/chat/send', authenticateToken, chatController.sendMessage);

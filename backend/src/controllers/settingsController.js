@@ -163,3 +163,62 @@ exports.backupDatabase = async (req, res) => {
   }
 };
 
+exports.restoreDatabase = async (req, res) => {
+  const backupData = req.body;
+  if (!backupData || typeof backupData !== 'object') {
+    return res.status(400).json({ 
+      error_ar: 'الرجاء إدخال ملف نسخة احتياطية صالح بصيغة JSON', 
+      error_en: 'Please provide a valid backup JSON file' 
+    });
+  }
+
+  const tables = ['settings', 'users', 'categories', 'merchants', 'products', 'orders', 'chats', 'coupons', 'notifications', 'page_views'];
+  
+  // Verify that at least some key tables are present to check validity
+  if (!backupData.settings && !backupData.users && !backupData.products) {
+    return res.status(400).json({
+      error_ar: 'ملف النسخة الاحتياطية غير صالح أو فارغ',
+      error_en: 'Backup file is invalid or empty'
+    });
+  }
+
+  try {
+    // Start transaction
+    await db.runAsync('BEGIN TRANSACTION');
+
+    for (const table of tables) {
+      if (backupData[table] && Array.isArray(backupData[table])) {
+        // Wiping the current table records
+        await db.runAsync(`DELETE FROM ${table}`);
+        const rows = backupData[table];
+        if (rows.length === 0) continue;
+
+        // Construct dynamic insert statement
+        const keys = Object.keys(rows[0]);
+        const placeholders = keys.map(() => '?').join(', ');
+        const sql = `INSERT INTO ${table} (${keys.join(', ')}) VALUES (${placeholders})`;
+
+        for (const row of rows) {
+          const values = keys.map(k => row[k]);
+          await db.runAsync(sql, values);
+        }
+      }
+    }
+
+    await db.runAsync('COMMIT');
+    res.json({
+      message_ar: 'تم استعادة نسخة الموقع الاحتياطية بنجاح!',
+      message_en: 'Site backup restored successfully!'
+    });
+  } catch (err) {
+    // Rollback changes on error
+    await db.runAsync('ROLLBACK').catch(() => {});
+    console.error('Restore database error:', err);
+    res.status(500).json({ 
+      error_ar: 'خطأ أثناء استعادة النسخة الاحتياطية، تم إلغاء التغييرات لسلامة النظام', 
+      error_en: 'Error restoring backup, changes rolled back for safety' 
+    });
+  }
+};
+
+
