@@ -332,10 +332,40 @@ export default function AdminSettings() {
           </div>
           <div>
             <label className="input-label">{lang === 'ar' ? 'حالة الموقع (Site Status)' : 'Site Status'}</label>
-            <select className="input-field" value={siteOffline} onChange={(e) => setSiteOffline(parseInt(e.target.value))}>
-              <option value={0}>{lang === 'ar' ? 'متصل - متاح للجميع (Online)' : 'Online - Available for everyone'}</option>
-              <option value={1}>{lang === 'ar' ? 'مغلق - وضع الصيانة (Offline / Maintenance)' : 'Offline / Under Maintenance'}</option>
-            </select>
+            <button
+              type="button"
+              onClick={() => setSiteOffline(siteOffline === 1 ? 0 : 1)}
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                borderRadius: '8px',
+                border: '1px solid var(--border-color)',
+                backgroundColor: siteOffline === 1 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                color: siteOffline === 1 ? '#ef4444' : '#10b981',
+                fontWeight: '700',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                fontSize: '0.85rem',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <span style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                backgroundColor: siteOffline === 1 ? '#ef4444' : '#10b981',
+                display: 'inline-block'
+              }}></span>
+              <span>
+                {siteOffline === 1 
+                  ? (lang === 'ar' ? 'مغلق - وضع الصيانة (Offline)' : 'Offline / Maintenance')
+                  : (lang === 'ar' ? 'متصل - متاح للجميع (Online)' : 'Online / Active')
+                }
+              </span>
+            </button>
           </div>
           <div>
             <label className="input-label">إيميل التواصل (Contact Email)</label>
