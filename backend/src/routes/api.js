@@ -22,6 +22,7 @@ router.delete('/auth/delete-account', authenticateToken, authController.deleteAc
 // --- User Management (Admin Only) ---
 router.get('/admin/users', authenticateToken, requirePermission('users'), authController.getUsers);
 router.put('/admin/users/:id/permissions', authenticateToken, requirePermission('users'), authController.updateUserRoleAndPermissions);
+router.delete('/admin/users/:id', authenticateToken, requirePermission('users'), authController.adminDeleteUser);
 
 // --- Category Routes ---
 router.get('/categories', categoryController.getCategories);

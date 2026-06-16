@@ -5,7 +5,7 @@ import { useChat } from '../../context/ChatContext';
 import { 
   Package, Folder, ShoppingBag, Users, BarChart3, Settings, Tag, ShieldAlert,
   DollarSign, TrendingUp, AlertTriangle, ArrowRight, MessageSquare, Send, Store,
-  ExternalLink
+  ExternalLink, Database
 } from 'lucide-react';
 
 // Sub-components
@@ -20,7 +20,7 @@ import AdminMerchants from './AdminMerchants';
 
 export default function AdminDashboard({ setCurrentView }) {
   const { lang, formatPrice, t, apiBase } = useApp();
-  const { token, hasPermission } = useAuth();
+  const { token, hasPermission, user: currentUser } = useAuth();
   const { chatUsers, activeChatUserId, setActiveChatUserId, messages, sendMessage } = useChat();
 
   const [activeTab, setActiveTab] = useState(() => {
@@ -56,6 +56,33 @@ export default function AdminDashboard({ setCurrentView }) {
       }
     } catch (err) {
       console.error('Fetch admin stats error:', err);
+    }
+  };
+
+  const handleDownloadBackup = async () => {
+    try {
+      const res = await fetch(`${apiBase}/admin/backup`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error_ar || errData.error_en || 'Backup failed');
+      }
+      
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      
+      const dateStr = new Date().toISOString().slice(0, 10);
+      a.download = `arz_mart_backup_${dateStr}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download backup error:', err);
+      alert(lang === 'ar' ? `فشل تحميل النسخة الاحتياطية: ${err.message}` : `Failed to download backup: ${err.message}`);
     }
   };
 
@@ -288,6 +315,39 @@ export default function AdminDashboard({ setCurrentView }) {
             );
           })}
         </nav>
+
+        {currentUser?.role === 'admin' && (
+          <>
+            <div style={{ flex: 1 }}></div>
+            <div style={{ padding: '0 10px', marginTop: 'auto' }}>
+              <button
+                type="button"
+                onClick={handleDownloadBackup}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  backgroundColor: 'var(--accent-red-gold, #d97706)',
+                  color: 'white',
+                  border: 'none',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  fontSize: '0.85rem',
+                  transition: 'transform 0.15s ease, opacity 0.15s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+              >
+                <Database size={16} />
+                <span>{lang === 'ar' ? 'نسخ احتياطي للموقع' : 'Download Backup'}</span>
+              </button>
+            </div>
+          </>
+        )}
       </aside>
 
       {/* Main Content Area */}
