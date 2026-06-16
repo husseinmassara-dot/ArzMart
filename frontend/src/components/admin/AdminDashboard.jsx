@@ -212,7 +212,11 @@ export default function AdminDashboard({ setCurrentView }) {
         padding: '20px 10px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '24px'
+        gap: '24px',
+        position: 'sticky',
+        top: '70px',
+        height: 'calc(100vh - 70px)',
+        overflowY: 'auto'
       }}>
         <div style={{ padding: '0 10px' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-primary)' }}>
@@ -377,7 +381,7 @@ export default function AdminDashboard({ setCurrentView }) {
           })}
         </nav>
 
-        {currentUser?.role === 'admin' && (
+        {(currentUser?.role === 'admin' || hasPermission('settings')) && (
           <>
             <div style={{ flex: 1 }}></div>
             <div style={{ padding: '0 10px', marginTop: 'auto' }}>
