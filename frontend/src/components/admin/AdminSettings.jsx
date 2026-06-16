@@ -70,6 +70,7 @@ export default function AdminSettings() {
   const [onlinePayEnabled, setOnlinePayEnabled] = useState(0);
   const [contactEmail, setContactEmail] = useState('');
   const [logoFile, setLogoFile] = useState(null);
+  const [siteOffline, setSiteOffline] = useState(0);
 
   // Banners states
   const [banners, setBanners] = useState([]);
@@ -87,6 +88,7 @@ export default function AdminSettings() {
       setDeliveryFee(settings.delivery_fee || 4);
       setOnlinePayEnabled(settings.online_payment_enabled || 0);
       setContactEmail(settings.contact_email || 'info@arz-mart.com');
+      setSiteOffline(settings.site_offline || 0);
       
       // Ensure all loaded banners have unique IDs for stable editing key
       const bannersWithIds = (settings.hero_banners || []).map((b, idx) => ({
@@ -194,6 +196,7 @@ export default function AdminSettings() {
     formData.append('delivery_fee', deliveryFee);
     formData.append('online_payment_enabled', onlinePayEnabled);
     formData.append('contact_email', contactEmail);
+    formData.append('site_offline', siteOffline);
     if (logoFile) {
       const compressed = await compressImage(logoFile, 200, 200, 0.7);
       formData.append('logo', compressed);
@@ -325,6 +328,13 @@ export default function AdminSettings() {
             <select className="input-field" value={onlinePayEnabled} onChange={(e) => setOnlinePayEnabled(parseInt(e.target.value))}>
               <option value={0}>إيقاف - نقدي فقط (Cash Only)</option>
               <option value={1}>تفعيل خيار الدفع الإلكتروني (Allow Online Payment)</option>
+            </select>
+          </div>
+          <div>
+            <label className="input-label">{lang === 'ar' ? 'حالة الموقع (Site Status)' : 'Site Status'}</label>
+            <select className="input-field" value={siteOffline} onChange={(e) => setSiteOffline(parseInt(e.target.value))}>
+              <option value={0}>{lang === 'ar' ? 'متصل - متاح للجميع (Online)' : 'Online - Available for everyone'}</option>
+              <option value={1}>{lang === 'ar' ? 'مغلق - وضع الصيانة (Offline / Maintenance)' : 'Offline / Under Maintenance'}</option>
             </select>
           </div>
           <div>

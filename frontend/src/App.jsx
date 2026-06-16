@@ -15,7 +15,7 @@ import PwaInstallBanner from './components/PwaInstallBanner';
 // Admin panel imports
 import AdminDashboard from './components/admin/AdminDashboard';
 
-import { Key, User, FileText, ChevronDown, Check, Star, RefreshCw, Fingerprint, Smartphone, Globe } from 'lucide-react';
+import { Key, User, FileText, ChevronDown, Check, Star, RefreshCw, Fingerprint, Smartphone, Globe, Settings } from 'lucide-react';
 
 export default function App() {
   const { lang, formatPrice, t, apiBase, settings, currency, apiHost } = useApp();
@@ -369,6 +369,10 @@ export default function App() {
     setMinRating('');
   };
 
+  const isSiteOffline = settings?.site_offline === 1;
+  const isManagementUser = user?.role === 'admin' || user?.role === 'employee';
+  const showMaintenance = isSiteOffline && !isManagementUser && currentView !== 'login' && currentView !== 'register';
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       
@@ -562,7 +566,84 @@ export default function App() {
       )}
 
       {/* 3. Main Views router */}
-      {currentView === 'admin' ? (
+      {showMaintenance ? (
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '40px 24px',
+          textAlign: 'center',
+          backgroundColor: 'var(--bg-primary)',
+          color: 'var(--text-primary)',
+          minHeight: '70vh',
+          animation: 'fadeIn 0.5s ease-out'
+        }}>
+          <div style={{
+            maxWidth: '500px',
+            padding: '40px 30px',
+            borderRadius: '16px',
+            backgroundColor: 'var(--bg-secondary)',
+            border: '1px solid var(--border-color)',
+            boxShadow: 'var(--shadow-lg)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '20px'
+          }}>
+            <div style={{
+              width: '80px',
+              height: '80px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(217, 119, 6, 0.1)',
+              color: '#d97706',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '10px'
+            }}>
+              <Settings size={40} className="animate-spin" style={{ animationDuration: '6s' }} />
+            </div>
+
+            <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+              {lang === 'ar' ? 'الموقع قيد الصيانة مؤقتاً' : 'Website Under Maintenance'}
+            </h2>
+
+            <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+              {lang === 'ar'
+                ? 'نحن نقوم ببعض التحديثات والتحسينات لنوفر لكم تجربة تسوق أفضل. سنعود للعمل قريباً جداً، شكراً لتفهمكم وصبركم.'
+                : 'We are performing some scheduled updates and improvements to provide you with a better shopping experience. We will be back online shortly. Thank you for your patience.'}
+            </p>
+
+            <hr style={{ width: '100%', border: 'none', borderBottom: '1px solid var(--border-color)', margin: '10px 0' }} />
+
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>
+              {lang === 'ar' ? 'للاستفسارات الطارئة يرجى التواصل عبر البريد الإلكتروني:' : 'For urgent inquiries, please contact us at:'}
+              {settings?.contact_email && (
+                <div style={{ marginTop: '4px', fontWeight: 'bold', color: 'var(--accent-blue)' }}>
+                  {settings.contact_email}
+                </div>
+              )}
+            </div>
+            
+            <button
+              onClick={() => setCurrentView('login')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-light)',
+                fontSize: '0.75rem',
+                textDecoration: 'underline',
+                cursor: 'pointer',
+                marginTop: '10px'
+              }}
+            >
+              {lang === 'ar' ? 'تسجيل دخول الإدارة (Admin Login)' : 'Admin Login'}
+            </button>
+          </div>
+        </div>
+      ) : currentView === 'admin' ? (
         <AdminDashboard setCurrentView={setCurrentView} />
       ) : currentView === 'privacy' ? (
         /* PRIVACY POLICY VIEW */

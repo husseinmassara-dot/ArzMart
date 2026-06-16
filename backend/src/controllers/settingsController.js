@@ -18,7 +18,7 @@ exports.getSettings = async (req, res) => {
 };
 
 exports.updateSettings = async (req, res) => {
-  const { app_name, exchange_rate, free_delivery_threshold, delivery_fee, online_payment_enabled, contact_email } = req.body;
+  const { app_name, exchange_rate, free_delivery_threshold, delivery_fee, online_payment_enabled, contact_email, site_offline } = req.body;
 
   try {
     const settings = await db.getAsync('SELECT * FROM settings ORDER BY id DESC LIMIT 1');
@@ -35,18 +35,19 @@ exports.updateSettings = async (req, res) => {
     const delFee = delivery_fee !== undefined ? parseFloat(delivery_fee) : (settings ? settings.delivery_fee : 4);
     const payEnabled = online_payment_enabled !== undefined ? parseInt(online_payment_enabled) : (settings ? settings.online_payment_enabled : 0);
     const contactEmail = contact_email !== undefined ? contact_email : (settings ? settings.contact_email : 'info@arz-mart.com');
+    const siteOfflineVal = site_offline !== undefined ? parseInt(site_offline) : (settings ? (settings.site_offline || 0) : 0);
 
     if (settings) {
       await db.runAsync(`
         UPDATE settings 
-        SET app_name = ?, logo_url = ?, exchange_rate = ?, free_delivery_threshold = ?, delivery_fee = ?, online_payment_enabled = ?, contact_email = ?
+        SET app_name = ?, logo_url = ?, exchange_rate = ?, free_delivery_threshold = ?, delivery_fee = ?, online_payment_enabled = ?, contact_email = ?, site_offline = ?
         WHERE id = ?
-      `, [appName, logoUrl, exRate, freeThreshold, delFee, payEnabled, contactEmail, id]);
+      `, [appName, logoUrl, exRate, freeThreshold, delFee, payEnabled, contactEmail, siteOfflineVal, id]);
     } else {
       await db.runAsync(`
-        INSERT INTO settings (app_name, logo_url, exchange_rate, free_delivery_threshold, delivery_fee, online_payment_enabled, contact_email, hero_banners)
-        VALUES (?, ?, ?, ?, ?, ?, ?, '[]')
-      `, [appName, logoUrl, exRate, freeThreshold, delFee, payEnabled, contactEmail]);
+        INSERT INTO settings (app_name, logo_url, exchange_rate, free_delivery_threshold, delivery_fee, online_payment_enabled, contact_email, site_offline, hero_banners)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, '[]')
+      `, [appName, logoUrl, exRate, freeThreshold, delFee, payEnabled, contactEmail, siteOfflineVal]);
     }
 
     res.json({
@@ -59,7 +60,8 @@ exports.updateSettings = async (req, res) => {
         free_delivery_threshold: freeThreshold,
         delivery_fee: delFee,
         online_payment_enabled: payEnabled,
-        contact_email: contactEmail
+        contact_email: contactEmail,
+        site_offline: siteOfflineVal
       }
     });
   } catch (err) {

@@ -242,12 +242,16 @@ async function initializeDatabasePostgres() {
         delivery_fee DOUBLE PRECISION DEFAULT 4,
         hero_banners TEXT DEFAULT '[]',
         online_payment_enabled INTEGER DEFAULT 0,
-        contact_email TEXT DEFAULT 'info@arz-mart.com'
+        contact_email TEXT DEFAULT 'info@arz-mart.com',
+        site_offline INTEGER DEFAULT 0
       )
     `);
     
     try {
       await pgPool.query("ALTER TABLE settings ADD COLUMN IF NOT EXISTS contact_email TEXT DEFAULT 'info@arz-mart.com'");
+    } catch (e) {}
+    try {
+      await pgPool.query("ALTER TABLE settings ADD COLUMN IF NOT EXISTS site_offline INTEGER DEFAULT 0");
     } catch (e) {}
 
     // 2. Users Table
@@ -499,14 +503,21 @@ function initializeDatabase() {
         delivery_fee REAL DEFAULT 4,
         hero_banners TEXT DEFAULT '[]',
         online_payment_enabled INTEGER DEFAULT 0,
-        contact_email TEXT DEFAULT 'info@arz-mart.com'
+        contact_email TEXT DEFAULT 'info@arz-mart.com',
+        site_offline INTEGER DEFAULT 0
       )
     `, [], () => {
       const alterQuery = isPostgres 
         ? "ALTER TABLE settings ADD COLUMN IF NOT EXISTS contact_email TEXT DEFAULT 'info@arz-mart.com'" 
         : "ALTER TABLE settings ADD COLUMN contact_email TEXT DEFAULT 'info@arz-mart.com'";
       db.run(alterQuery, [], (err) => {
-        // Ignore errors for SQLite if column already exists
+        // Ignore errors
+      });
+      const alterOffline = isPostgres 
+        ? "ALTER TABLE settings ADD COLUMN IF NOT EXISTS site_offline INTEGER DEFAULT 0" 
+        : "ALTER TABLE settings ADD COLUMN site_offline INTEGER DEFAULT 0";
+      db.run(alterOffline, [], (err) => {
+        // Ignore errors
       });
     });
 
