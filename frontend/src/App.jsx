@@ -19,7 +19,7 @@ import { Key, User, FileText, ChevronDown, Check, Star, RefreshCw, Fingerprint, 
 
 export default function App() {
   const { lang, formatPrice, t, apiBase, settings, currency, apiHost } = useApp();
-  const { user, login, register, token } = useAuth();
+  const { user, login, register, token, logout } = useAuth();
   const { setIsCartOpen, cartItems } = useCart();
   const { isChatOpen, setIsChatOpen } = useChat();
 
@@ -64,6 +64,60 @@ export default function App() {
 
   // User orders history state
   const [userOrders, setUserOrders] = useState([]);
+
+  // Network and account states
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  const handleDeleteAccountClick = async () => {
+    const confirm1 = window.confirm(
+      lang === 'ar'
+        ? '⚠️ تحذير: هل أنت متأكد تماماً من رغبتك في حذف حسابك الشخصي بشكل نهائي؟ لا يمكن التراجع عن هذا الإجراء وسيتم مسح كافة رسائلك وبياناتك الشخصية.'
+        : '⚠️ Warning: Are you absolutely sure you want to permanently delete your account? This action cannot be undone and all your messages and personal details will be erased.'
+    );
+    if (!confirm1) return;
+
+    const confirm2 = window.confirm(
+      lang === 'ar'
+        ? 'للتأكيد النهائي: هل ترغب حقاً في إزالة حسابك الآن؟ سيتم تسجيل خروجك فوراً.'
+        : 'Final Confirmation: Do you really want to remove your account now? You will be logged out immediately.'
+    );
+    if (!confirm2) return;
+
+    try {
+      const res = await fetch(`${apiBase}/auth/delete-account`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(lang === 'ar' ? data.message_ar : data.message_en);
+        localStorage.removeItem('biometric_username');
+        localStorage.removeItem('biometric_password');
+        logout();
+        setCurrentView('store');
+      } else {
+        alert(data.error_ar || data.error_en || 'Error deleting account');
+      }
+    } catch (err) {
+      console.error(err);
+      alert(lang === 'ar' ? 'خطأ في الاتصال بالخادم، يرجى التحقق من الإنترنت' : 'Error connecting to server, please check internet');
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -318,7 +372,6 @@ export default function App() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       
-      {/* 1. Header Navigation */}
       <Header 
         currentView={currentView} 
         setCurrentView={setCurrentView} 
@@ -337,6 +390,35 @@ export default function App() {
           window.history.pushState(null, '', '/');
         }}
       />
+
+      {/* Offline Mode Banner */}
+      {isOffline && (
+        <div style={{
+          position: 'sticky',
+          top: '70px',
+          zIndex: 99,
+          background: 'rgba(217, 119, 6, 0.95)',
+          color: 'white',
+          backdropFilter: 'blur(8px)',
+          textAlign: 'center',
+          padding: '10px 16px',
+          fontSize: '0.9rem',
+          fontWeight: 'bold',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          borderBottom: '1px solid rgba(255,255,255,0.1)'
+        }}>
+          <Globe size={16} className="animate-pulse" />
+          <span>
+            {lang === 'ar' 
+              ? '⚠️ أنت تتصفح حالياً في وضع عدم الاتصال بالإنترنت. المنتجات والتصنيفات المعروضة هي من التخزين المؤقت.' 
+              : '⚠️ You are browsing in Offline Mode. Displayed products and categories are loaded from cache.'}
+          </span>
+        </div>
+      )}
 
       {/* 2. Congratulatory New User Discount Banner Modal */}
       {congratsPromo && (
@@ -571,7 +653,22 @@ export default function App() {
                 </section>
 
                 <section>
-                  <h3 style={{ color: 'var(--accent-blue)', fontWeight: '700', marginBottom: '8px' }}>٦. التغييرات على هذه السياسة</h3>
+                  <h3 style={{ color: 'var(--accent-blue)', fontWeight: '700', marginBottom: '8px' }}>٦. حذف الحساب والبيانات</h3>
+                  <p>
+                    يحق لجميع المستخدمين حذف حساباتهم وبياناتهم الشخصية بالكامل في أي وقت. يمكنك القيام بذلك بسهولة من خلال الانتقال إلى صفحة حسابك الشخصي والضغط على زر <strong>"حذف الحساب نهائياً"</strong>.
+                  </p>
+                  <p style={{ marginTop: '6px' }}>
+                    عند تأكيد حذف الحساب:
+                  </p>
+                  <ul style={{ listStyleType: 'disc', paddingRight: '20px', marginTop: '6px' }}>
+                    <li>يتم مسح معلوماتك الشخصية واسم المستخدم وكلمة المرور والبريد الإلكتروني من خوادمنا بشكل نهائي.</li>
+                    <li>يتم حذف كافة المحادثات والرسائل والدردشات الخاصة بك مع الإدارة بالكامل.</li>
+                    <li>يتم إلغاء ربط طلبياتك السابقة بهويتك الشخصية وجعلها مجهولة الهوية (Anonymized) للاحتفاظ بالتقارير المالية والمبيعات الإجمالية للشركة فقط دون حفظ أي معلومات تدل عليك.</li>
+                  </ul>
+                </section>
+
+                <section>
+                  <h3 style={{ color: 'var(--accent-blue)', fontWeight: '700', marginBottom: '8px' }}>٧. التغييرات على هذه السياسة</h3>
                   <p>
                     قد نقوم بتحديث سياسة الخصوصية هذه من وقت لآخر لتواكب التحديثات القانونية أو التقنية. سيتم نشر أي تغييرات في هذه الصفحة مع تحديث تاريخ السريان المذكور في الأعلى.
                   </p>
@@ -624,7 +721,22 @@ export default function App() {
                 </section>
 
                 <section>
-                  <h3 style={{ color: 'var(--accent-blue)', fontWeight: '700', marginBottom: '8px' }}>6. Changes to This Policy</h3>
+                  <h3 style={{ color: 'var(--accent-blue)', fontWeight: '700', marginBottom: '8px' }}>6. Account and Data Deletion</h3>
+                  <p>
+                    All users have the right to delete their accounts and personal data completely at any time. You can do this easily by going to your profile section and clicking the <strong>"Permanently Delete Account"</strong> button.
+                  </p>
+                  <p style={{ marginTop: '6px' }}>
+                    Upon confirming the account deletion:
+                  </p>
+                  <ul style={{ listStyleType: 'disc', paddingLeft: '20px', marginTop: '6px' }}>
+                    <li>Your personal information, username, password, and email are permanently erased from our servers.</li>
+                    <li>All your chats and message history with the administration are completely deleted.</li>
+                    <li>Your previous orders will be decoupled from your identity and anonymized, preserving them solely for financial and sales reports without any identifying information.</li>
+                  </ul>
+                </section>
+
+                <section>
+                  <h3 style={{ color: 'var(--accent-blue)', fontWeight: '700', marginBottom: '8px' }}>7. Changes to This Policy</h3>
                   <p>
                     We may update this Privacy Policy from time to time. Any changes will be published on this page with the updated last modified date shown above.
                   </p>
@@ -866,53 +978,129 @@ export default function App() {
 
       ) : currentView === 'orders' ? (
 
-        /* USER ORDER HISTORY VIEW */
-        <div className="container" style={{ flex: '1', padding: '24px 0' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '20px' }}>{t('myOrders')}</h2>
-          {userOrders.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-light)' }}>
-              ليس لديك أي طلبات سابقة مسجلة. (No order history found.)
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {userOrders.map((o) => (
-                <div key={o.id} className="dashboard-card" style={{ padding: '20px', gap: '10px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
-                    <div>
-                      <strong>رقم الطلب: #{o.id}</strong>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '2px' }}>{o.tracking_number}</div>
-                    </div>
-                    <span style={{
-                      fontSize: '0.75rem',
-                      fontWeight: 'bold',
-                      padding: '4px 12px',
-                      borderRadius: '12px',
-                      backgroundColor: o.status === 'pending' ? 'rgba(239,68,68,0.1)' : o.status === 'processing' ? 'rgba(59,130,246,0.1)' : o.status === 'shipped' ? 'rgba(217,119,6,0.1)' : 'rgba(16,185,129,0.1)',
-                      color: o.status === 'pending' ? '#ef4444' : o.status === 'processing' ? 'var(--accent-blue)' : o.status === 'shipped' ? '#d97706' : '#10b981'
-                    }}>
-                      {t(o.status)}
-                    </span>
-                  </div>
+        /* USER ORDER HISTORY & PROFILE VIEW */
+        <div className="container" style={{ flex: '1', padding: '24px 0', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          
+          {/* User Profile Details Card */}
+          {user && (
+            <div className="animate-fade dashboard-card" style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <User size={20} color="var(--accent-blue)" />
+                  <span>{lang === 'ar' ? 'بيانات الملف الشخصي' : 'User Profile Details'}</span>
+                </h3>
+                {user.role === 'user' && (
+                  <button
+                    onClick={handleDeleteAccountClick}
+                    style={{
+                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                      color: '#ef4444',
+                      border: '1px solid rgba(239, 68, 68, 0.2)',
+                      padding: '6px 16px',
+                      borderRadius: '20px',
+                      fontWeight: '700',
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.backgroundColor = '#ef4444';
+                      e.target.style.color = 'white';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                      e.target.style.color = '#ef4444';
+                    }}
+                  >
+                    {lang === 'ar' ? 'حذف الحساب نهائياً' : 'Permanently Delete Account'}
+                  </button>
+                )}
+              </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
-                    <div style={{ fontSize: '0.85rem' }}>
-                      {o.items.map((item, idx) => (
-                        <div key={idx} style={{ color: 'var(--text-secondary)' }}>
-                          {item.quantity}x {lang === 'ar' ? item.name_ar : item.name_en}
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{ textAlign: 'end' }}>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>{lang === 'ar' ? 'إجمالي الطلبية:' : 'Order Total:'}</span>
-                      <h4 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--accent-red-gold)' }}>
-                        {formatPrice(o.total_usd)}
-                      </h4>
-                    </div>
-                  </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-light)', display: 'block' }}>
+                    {lang === 'ar' ? 'الاسم الكامل' : 'Full Name'}
+                  </span>
+                  <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>{user.full_name || '—'}</strong>
                 </div>
-              ))}
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-light)', display: 'block' }}>
+                    {lang === 'ar' ? 'اسم المستخدم' : 'Username'}
+                  </span>
+                  <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>{user.username}</strong>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-light)', display: 'block' }}>
+                    {lang === 'ar' ? 'رقم الهاتف' : 'Phone Number'}
+                  </span>
+                  <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>{user.phone || '—'}</strong>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-light)', display: 'block' }}>
+                    {lang === 'ar' ? 'البريد الإلكتروني' : 'Email Address'}
+                  </span>
+                  <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>{user.email || '—'}</strong>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-light)', display: 'block' }}>
+                    {lang === 'ar' ? 'تاريخ الانضمام' : 'Join Date'}
+                  </span>
+                  <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>
+                    {user.created_at ? new Date(user.created_at).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}
+                  </strong>
+                </div>
+              </div>
             </div>
           )}
+
+          <div>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '20px' }}>{t('myOrders')}</h2>
+            {userOrders.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-light)' }}>
+                ليس لديك أي طلبات سابقة مسجلة. (No order history found.)
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {userOrders.map((o) => (
+                  <div key={o.id} className="dashboard-card" style={{ padding: '20px', gap: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                      <div>
+                        <strong>رقم الطلب: #{o.id}</strong>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '2px' }}>{o.tracking_number}</div>
+                      </div>
+                      <span style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 'bold',
+                        padding: '4px 12px',
+                        borderRadius: '12px',
+                        backgroundColor: o.status === 'pending' ? 'rgba(239,68,68,0.1)' : o.status === 'processing' ? 'rgba(59,130,246,0.1)' : o.status === 'shipped' ? 'rgba(217,119,6,0.1)' : 'rgba(16,185,129,0.1)',
+                        color: o.status === 'pending' ? '#ef4444' : o.status === 'processing' ? 'var(--accent-blue)' : o.status === 'shipped' ? '#d97706' : '#10b981'
+                      }}>
+                        {t(o.status)}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                      <div style={{ fontSize: '0.85rem' }}>
+                        {o.items.map((item, idx) => (
+                          <div key={idx} style={{ color: 'var(--text-secondary)' }}>
+                            {item.quantity}x {lang === 'ar' ? item.name_ar : item.name_en}
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ textAlign: 'end' }}>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>{lang === 'ar' ? 'إجمالي الطلبية:' : 'Order Total:'}</span>
+                        <h4 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--accent-red-gold)' }}>
+                          {formatPrice(o.total_usd)}
+                        </h4>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
       ) : (

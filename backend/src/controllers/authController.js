@@ -124,7 +124,7 @@ exports.login = async (req, res) => {
 
 exports.getProfile = async (req, res) => {
   try {
-    const user = await db.getAsync('SELECT id, username, role, permissions, discount_used, created_at FROM users WHERE id = ?', [req.user.id]);
+    const user = await db.getAsync('SELECT id, username, role, permissions, discount_used, phone, email, full_name, created_at FROM users WHERE id = ?', [req.user.id]);
     if (!user) {
       return res.status(404).json({ error_ar: 'المستخدم غير موجود', error_en: 'User not found' });
     }
@@ -181,3 +181,74 @@ exports.updateUserRoleAndPermissions = async (req, res) => {
     res.status(500).json({ error_ar: 'خطأ أثناء تحديث الصلاحيات', error_en: 'Error updating user permissions' });
   }
 };
+
+exports.deleteAccount = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const username = req.user.username;
+
+    // Block deletion for super administrators
+    if (username === 'husseinmassara' || username === 'city-hunter') {
+      return res.status(400).json({
+        error_ar: 'لا يمكن حذف حساب المدير العام للموقع لمنع حدوث مشاكل في النظام',
+        error_en: 'General admin accounts cannot be deleted to prevent system issues'
+      });
+    }
+
+    // 1. Delete chats
+    await db.runAsync('DELETE FROM chats WHERE user_id = ?', [userId]);
+
+    // 2. Anonymize orders
+    await db.runAsync('UPDATE orders SET user_id = NULL WHERE user_id = ?', [userId]);
+
+    // 3. Delete user
+    await db.runAsync('DELETE FROM users WHERE id = ?', [userId]);
+
+    res.json({
+      message_ar: 'تم حذف حسابك وبياناتك الشخصية بنجاح.',
+      message_en: 'Your account and personal data have been deleted successfully.'
+    });
+  } catch (err) {
+    console.error('Delete account error:', err);
+    res.status(500).json({
+      error_ar: 'خطأ أثناء حذف الحساب، يرجى المحاولة لاحقاً',
+      error_en: 'Error deleting account, please try again later'
+    });
+  }
+};
+
+exports.adminDeleteUser = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const user = await db.getAsync('SELECT * FROM users WHERE id = ?', [id]);
+    if (!user) {
+      return res.status(404).json({ error_ar: 'المستخدم غير موجود', error_en: 'User not found' });
+    }
+
+    if (user.username === 'husseinmassara' || user.username === 'city-hunter') {
+      return res.status(400).json({
+        error_ar: 'لا يمكن حذف حساب المدير العام للموقع',
+        error_en: 'General admin accounts cannot be deleted'
+      });
+    }
+
+    // 1. Delete chats
+    await db.runAsync('DELETE FROM chats WHERE user_id = ?', [id]);
+
+    // 2. Anonymize orders
+    await db.runAsync('UPDATE orders SET user_id = NULL WHERE user_id = ?', [id]);
+
+    // 3. Delete user record
+    await db.runAsync('DELETE FROM users WHERE id = ?', [id]);
+
+    res.json({
+      message_ar: `تم حذف حساب المستخدم ${user.username} بنجاح.`,
+      message_en: `User account ${user.username} deleted successfully.`
+    });
+  } catch (err) {
+    console.error('Admin delete user error:', err);
+    res.status(500).json({ error_ar: 'خطأ أثناء حذف المستخدم', error_en: 'Error deleting user' });
+  }
+};
+
+

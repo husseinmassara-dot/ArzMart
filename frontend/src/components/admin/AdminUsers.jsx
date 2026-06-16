@@ -13,6 +13,7 @@ export default function AdminUsers() {
   // Permissions states
   const [role, setRole] = useState('user');
   const [perms, setPerms] = useState([]);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const permissionList = [
     { id: 'products', name_ar: 'إدارة المنتجات', name_en: 'Manage Products' },
@@ -47,6 +48,37 @@ export default function AdminUsers() {
     setSelectedUser(user);
     setRole(user.role);
     setPerms(user.permissions || []);
+    setConfirmDelete(false);
+  };
+
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${apiBase}/admin/users/${selectedUser.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (res.ok) {
+        alert(lang === 'ar' ? 'تم حذف الحساب بنجاح وتجهيل الطلبيات وحذف المحادثات' : 'Account deleted successfully, orders anonymized and chats deleted.');
+        fetchUsers();
+        setSelectedUser(null);
+        setConfirmDelete(false);
+      } else {
+        const errData = await res.json();
+        alert(errData.error_ar || errData.error_en || 'Error deleting account');
+      }
+    } catch (err) {
+      console.error(err);
+      alert(lang === 'ar' ? 'حدث خطأ أثناء حذف الحساب' : 'An error occurred while deleting the account');
+    }
   };
 
   const handleTogglePermission = (permId) => {
@@ -189,6 +221,60 @@ export default function AdminUsers() {
               <button type="button" onClick={() => setSelectedUser(null)} className="input-field" style={{ width: 'auto', padding: '8px 20px', backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: 'none', fontWeight: '600', cursor: 'pointer' }}>
                 إلغاء
               </button>
+            </div>
+
+            <hr style={{ border: 'none', borderBottom: '1px solid var(--border-color)', margin: '20px 0' }} />
+            
+            <div>
+              <h5 style={{ color: 'var(--accent-red, #ff4d4f)', fontSize: '0.9rem', fontWeight: '700', marginBottom: '8px' }}>
+                {lang === 'ar' ? 'منطقة الخطر (Danger Zone)' : 'Danger Zone'}
+              </h5>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginBottom: '12px' }}>
+                {lang === 'ar' 
+                  ? 'حذف الحساب نهائياً سيقوم بإزالة الملف الشخصي للمستخدم، وحذف جميع الرسائل والدردشات الخاصة به، وتحويل طلبياته السابقة لتكون بدون معرف مستخدم (مجهولة) للحفاظ على سرية البيانات والتقارير المالية.' 
+                  : 'Permanently deleting the account will remove the user profile, delete all their messages/chats, and anonymize their past orders for data privacy and financial report integrity.'}
+              </p>
+              <button
+                type="button"
+                onClick={handleDeleteUser}
+                className="input-field"
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  backgroundColor: confirmDelete ? 'var(--accent-red, #ff4d4f)' : 'transparent',
+                  color: confirmDelete ? 'white' : 'var(--accent-red, #ff4d4f)',
+                  border: '1px solid var(--accent-red, #ff4d4f)',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  borderRadius: '8px',
+                  transition: 'all 0.2s ease',
+                  textAlign: 'center'
+                }}
+              >
+                {confirmDelete 
+                  ? (lang === 'ar' ? '⚠️ هل أنت متأكد؟ اضغط للتأكيد النهائي للحذف' : '⚠️ Are you sure? Click to confirm permanent deletion') 
+                  : (lang === 'ar' ? 'حذف هذا الحساب نهائياً' : 'Delete Account Permanently')}
+              </button>
+              {confirmDelete && (
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(false)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-light)',
+                    fontSize: '0.75rem',
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                    marginTop: '8px',
+                    display: 'block',
+                    width: '100%',
+                    textAlign: 'center'
+                  }}
+                >
+                  {lang === 'ar' ? 'تراجع عن الحذف' : 'Cancel Deletion'}
+                </button>
+              )}
             </div>
           </form>
         ) : (

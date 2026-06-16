@@ -93,6 +93,33 @@ export default function AdminSettings() {
     }
   }, [settings]);
 
+  const handleDownloadBackup = async () => {
+    try {
+      const res = await fetch(`${apiBase}/admin/backup`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error_ar || errData.error_en || 'Backup failed');
+      }
+      
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      
+      const dateStr = new Date().toISOString().slice(0, 10);
+      a.download = `arz_mart_backup_${dateStr}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download backup error:', err);
+      alert(lang === 'ar' ? `فشل تحميل النسخة الاحتياطية: ${err.message}` : `Failed to download backup: ${err.message}`);
+    }
+  };
+
   const handleLogoChange = (e) => {
     setLogoFile(e.target.files[0]);
   };
@@ -463,6 +490,38 @@ export default function AdminSettings() {
             </button>
           )}
         </form>
+      </div>
+
+      {/* Database Utilities */}
+      <div className="dashboard-card" style={{ padding: '20px' }}>
+        <h4 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Settings size={18} color="var(--accent-red-gold)" />
+          <span>{lang === 'ar' ? 'أدوات الصيانة وقاعدة البيانات' : 'Database & Maintenance Utilities'}</span>
+        </h4>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+          {lang === 'ar' 
+            ? 'تصدير نسخة احتياطية كاملة من الموقع. تشمل النسخة كافة الإعدادات، الحسابات، المنتجات، التصنيفات، الطلبيات، والصور المخزنة بصيغة Base64.' 
+            : 'Export a complete website backup. The backup file includes all settings, accounts, products, categories, orders, and Base64 images.'}
+        </p>
+        <button
+          onClick={handleDownloadBackup}
+          className="input-field"
+          style={{
+            width: 'auto',
+            padding: '10px 24px',
+            backgroundColor: 'var(--accent-red-gold)',
+            color: 'white',
+            border: 'none',
+            fontWeight: '700',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px'
+          }}
+        >
+          <span>{lang === 'ar' ? 'تحميل نسخة احتياطية كاملة (JSON)' : 'Download Full Backup (JSON)'}</span>
+        </button>
       </div>
 
     </div>
