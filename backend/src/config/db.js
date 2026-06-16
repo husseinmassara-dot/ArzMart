@@ -284,9 +284,13 @@ async function initializeDatabasePostgres() {
         name_en TEXT NOT NULL,
         parent_id INTEGER DEFAULT NULL,
         image_url TEXT DEFAULT '',
+        sort_order INTEGER DEFAULT 0,
         FOREIGN KEY (parent_id) REFERENCES categories (id) ON DELETE CASCADE
       )
     `);
+    try {
+      await pgPool.query("ALTER TABLE categories ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0");
+    } catch (e) {}
 
     // 4. Merchants Table
     await pgPool.query(`
@@ -559,9 +563,16 @@ function initializeDatabase() {
         name_en TEXT NOT NULL,
         parent_id INTEGER DEFAULT NULL,
         image_url TEXT DEFAULT '',
+        sort_order INTEGER DEFAULT 0,
         FOREIGN KEY (parent_id) REFERENCES categories (id) ON DELETE CASCADE
       )
-    `);
+    `, [], () => {
+      // Migrate existing databases by adding sort_order column if it doesn't exist
+      const alterSortOrder = isPostgres 
+        ? "ALTER TABLE categories ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0" 
+        : "ALTER TABLE categories ADD COLUMN sort_order INTEGER DEFAULT 0";
+      db.run(alterSortOrder, [], () => { /* Ignore errors for existing columns */ });
+    });
 
     // 4. Merchants Table
     runInit(`
