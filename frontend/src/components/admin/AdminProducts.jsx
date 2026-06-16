@@ -85,6 +85,10 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
   const [colorsInput, setColorsInput] = useState('');
   const [sizesList, setSizesList] = useState([{ name: '', price: '', type: 'absolute' }]);
 
+  const [formError, setFormError] = useState('');
+  const [formSuccess, setFormSuccess] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const fetchProducts = async () => {
     try {
       const res = await fetch(`${apiBase}/products`);
@@ -138,6 +142,9 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!nameAr || !nameEn || !priceUsd) return;
+    setFormError('');
+    setFormSuccess('');
+    setIsSubmitting(true);
 
     const formData = new FormData();
     formData.append('name_ar', nameAr);
@@ -150,7 +157,7 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     formData.append('category_id', categoryId || 'null');
     formData.append('merchant_id', merchantId || 'null');
     formData.append('stock', stock);
-    
+
     // Compress and append selected files
     const compressedFiles = await Promise.all(
       selectedFiles.map(file => compressImage(file, 600, 600, 0.7))
@@ -158,7 +165,21 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     compressedFiles.forEach((file) => {
       formData.append('product_images', file);
     });
-    formData.append('existing_images', JSON.stringify(existingImages));
+
+    if (isEditing) {
+      // When editing: if no new files selected, tell backend to keep existing images.
+      // We do NOT re-send the huge base64 strings.
+      if (selectedFiles.length === 0) {
+        formData.append('keep_existing_images', 'true');
+      } else {
+        // New files selected — existing images are intentionally replaced
+        formData.append('keep_existing_images', 'false');
+      }
+    } else {
+      // For new products, no existing images to worry about
+      formData.append('existing_images', JSON.stringify([]));
+    }
+
     const colorsArray = colorsInput ? colorsInput.split(',').map(c => c.trim()).filter(Boolean) : [];
     const sizesArray = sizesList.map(opt => {
       if (!opt.name) return null;
@@ -170,7 +191,7 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     formData.append('colors', JSON.stringify(colorsArray));
     formData.append('sizes', JSON.stringify(sizesArray));
 
-    const url = isEditing 
+    const url = isEditing
       ? `${apiBase}/products/${editingId}`
       : `${apiBase}/products`;
 
@@ -184,11 +205,19 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
       });
 
       if (res.ok) {
+        setFormSuccess(isEditing ? 'تم حفظ التعديلات بنجاح ✓' : 'تم إضافة المنتج بنجاح ✓');
         resetForm();
         fetchProducts();
+        setTimeout(() => setFormSuccess(''), 4000);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        setFormError(errData.error_ar || errData.error || `فشل الحفظ (${res.status})`);
       }
     } catch (err) {
       console.error('Submit product error:', err);
+      setFormError('خطأ في الاتصال بالخادم');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -316,7 +345,7 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
           </div>
           <div>
             <label className="input-label">سعر التكلفة (Cost Price - USD) *</label>
-            <input type="number" step="0.01" required className="input-field" value={costPriceUsd} onChange={(e) => setCostPriceUsd(e.target.value)} />
+            <input type="number" step="0.01" className="input-field" value={costPriceUsd} onChange={(e) => setCostPriceUsd(e.target.value)} />
           </div>
           <div>
             <label className="input-label">السعر القديم المشطوب (USD - إن وجد)</label>
@@ -598,14 +627,29 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
             )}
           </div>
 
-          <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '10px', marginTop: '10px' }}>
-            <button type="submit" className="input-field" style={{ width: 'auto', padding: '10px 24px', backgroundColor: 'var(--accent-blue)', color: 'white', border: 'none', fontWeight: '700', cursor: 'pointer' }}>
-              {isEditing ? 'حفظ التعديلات' : 'إضافة المنتج'}
+          <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="input-field"
+              style={{ width: 'auto', padding: '10px 24px', backgroundColor: 'var(--accent-blue)', color: 'white', border: 'none', fontWeight: '700', cursor: isSubmitting ? 'not-allowed' : 'pointer', opacity: isSubmitting ? 0.7 : 1 }}
+            >
+              {isSubmitting ? 'جاري الحفظ...' : (isEditing ? 'حفظ التعديلات' : 'إضافة المنتج')}
             </button>
             {isEditing && (
               <button type="button" onClick={resetForm} className="input-field" style={{ width: 'auto', padding: '10px 24px', backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: 'none', fontWeight: '600', cursor: 'pointer' }}>
                 إلغاء
               </button>
+            )}
+            {formError && (
+              <span style={{ color: '#ef4444', fontWeight: '600', fontSize: '0.9rem', padding: '8px 12px', backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: '6px', border: '1px solid rgba(239,68,68,0.3)' }}>
+                ⚠️ {formError}
+              </span>
+            )}
+            {formSuccess && (
+              <span style={{ color: '#10b981', fontWeight: '600', fontSize: '0.9rem', padding: '8px 12px', backgroundColor: 'rgba(16,185,129,0.1)', borderRadius: '6px', border: '1px solid rgba(16,185,129,0.3)' }}>
+                {formSuccess}
+              </span>
             )}
           </div>
         </form>

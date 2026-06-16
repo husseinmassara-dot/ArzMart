@@ -189,7 +189,7 @@ exports.createProduct = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
   const { id } = req.params;
-  const { name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, stock, colors, sizes, existing_images } = req.body;
+  const { name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, stock, colors, sizes, existing_images, keep_existing_images } = req.body;
 
   try {
     const product = await db.getAsync('SELECT * FROM products WHERE id = ?', [id]);
@@ -198,23 +198,9 @@ exports.updateProduct = async (req, res) => {
     }
 
     let imageUrls = [];
-    const hasExistingField = req.body.hasOwnProperty('existing_images');
-    if (hasExistingField) {
-      try {
-        imageUrls = typeof existing_images === 'string'
-          ? JSON.parse(existing_images)
-          : (existing_images || []);
-      } catch (e) {
-        imageUrls = [];
-      }
-    }
 
-    if (req.files && req.files.length > 0) {
-      const newUrls = req.files.map(file => fileToBase64(file)).filter(Boolean);
-      imageUrls = [...imageUrls, ...newUrls];
-    }
-
-    if (!hasExistingField && (!req.files || req.files.length === 0)) {
+    if (keep_existing_images === 'true') {
+      // Frontend says: no new images uploaded, keep current images as-is
       try {
         if (product.image_url && product.image_url.startsWith('[')) {
           imageUrls = JSON.parse(product.image_url);
@@ -223,6 +209,40 @@ exports.updateProduct = async (req, res) => {
         }
       } catch (e) {
         imageUrls = product.image_url ? [product.image_url] : [];
+      }
+    } else if (keep_existing_images === 'false') {
+      // Frontend says: new images uploaded, replace existing with new ones only
+      if (req.files && req.files.length > 0) {
+        imageUrls = req.files.map(file => fileToBase64(file)).filter(Boolean);
+      }
+    } else {
+      // Legacy path: existing_images field provided in body
+      const hasExistingField = req.body.hasOwnProperty('existing_images');
+      if (hasExistingField) {
+        try {
+          imageUrls = typeof existing_images === 'string'
+            ? JSON.parse(existing_images)
+            : (existing_images || []);
+        } catch (e) {
+          imageUrls = [];
+        }
+      }
+
+      if (req.files && req.files.length > 0) {
+        const newUrls = req.files.map(file => fileToBase64(file)).filter(Boolean);
+        imageUrls = [...imageUrls, ...newUrls];
+      }
+
+      if (!hasExistingField && (!req.files || req.files.length === 0)) {
+        try {
+          if (product.image_url && product.image_url.startsWith('[')) {
+            imageUrls = JSON.parse(product.image_url);
+          } else if (product.image_url) {
+            imageUrls = [product.image_url];
+          }
+        } catch (e) {
+          imageUrls = product.image_url ? [product.image_url] : [];
+        }
       }
     }
 
@@ -268,6 +288,7 @@ exports.updateProduct = async (req, res) => {
     res.status(500).json({ error_ar: 'خطأ في تعديل المنتج', error_en: 'Error updating product' });
   }
 };
+
 
 exports.deleteProduct = async (req, res) => {
   const { id } = req.params;
