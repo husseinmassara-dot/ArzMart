@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
-import { Trash2, Edit3, Image } from 'lucide-react';
+import { Trash2, Edit3, Image, Search, Filter, RotateCcw } from 'lucide-react';
 
 const compressImage = (file, maxWidth = 600, maxHeight = 600, quality = 0.7) => {
   return new Promise((resolve) => {
@@ -89,6 +89,20 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Filter/Search states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
+  const [filterMerchant, setFilterMerchant] = useState('');
+  const [filterStatus, setFilterStatus] = useState(filterOutOfStock ? 'out_of_stock' : 'all');
+
+  useEffect(() => {
+    if (filterOutOfStock) {
+      setFilterStatus('out_of_stock');
+    } else {
+      setFilterStatus('all');
+    }
+  }, [filterOutOfStock]);
 
   const fetchProducts = async () => {
     try {
@@ -313,9 +327,40 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     setSizesList([{ name: '', price: '', cost: '', type: 'absolute' }]);
   };
 
-  const displayedProducts = filterOutOfStock
-    ? products.filter(p => Number(p.stock) <= 0)
-    : products;
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setFilterCategory('');
+    setFilterMerchant('');
+    setFilterStatus('all');
+    if (onClearFilter) {
+      onClearFilter();
+    }
+  };
+
+  const displayedProducts = products.filter(p => {
+    // Search Term
+    const sTerm = searchTerm.trim().toLowerCase();
+    const matchesSearch = !sTerm ||
+      (p.name_ar && p.name_ar.toLowerCase().includes(sTerm)) ||
+      (p.name_en && p.name_en.toLowerCase().includes(sTerm)) ||
+      (p.model_number && p.model_number.toLowerCase().includes(sTerm));
+
+    // Category
+    const matchesCategory = !filterCategory || String(p.category_id) === String(filterCategory);
+
+    // Merchant
+    const matchesMerchant = !filterMerchant || String(p.merchant_id) === String(filterMerchant);
+
+    // Status
+    let matchesStatus = true;
+    if (filterStatus === 'in_stock') {
+      matchesStatus = Number(p.stock) > 0;
+    } else if (filterStatus === 'out_of_stock') {
+      matchesStatus = Number(p.stock) <= 0;
+    }
+
+    return matchesSearch && matchesCategory && matchesMerchant && matchesStatus;
+  });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -753,6 +798,150 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
               <span>{lang === 'ar' ? `حذف المحدد (${selectedIds.length})` : `Delete Selected (${selectedIds.length})`}</span>
             </button>
           )}
+        </div>
+
+        {/* Search and Filter Panel */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+          gap: '12px', 
+          padding: '16px', 
+          marginBottom: '20px', 
+          borderRadius: '12px', 
+          backgroundColor: 'var(--bg-secondary)', 
+          border: '1px solid var(--border-color)' 
+        }}>
+          {/* Search Input */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Search size={12} />
+              {lang === 'ar' ? 'البحث عن منتج' : 'Search Product'}
+            </label>
+            <input 
+              type="text" 
+              className="input-field" 
+              style={{ margin: 0, padding: '8px 12px', fontSize: '0.9rem' }}
+              placeholder={lang === 'ar' ? 'الاسم أو رقم الموديل...' : 'Name or model number...'} 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          {/* Category Filter */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Filter size={12} />
+              {lang === 'ar' ? 'التصنيف' : 'Category'}
+            </label>
+            <select 
+              className="input-field" 
+              style={{ margin: 0, padding: '8px', fontSize: '0.9rem' }}
+              value={filterCategory} 
+              onChange={(e) => setFilterCategory(e.target.value)}
+            >
+              <option value="">{lang === 'ar' ? 'جميع التصنيفات' : 'All Categories'}</option>
+              {(() => {
+                const parents = categories.filter(c => !c.parent_id);
+                const children = categories.filter(c => c.parent_id);
+                
+                const list = [];
+                parents.forEach(p => {
+                  list.push({ ...p, depth: 0 });
+                  const subcats = children.filter(c => c.parent_id === p.id);
+                  subcats.forEach(s => {
+                    list.push({ ...s, depth: 1 });
+                    const subsub = children.filter(c => c.parent_id === s.id);
+                    subsub.forEach(ss => {
+                      list.push({ ...ss, depth: 2 });
+                    });
+                  });
+                });
+                
+                categories.forEach(c => {
+                  if (!list.some(item => item.id === c.id)) {
+                    list.push({ ...c, depth: 0 });
+                  }
+                });
+                
+                return list.map(c => {
+                  const indent = '　'.repeat(c.depth) + (c.depth > 0 ? '↳ ' : '');
+                  return (
+                    <option key={c.id} value={c.id}>
+                      {indent}{lang === 'ar' ? c.name_ar : c.name_en}
+                    </option>
+                  );
+                });
+              })()}
+            </select>
+          </div>
+
+          {/* Merchant Filter */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Filter size={12} />
+              {lang === 'ar' ? 'المورد / التاجر' : 'Merchant / Supplier'}
+            </label>
+            <select 
+              className="input-field" 
+              style={{ margin: 0, padding: '8px', fontSize: '0.9rem' }}
+              value={filterMerchant} 
+              onChange={(e) => setFilterMerchant(e.target.value)}
+            >
+              <option value="">{lang === 'ar' ? 'جميع الموردين' : 'All Suppliers'}</option>
+              {merchants.map(m => (
+                <option key={m.id} value={m.id}>
+                  {m.name} {m.company ? `(${m.company})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Stock Status Filter */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Filter size={12} />
+              {lang === 'ar' ? 'حالة المخزون' : 'Stock Status'}
+            </label>
+            <select 
+              className="input-field" 
+              style={{ margin: 0, padding: '8px', fontSize: '0.9rem' }}
+              value={filterStatus} 
+              onChange={(e) => setFilterStatus(e.target.value)}
+            >
+              <option value="all">{lang === 'ar' ? 'جميع المنتجات' : 'All Products'}</option>
+              <option value="in_stock">{lang === 'ar' ? 'متوفر بالمخزون' : 'In Stock'}</option>
+              <option value="out_of_stock">{lang === 'ar' ? 'منتهي من المخزون' : 'Out of Stock'}</option>
+            </select>
+          </div>
+
+          {/* Reset Button */}
+          <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+            <button 
+              type="button"
+              onClick={handleResetFilters}
+              style={{
+                width: '100%',
+                padding: '9px 16px',
+                borderRadius: '8px',
+                backgroundColor: 'var(--bg-tertiary)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-color)',
+                fontWeight: '700',
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--border-color)'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = 'var(--bg-tertiary)'}
+            >
+              <RotateCcw size={14} />
+              {lang === 'ar' ? 'إعادة تعيين' : 'Reset Filters'}
+            </button>
+          </div>
         </div>
 
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'start' }}>
