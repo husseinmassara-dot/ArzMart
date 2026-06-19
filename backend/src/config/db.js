@@ -323,6 +323,7 @@ async function initializeDatabasePostgres() {
         rating_count INTEGER DEFAULT 0,
         colors TEXT DEFAULT '[]',
         sizes TEXT DEFAULT '[]',
+        model_number TEXT DEFAULT '',
         FOREIGN KEY (category_id) REFERENCES categories (id) ON DELETE SET NULL,
         FOREIGN KEY (merchant_id) REFERENCES merchants (id) ON DELETE SET NULL
       )
@@ -333,6 +334,9 @@ async function initializeDatabasePostgres() {
     } catch (e) {}
     try {
       await pgPool.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS sizes TEXT DEFAULT '[]'");
+    } catch (e) {}
+    try {
+      await pgPool.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS model_number TEXT DEFAULT ''");
     } catch (e) {}
 
     // 6. Orders Table
@@ -605,6 +609,7 @@ function initializeDatabase() {
         rating_count INTEGER DEFAULT 0,
         colors TEXT DEFAULT '[]',
         sizes TEXT DEFAULT '[]',
+        model_number TEXT DEFAULT '',
         FOREIGN KEY (category_id) REFERENCES categories (id) ON DELETE SET NULL,
         FOREIGN KEY (merchant_id) REFERENCES merchants (id) ON DELETE SET NULL
       )
@@ -619,6 +624,12 @@ function initializeDatabase() {
         ? "ALTER TABLE products ADD COLUMN IF NOT EXISTS sizes TEXT DEFAULT '[]'" 
         : "ALTER TABLE products ADD COLUMN sizes TEXT DEFAULT '[]'";
       db.run(alterSizes, [], (err) => {
+        // Ignore error
+      });
+      const alterModel = isPostgres 
+        ? "ALTER TABLE products ADD COLUMN IF NOT EXISTS model_number TEXT DEFAULT ''" 
+        : "ALTER TABLE products ADD COLUMN model_number TEXT DEFAULT ''";
+      db.run(alterModel, [], (err) => {
         // Ignore error
       });
     });

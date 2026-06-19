@@ -574,6 +574,7 @@ export default function AdminOrders() {
                           <td style={{ padding: '8px' }}>
                             <div style={{ fontWeight: '700', color: 'var(--text-primary)' }}>
                               {lang === 'ar' ? item.name_ar : item.name_en}
+                              {item.model_number && ` (${item.model_number})`}
                             </div>
                             {(item.selectedColor || item.selectedSize) && (
                               <div style={{ fontSize: '0.75rem', color: 'var(--text-light)', display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '3px' }}>
