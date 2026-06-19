@@ -42,6 +42,8 @@ export default function AdminDashboard({ setCurrentView }) {
     pending_orders: 0,
     out_of_stock: 0
   });
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
 
   const [chatInput, setChatInput] = useState('');
   const [showDbModal, setShowDbModal] = useState(false);
@@ -51,6 +53,7 @@ export default function AdminDashboard({ setCurrentView }) {
   const [restoreSuccess, setRestoreSuccess] = useState('');
 
   const fetchStats = async () => {
+    setStatsLoading(true);
     try {
       const res = await fetch(`${apiBase}/reports`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -58,9 +61,12 @@ export default function AdminDashboard({ setCurrentView }) {
       if (res.ok) {
         const data = await res.json();
         setStats(data.summary);
+        setLastUpdated(new Date());
       }
     } catch (err) {
       console.error('Fetch admin stats error:', err);
+    } finally {
+      setStatsLoading(false);
     }
   };
 
@@ -146,6 +152,13 @@ export default function AdminDashboard({ setCurrentView }) {
       setIsRestoring(false);
     }
   };
+
+  useEffect(() => {
+    fetchStats();
+    // Auto-refresh stats every 30 seconds so counters stay live
+    const interval = setInterval(fetchStats, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     fetchStats();
@@ -421,8 +434,31 @@ export default function AdminDashboard({ setCurrentView }) {
         {/* Stats Summary Cards */}
         {activeTab !== 'settings' && activeTab !== 'reports' && (
           <section className="no-print dashboard-grid animate-fade">
-            
-            {/* Earnings USD */}
+            {/* Live refresh indicator */}
+            <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '-12px' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{
+                  width: '8px', height: '8px', borderRadius: '50%',
+                  backgroundColor: statsLoading ? '#f59e0b' : '#10b981',
+                  display: 'inline-block',
+                  animation: statsLoading ? 'pulse 1s infinite' : 'none'
+                }} />
+                {statsLoading
+                  ? (lang === 'ar' ? 'جاري التحديث...' : 'Refreshing...')
+                  : lastUpdated
+                    ? (lang === 'ar'
+                      ? `آخر تحديث: ${lastUpdated.toLocaleTimeString('ar')}`
+                      : `Last updated: ${lastUpdated.toLocaleTimeString()}`)
+                    : ''}
+              </span>
+              <button
+                onClick={fetchStats}
+                disabled={statsLoading}
+                style={{ fontSize: '0.75rem', color: 'var(--accent-blue)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '600', padding: '0' }}
+              >
+                {lang === 'ar' ? '↻ تحديث' : '↻ Refresh'}
+              </button>
+            </div>
             <div 
               className="dashboard-card" 
               style={{ 
