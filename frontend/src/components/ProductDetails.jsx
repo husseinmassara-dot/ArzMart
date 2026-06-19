@@ -3,9 +3,19 @@ import { useApp } from '../context/AppContext';
 import { useCart, getOptionPrice } from '../context/CartContext';
 import { Star, ShoppingCart, X, Images } from 'lucide-react';
 
+function getOptionStock(optionString, defaultStock) {
+  if (!optionString) return defaultStock;
+  const stockMatch = optionString.match(/\[Stock:\s*([0-9]+)\]/);
+  if (stockMatch) {
+    return parseInt(stockMatch[1], 10);
+  }
+  return defaultStock;
+}
+
 function getOptionName(optionString) {
   if (!optionString) return '';
-  return optionString.replace(/\s*\(\s*[+-]?\s*\$?\s*[0-9.]+\s*\$?_?\)/g, '').trim();
+  const cleanS = optionString.replace(/\[Stock:\s*[0-9]+\]/g, '').trim();
+  return cleanS.replace(/\s*\(\s*[+-]?\s*\$?\s*[0-9.]+\s*\$?_?\)/g, '').trim();
 }
 
 export default function ProductDetails({ product, onClose, onRefresh }) {
@@ -21,7 +31,19 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
     return (product && product.colors && product.colors.length > 0) ? product.colors[0] : null;
   });
   const [selectedSize, setSelectedSize] = useState(() => {
-    return (product && product.sizes && product.sizes.length > 0) ? product.sizes[0] : null;
+    let initialSizes = [];
+    if (product && product.sizes) {
+      if (Array.isArray(product.sizes)) {
+        initialSizes = product.sizes;
+      } else if (typeof product.sizes === 'string') {
+        try {
+          initialSizes = JSON.parse(product.sizes);
+        } catch (e) {
+          initialSizes = [];
+        }
+      }
+    }
+    return initialSizes.length > 0 ? initialSizes[0] : null;
   });
 
   // Fetch full product data (with all images) when modal opens
@@ -37,11 +59,29 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
       .catch(() => {/* fallback to passed product */})
       .finally(() => setLoadingImages(false));
   }, [product?.id, apiBase]);
+  useEffect(() => {
+    if (selectedSize) {
+      const optStock = getOptionStock(selectedSize, displayProduct.stock);
+      setQty(q => Math.min(q, Math.max(1, optStock)));
+    }
+  }, [selectedSize, displayProduct.stock]);
 
   if (!product) return null;
 
-  // Use fullProduct (fetched fresh) or fallback to passed product
   const displayProduct = fullProduct || product;
+
+  let parsedSizes = [];
+  if (displayProduct && displayProduct.sizes) {
+    if (Array.isArray(displayProduct.sizes)) {
+      parsedSizes = displayProduct.sizes;
+    } else if (typeof displayProduct.sizes === 'string') {
+      try {
+        parsedSizes = JSON.parse(displayProduct.sizes);
+      } catch (e) {
+        parsedSizes = [];
+      }
+    }
+  }
 
   const name = lang === 'ar' ? displayProduct.name_ar : displayProduct.name_en;
   const desc = lang === 'ar' ? displayProduct.description_ar : displayProduct.description_en;
@@ -50,6 +90,7 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
   const rating = displayProduct.rating || 0;
   
   const currentPrice = getOptionPrice(selectedSize, displayProduct.price_usd);
+  const currentStock = getOptionStock(selectedSize, displayProduct.stock);
   let adjustedOldPrice = displayProduct.old_price_usd;
   if (displayProduct.old_price_usd && selectedSize) {
     const relativeMatch = selectedSize.match(/\(\s*([+-])\s*\$?\s*([0-9.]+)\s*\$?_?\)/);
@@ -373,12 +414,12 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
             )}
 
             {/* Size Selector */}
-            {displayProduct.sizes && displayProduct.sizes.length > 0 && (
+            {parsedSizes && parsedSizes.length > 0 && (
               <div style={{ margin: '12px 0' }}>
                 <span className="input-label" style={{ display: 'block', marginBottom: '6px' }}>
                   {lang === 'ar' ? 'الخيار المتاح:' : 'Available Option:'}
                 </span>
-                {displayProduct.sizes.length >= 4 ? (
+                {parsedSizes.length >= 4 ? (
                   <select
                     value={selectedSize}
                     onChange={(e) => setSelectedSize(e.target.value)}
@@ -396,7 +437,7 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
                       outline: 'none'
                     }}
                   >
-                    {displayProduct.sizes.map(size => {
+                    {parsedSizes.map(size => {
                       const optPrice = getOptionPrice(size, displayProduct.price_usd);
                       const priceDiff = optPrice - displayProduct.price_usd;
                       let priceLabel = '';
@@ -405,35 +446,43 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
                       } else if (priceDiff < 0) {
                         priceLabel = ` (-${formatPrice(Math.abs(priceDiff))})`;
                       }
+                      const optStock = getOptionStock(size, displayProduct.stock);
+                      const stockLabel = optStock > 0 ? '' : ` (${lang === 'ar' ? 'غير موجود بإشارة من المدير' : 'Not available by order of the manager'})`;
                       return (
                         <option key={size} value={size}>
-                          {getOptionName(size)}{priceLabel}
+                          {getOptionName(size)}{priceLabel}{stockLabel}
                         </option>
                       );
                     })}
                   </select>
                 ) : (
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    {displayProduct.sizes.map(size => (
-                      <button
-                        key={size}
-                        type="button"
-                        onClick={() => setSelectedSize(size)}
-                        style={{
-                          padding: '6px 16px',
-                          borderRadius: '20px',
-                          border: selectedSize === size ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)',
-                          backgroundColor: selectedSize === size ? 'var(--accent-blue)' : 'var(--bg-secondary)',
-                          color: selectedSize === size ? 'white' : 'var(--text-primary)',
-                          fontSize: '0.85rem',
-                          fontWeight: '600',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s'
-                        }}
-                      >
-                        {getOptionName(size)}
-                      </button>
-                    ))}
+                    {parsedSizes.map(size => {
+                      const optStock = getOptionStock(size, displayProduct.stock);
+                      const isOutOfStock = optStock <= 0;
+                      return (
+                        <button
+                          key={size}
+                          type="button"
+                          onClick={() => setSelectedSize(size)}
+                          disabled={isOutOfStock}
+                          style={{
+                            padding: '6px 16px',
+                            borderRadius: '20px',
+                            border: selectedSize === size ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)',
+                            backgroundColor: selectedSize === size ? 'var(--accent-blue)' : 'var(--bg-secondary)',
+                            color: selectedSize === size ? 'white' : 'var(--text-primary)',
+                            fontSize: '0.85rem',
+                            fontWeight: '600',
+                            cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                            opacity: isOutOfStock ? 0.5 : 1,
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          {getOptionName(size)}{isOutOfStock ? ` (${lang === 'ar' ? 'غير موجود بإشارة من المدير' : 'Not available by order of the manager'})` : ''}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -453,10 +502,10 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
                   </button>
                   <span style={{ fontWeight: '700', minWidth: '24px', textAlign: 'center' }}>{qty}</span>
                   <button 
-                    onClick={() => setQty(q => Math.min(displayProduct.stock, q + 1))}
-                    disabled={qty >= displayProduct.stock}
+                    onClick={() => setQty(q => Math.min(currentStock, q + 1))}
+                    disabled={qty >= currentStock}
                     className="input-field"
-                    style={{ width: '36px', height: '36px', padding: 0, cursor: qty >= displayProduct.stock ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
+                    style={{ width: '36px', height: '36px', padding: 0, cursor: qty >= currentStock ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
                   >
                     +
                   </button>
@@ -470,14 +519,14 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
                     addToCart(displayProduct, qty, selectedColor, selectedSize);
                     onClose();
                   }}
-                  disabled={displayProduct.stock <= 0}
+                  disabled={currentStock <= 0}
                   className="input-field"
                   style={{
-                    backgroundColor: displayProduct.stock > 0 ? 'var(--accent-blue)' : 'var(--border-color)',
-                    color: displayProduct.stock > 0 ? 'white' : 'var(--text-light)',
+                    backgroundColor: currentStock > 0 ? 'var(--accent-blue)' : 'var(--border-color)',
+                    color: currentStock > 0 ? 'white' : 'var(--text-light)',
                     border: 'none',
                     fontWeight: '700',
-                    cursor: displayProduct.stock > 0 ? 'pointer' : 'not-allowed',
+                    cursor: currentStock > 0 ? 'pointer' : 'not-allowed',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -486,7 +535,7 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
                   }}
                 >
                   <ShoppingCart size={16} />
-                  <span>{t('add_to_cart')}</span>
+                  <span>{currentStock > 0 ? t('add_to_cart') : (lang === 'ar' ? 'غير موجود بإشارة من المدير' : 'Not available by order of the manager')}</span>
                 </button>
               </div>
             </div>

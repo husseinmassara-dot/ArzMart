@@ -36,8 +36,9 @@ exports.createOrder = async (req, res) => {
         });
       }
 
-      // Resolve size-specific price
+      // Resolve size-specific price and cost
       let itemPrice = product.price_usd;
+      let itemSingleCostPrice = product.cost_price_usd;
       if (item.selectedSize && product.sizes) {
         try {
           const parsedSizes = JSON.parse(product.sizes || '[]');
@@ -47,26 +48,45 @@ exports.createOrder = async (req, res) => {
             return cleanS.startsWith(cleanSelected) || cleanSelected.startsWith(cleanS);
           });
           if (matchingSizeOption) {
-            const priceRegex = /\(\s*[+-]?\s*\$?\s*([0-9.]+)\s*\$?_?\)/;
+            const stockMatch = matchingSizeOption.match(/\[Stock:\s*([0-9]+)\]/);
+            if (stockMatch) {
+              const optionStock = parseInt(stockMatch[1], 10);
+              if (optionStock < item.quantity) {
+                return res.status(400).json({
+                  error_ar: `عذراً، الكمية المطلوبة من الخيار ${item.selectedSize} غير متوفرة. المتبقي: ${optionStock}`,
+                  error_en: `Sorry, requested quantity for option ${item.selectedSize} is not available. In stock: ${optionStock}`
+                });
+              }
+            }
+            const priceRegex = /\(\s*([+-]?\s*\$?\s*[0-9.]+)(?:\/([0-9.]+))?\s*\$?_?\)/;
             const match = matchingSizeOption.match(priceRegex);
             if (match) {
-              const val = parseFloat(match[1]);
+              const priceVal = parseFloat(match[1].replace(/[+\-$]/g, ''));
+              const costVal = match[2] ? parseFloat(match[2]) : null;
+              
               const isRelative = matchingSizeOption.includes('+') || matchingSizeOption.includes('-');
+              const isNegative = matchingSizeOption.includes('-');
+              
               if (isRelative) {
-                const isNegative = matchingSizeOption.includes('-');
-                itemPrice = isNegative ? (product.price_usd - val) : (product.price_usd + val);
+                itemPrice = isNegative ? (product.price_usd - priceVal) : (product.price_usd + priceVal);
+                if (costVal !== null) {
+                  itemSingleCostPrice = isNegative ? (product.cost_price_usd - costVal) : (product.cost_price_usd + costVal);
+                }
               } else {
-                itemPrice = val;
+                itemPrice = priceVal;
+                if (costVal !== null) {
+                  itemSingleCostPrice = costVal;
+                }
               }
             }
           }
         } catch (e) {
-          console.error('Error parsing size price offset on backend:', e);
+          console.error('Error parsing size price/cost offset on backend:', e);
         }
       }
 
       const itemCost = itemPrice * item.quantity;
-      const itemCostPrice = product.cost_price_usd * item.quantity;
+      const itemCostPrice = itemSingleCostPrice * item.quantity;
 
       subtotalUsd += itemCost;
       totalCostUsd += itemCostPrice;
@@ -77,7 +97,7 @@ exports.createOrder = async (req, res) => {
         name_en: product.name_en,
         image_url: product.image_url,
         price_usd: itemPrice,
-        cost_price_usd: product.cost_price_usd,
+        cost_price_usd: itemSingleCostPrice,
         quantity: item.quantity,
         merchant_name: product.merchant_name || '',
         selectedColor: item.selectedColor || null,
@@ -87,6 +107,30 @@ exports.createOrder = async (req, res) => {
 
       // Deduct stock
       await db.runAsync('UPDATE products SET stock = stock - ? WHERE id = ?', [item.quantity, product.id]);
+
+      // Deduct stock of selected option if exists
+      if (item.selectedSize && product.sizes) {
+        try {
+          const parsedSizes = JSON.parse(product.sizes || '[]');
+          const updatedSizes = parsedSizes.map(s => {
+            const cleanS = s.replace(/\[Stock:\s*[0-9]+\]/g, '').trim().replace(/\s+/g, '').toUpperCase();
+            const cleanSelected = item.selectedSize.replace(/\[Stock:\s*[0-9]+\]/g, '').trim().replace(/\s+/g, '').toUpperCase();
+            if (cleanS.startsWith(cleanSelected) || cleanSelected.startsWith(cleanS)) {
+              const stockMatch = s.match(/\[Stock:\s*([0-9]+)\]/);
+              if (stockMatch) {
+                const currentStock = parseInt(stockMatch[1], 10);
+                const newStock = Math.max(0, currentStock - item.quantity);
+                return s.replace(/\[Stock:\s*[0-9]+\]/, `[Stock: ${newStock}]`);
+              }
+            }
+            return s;
+          });
+          const sizesStr = JSON.stringify(updatedSizes);
+          await db.runAsync('UPDATE products SET sizes = ? WHERE id = ?', [sizesStr, product.id]);
+        } catch (e) {
+          console.error('Error updating sizes stock during checkout:', e);
+        }
+      }
     }
 
     // Handle discounts

@@ -6,7 +6,16 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const { apiBase } = useApp();
   const [token, setToken] = useState(localStorage.getItem('token') || null);
-  const [user, setUser] = useState(null);
+
+  // Restore cached user from localStorage so UI shows immediately without waiting for server
+  const [user, setUser] = useState(() => {
+    try {
+      const cached = localStorage.getItem('cached_user');
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (authToken) => {
@@ -19,12 +28,16 @@ export const AuthProvider = ({ children }) => {
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);
-      } else {
-        // Token invalid or expired
+        // Cache user data so next app open is instant
+        localStorage.setItem('cached_user', JSON.stringify(data.user));
+      } else if (res.status === 401) {
+        // Only logout if server explicitly says token is invalid/expired
         logout();
       }
+      // On any other error (500, network issue, etc.) — keep the user logged in
     } catch (err) {
-      console.error('Fetch profile error:', err);
+      // Network error or server down — keep user logged in with cached data
+      console.warn('Profile fetch failed (offline?), keeping session:', err.message);
     } finally {
       setLoading(false);
     }
@@ -53,6 +66,7 @@ export const AuthProvider = ({ children }) => {
     setToken(data.token);
     setUser(data.user);
     localStorage.setItem('token', data.token);
+    localStorage.setItem('cached_user', JSON.stringify(data.user));
     return data;
   };
 
@@ -75,6 +89,7 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     setUser(null);
     localStorage.removeItem('token');
+    localStorage.removeItem('cached_user');
   };
 
   const hasPermission = (permission) => {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
-import { Trash2, Edit3, Image } from 'lucide-react';
+import { Trash2, Edit3, Image, Search, Filter, RotateCcw } from 'lucide-react';
 
 const compressImage = (file, maxWidth = 600, maxHeight = 600, quality = 0.7) => {
   return new Promise((resolve) => {
@@ -84,7 +84,25 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
   const [colorsInput, setColorsInput] = useState('');
-  const [sizesList, setSizesList] = useState([{ name: '', price: '', type: 'absolute' }]);
+  const [sizesList, setSizesList] = useState([{ name: '', price: '', cost: '', stock: '10', type: 'relative' }]);
+
+  const [formError, setFormError] = useState('');
+  const [formSuccess, setFormSuccess] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Filter/Search states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
+  const [filterMerchant, setFilterMerchant] = useState('');
+  const [filterStatus, setFilterStatus] = useState(filterOutOfStock ? 'out_of_stock' : 'all');
+
+  useEffect(() => {
+    if (filterOutOfStock) {
+      setFilterStatus('out_of_stock');
+    } else {
+      setFilterStatus('all');
+    }
+  }, [filterOutOfStock]);
 
   const fetchProducts = async () => {
     try {
@@ -139,6 +157,9 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!nameAr || !nameEn || !priceUsd) return;
+    setFormError('');
+    setFormSuccess('');
+    setIsSubmitting(true);
 
     const formData = new FormData();
     formData.append('name_ar', nameAr);
@@ -152,7 +173,7 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     formData.append('category_id', categoryId || 'null');
     formData.append('merchant_id', merchantId || 'null');
     formData.append('stock', stock);
-    
+
     // Compress and append selected files
     const compressedFiles = await Promise.all(
       selectedFiles.map(file => compressImage(file, 600, 600, 0.7))
@@ -160,19 +181,35 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     compressedFiles.forEach((file) => {
       formData.append('product_images', file);
     });
-    formData.append('existing_images', JSON.stringify(existingImages));
+
+    if (isEditing) {
+      // When editing: if no new files selected, tell backend to keep existing images.
+      // We do NOT re-send the huge base64 strings.
+      if (selectedFiles.length === 0) {
+        formData.append('keep_existing_images', 'true');
+      } else {
+        // New files selected — existing images are intentionally replaced
+        formData.append('keep_existing_images', 'false');
+      }
+    } else {
+      // For new products, no existing images to worry about
+      formData.append('existing_images', JSON.stringify([]));
+    }
+
     const colorsArray = colorsInput ? colorsInput.split(',').map(c => c.trim()).filter(Boolean) : [];
     const sizesArray = sizesList.map(opt => {
       if (!opt.name) return null;
-      if (!opt.price) return opt.name;
-      if (opt.type === 'relative') return `${opt.name} (+${opt.price})`;
-      if (opt.type === 'negative') return `${opt.name} (-${opt.price})`;
-      return `${opt.name} ($${opt.price})`;
+      const priceVal = opt.price || '0';
+      const costPart = opt.cost ? `/${opt.cost}` : '';
+      const stockPart = opt.stock !== undefined && opt.stock !== null && opt.stock !== '' ? ` [Stock: ${opt.stock}]` : ' [Stock: 10]';
+      if (opt.type === 'relative') return `${opt.name} (+${priceVal}${costPart})${stockPart}`;
+      if (opt.type === 'negative') return `${opt.name} (-${priceVal}${costPart})${stockPart}`;
+      return `${opt.name} (+${priceVal}${costPart})${stockPart}`;
     }).filter(Boolean);
     formData.append('colors', JSON.stringify(colorsArray));
     formData.append('sizes', JSON.stringify(sizesArray));
 
-    const url = isEditing 
+    const url = isEditing
       ? `${apiBase}/products/${editingId}`
       : `${apiBase}/products`;
 
@@ -186,11 +223,19 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
       });
 
       if (res.ok) {
+        setFormSuccess(isEditing ? 'تم حفظ التعديلات بنجاح ✓' : 'تم إضافة المنتج بنجاح ✓');
         resetForm();
         fetchProducts();
+        setTimeout(() => setFormSuccess(''), 4000);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        setFormError(errData.error_ar || errData.error || `فشل الحفظ (${res.status})`);
       }
     } catch (err) {
       console.error('Submit product error:', err);
+      setFormError('خطأ في الاتصال بالخادم');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -214,20 +259,25 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     let parsedSizes = [];
     if (product.sizes && Array.isArray(product.sizes)) {
       parsedSizes = product.sizes.map(s => {
-        const priceRegex = /\(\s*([+-]?\s*\$?\s*[0-9.]+)\s*\$?_?\)/;
-        const match = s.match(priceRegex);
+        const stockMatch = s.match(/\[Stock:\s*([0-9]+)\]/);
+        const stockVal = stockMatch ? stockMatch[1] : '';
+        const cleanS = s.replace(/\[Stock:\s*[0-9]+\]/g, '').trim();
+
+        const priceRegex = /\(\s*([+-]?\s*\$?\s*[0-9.]+)(?:\/([0-9.]+))?\s*\$?_?\)/;
+        const match = cleanS.match(priceRegex);
         if (match) {
-          const name = s.replace(/\s*\(\s*[+-]?\s*\$?\s*[0-9.]+\s*\$?_?\)/g, '').trim();
+          const name = cleanS.replace(/\s*\(\s*[+-]?\s*\$?\s*[0-9.]+(?:\/[0-9.]+)?\s*\$?_?\)/g, '').trim();
           const priceVal = match[1].replace(/[+\-$]/g, '').trim();
-          let type = 'absolute';
-          if (s.includes('+')) type = 'relative';
-          else if (s.includes('-')) type = 'negative';
-          return { name, price: priceVal, type };
+          const costVal = match[2] ? match[2].trim() : '';
+          let type = 'relative';
+          if (cleanS.includes('+')) type = 'relative';
+          else if (cleanS.includes('-')) type = 'negative';
+          return { name, price: priceVal, cost: costVal, stock: stockVal, type };
         }
-        return { name: s, price: '', type: 'absolute' };
+        return { name: cleanS, price: '', cost: '', stock: stockVal, type: 'relative' };
       });
     }
-    setSizesList(parsedSizes.length > 0 ? parsedSizes : [{ name: '', price: '', type: 'absolute' }]);
+    setSizesList(parsedSizes.length > 0 ? parsedSizes : [{ name: '', price: '', cost: '', stock: '10', type: 'relative' }]);
   };
 
   const handleDelete = async (id) => {
@@ -279,12 +329,43 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     setSelectedFiles([]);
     setExistingImages([]);
     setColorsInput('');
-    setSizesList([{ name: '', price: '', type: 'absolute' }]);
+    setSizesList([{ name: '', price: '', cost: '', stock: '10', type: 'relative' }]);
   };
 
-  const displayedProducts = filterOutOfStock
-    ? products.filter(p => Number(p.stock) <= 0)
-    : products;
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setFilterCategory('');
+    setFilterMerchant('');
+    setFilterStatus('all');
+    if (onClearFilter) {
+      onClearFilter();
+    }
+  };
+
+  const displayedProducts = products.filter(p => {
+    // Search Term
+    const sTerm = searchTerm.trim().toLowerCase();
+    const matchesSearch = !sTerm ||
+      (p.name_ar && p.name_ar.toLowerCase().includes(sTerm)) ||
+      (p.name_en && p.name_en.toLowerCase().includes(sTerm)) ||
+      (p.model_number && p.model_number.toLowerCase().includes(sTerm));
+
+    // Category
+    const matchesCategory = !filterCategory || String(p.category_id) === String(filterCategory);
+
+    // Merchant
+    const matchesMerchant = !filterMerchant || String(p.merchant_id) === String(filterMerchant);
+
+    // Status
+    let matchesStatus = true;
+    if (filterStatus === 'in_stock') {
+      matchesStatus = Number(p.stock) > 0;
+    } else if (filterStatus === 'out_of_stock') {
+      matchesStatus = Number(p.stock) <= 0;
+    }
+
+    return matchesSearch && matchesCategory && matchesMerchant && matchesStatus;
+  });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -324,7 +405,7 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
           </div>
           <div>
             <label className="input-label">سعر التكلفة (Cost Price - USD) *</label>
-            <input type="number" step="0.01" required className="input-field" value={costPriceUsd} onChange={(e) => setCostPriceUsd(e.target.value)} />
+            <input type="number" step="0.01" className="input-field" value={costPriceUsd} onChange={(e) => setCostPriceUsd(e.target.value)} />
           </div>
           <div>
             <label className="input-label">السعر القديم المشطوب (USD - إن وجد)</label>
@@ -416,16 +497,15 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
                     <select 
                       className="input-field" 
                       style={{ margin: 0, padding: '8px' }}
-                      value={item.type} 
+                      value={item.type || 'relative'} 
                       onChange={(e) => {
                         const newList = [...sizesList];
                         newList[index].type = e.target.value;
                         setSizesList(newList);
                       }}
                     >
-                      <option value="absolute">{lang === 'ar' ? 'سعر يدوي مباشر ($)' : 'Absolute Price ($)'}</option>
                       <option value="relative">{lang === 'ar' ? 'زيادة نسبية (+)' : 'Price Increase (+)'}</option>
-                      <option value="negative">{lang === 'ar' ? 'خصم نسبي (-)' : 'Price Decrease (-)'}</option>
+                      <option value="negative">{lang === 'ar' ? 'خصم نسبى (-)' : 'Price Decrease (-)'}</option>
                     </select>
                   </div>
 
@@ -446,12 +526,45 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
                     />
                   </div>
 
+                  {/* Cost Value */}
+                  <div style={{ width: '120px' }}>
+                    <input 
+                      type="number" 
+                      step="0.01" 
+                      placeholder={lang === 'ar' ? 'التكلفة/الفارق' : 'Cost/Offset'} 
+                      className="input-field" 
+                      style={{ margin: 0 }}
+                      value={item.cost || ''} 
+                      onChange={(e) => {
+                        const newList = [...sizesList];
+                        newList[index].cost = e.target.value;
+                        setSizesList(newList);
+                      }} 
+                    />
+                  </div>
+
+                  {/* Stock Value */}
+                  <div style={{ width: '100px' }}>
+                    <input 
+                      type="number" 
+                      placeholder={lang === 'ar' ? 'المخزون' : 'Stock'} 
+                      className="input-field" 
+                      style={{ margin: 0 }}
+                      value={item.stock !== undefined ? item.stock : '10'} 
+                      onChange={(e) => {
+                        const newList = [...sizesList];
+                        newList[index].stock = e.target.value;
+                        setSizesList(newList);
+                      }} 
+                    />
+                  </div>
+
                   {/* Delete Button */}
                   <button 
                     type="button" 
                     onClick={() => {
                       const newList = sizesList.filter((_, i) => i !== index);
-                      setSizesList(newList.length > 0 ? newList : [{ name: '', price: '', type: 'absolute' }]);
+                      setSizesList(newList.length > 0 ? newList : [{ name: '', price: '', cost: '', stock: '10', type: 'relative' }]);
                     }}
                     style={{
                       border: 'none',
@@ -472,7 +585,7 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
             {/* Add Option Button */}
             <button 
               type="button" 
-              onClick={() => setSizesList([...sizesList, { name: '', price: '', type: 'absolute' }])}
+              onClick={() => setSizesList([...sizesList, { name: '', price: '', cost: '', stock: '10', type: 'relative' }])}
               style={{
                 marginTop: '12px',
                 padding: '6px 16px',
@@ -606,14 +719,29 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
             )}
           </div>
 
-          <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '10px', marginTop: '10px' }}>
-            <button type="submit" className="input-field" style={{ width: 'auto', padding: '10px 24px', backgroundColor: 'var(--accent-blue)', color: 'white', border: 'none', fontWeight: '700', cursor: 'pointer' }}>
-              {isEditing ? 'حفظ التعديلات' : 'إضافة المنتج'}
+          <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="input-field"
+              style={{ width: 'auto', padding: '10px 24px', backgroundColor: 'var(--accent-blue)', color: 'white', border: 'none', fontWeight: '700', cursor: isSubmitting ? 'not-allowed' : 'pointer', opacity: isSubmitting ? 0.7 : 1 }}
+            >
+              {isSubmitting ? 'جاري الحفظ...' : (isEditing ? 'حفظ التعديلات' : 'إضافة المنتج')}
             </button>
             {isEditing && (
               <button type="button" onClick={resetForm} className="input-field" style={{ width: 'auto', padding: '10px 24px', backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: 'none', fontWeight: '600', cursor: 'pointer' }}>
                 إلغاء
               </button>
+            )}
+            {formError && (
+              <span style={{ color: '#ef4444', fontWeight: '600', fontSize: '0.9rem', padding: '8px 12px', backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: '6px', border: '1px solid rgba(239,68,68,0.3)' }}>
+                ⚠️ {formError}
+              </span>
+            )}
+            {formSuccess && (
+              <span style={{ color: '#10b981', fontWeight: '600', fontSize: '0.9rem', padding: '8px 12px', backgroundColor: 'rgba(16,185,129,0.1)', borderRadius: '6px', border: '1px solid rgba(16,185,129,0.3)' }}>
+                {formSuccess}
+              </span>
             )}
           </div>
         </form>
@@ -690,6 +818,150 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
               <span>{lang === 'ar' ? `حذف المحدد (${selectedIds.length})` : `Delete Selected (${selectedIds.length})`}</span>
             </button>
           )}
+        </div>
+
+        {/* Search and Filter Panel */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+          gap: '12px', 
+          padding: '16px', 
+          marginBottom: '20px', 
+          borderRadius: '12px', 
+          backgroundColor: 'var(--bg-secondary)', 
+          border: '1px solid var(--border-color)' 
+        }}>
+          {/* Search Input */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Search size={12} />
+              {lang === 'ar' ? 'البحث عن منتج' : 'Search Product'}
+            </label>
+            <input 
+              type="text" 
+              className="input-field" 
+              style={{ margin: 0, padding: '8px 12px', fontSize: '0.9rem' }}
+              placeholder={lang === 'ar' ? 'الاسم أو رقم الموديل...' : 'Name or model number...'} 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          {/* Category Filter */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Filter size={12} />
+              {lang === 'ar' ? 'التصنيف' : 'Category'}
+            </label>
+            <select 
+              className="input-field" 
+              style={{ margin: 0, padding: '8px', fontSize: '0.9rem' }}
+              value={filterCategory} 
+              onChange={(e) => setFilterCategory(e.target.value)}
+            >
+              <option value="">{lang === 'ar' ? 'جميع التصنيفات' : 'All Categories'}</option>
+              {(() => {
+                const parents = categories.filter(c => !c.parent_id);
+                const children = categories.filter(c => c.parent_id);
+                
+                const list = [];
+                parents.forEach(p => {
+                  list.push({ ...p, depth: 0 });
+                  const subcats = children.filter(c => c.parent_id === p.id);
+                  subcats.forEach(s => {
+                    list.push({ ...s, depth: 1 });
+                    const subsub = children.filter(c => c.parent_id === s.id);
+                    subsub.forEach(ss => {
+                      list.push({ ...ss, depth: 2 });
+                    });
+                  });
+                });
+                
+                categories.forEach(c => {
+                  if (!list.some(item => item.id === c.id)) {
+                    list.push({ ...c, depth: 0 });
+                  }
+                });
+                
+                return list.map(c => {
+                  const indent = '　'.repeat(c.depth) + (c.depth > 0 ? '↳ ' : '');
+                  return (
+                    <option key={c.id} value={c.id}>
+                      {indent}{lang === 'ar' ? c.name_ar : c.name_en}
+                    </option>
+                  );
+                });
+              })()}
+            </select>
+          </div>
+
+          {/* Merchant Filter */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Filter size={12} />
+              {lang === 'ar' ? 'المورد / التاجر' : 'Merchant / Supplier'}
+            </label>
+            <select 
+              className="input-field" 
+              style={{ margin: 0, padding: '8px', fontSize: '0.9rem' }}
+              value={filterMerchant} 
+              onChange={(e) => setFilterMerchant(e.target.value)}
+            >
+              <option value="">{lang === 'ar' ? 'جميع الموردين' : 'All Suppliers'}</option>
+              {merchants.map(m => (
+                <option key={m.id} value={m.id}>
+                  {m.name} {m.company ? `(${m.company})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Stock Status Filter */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Filter size={12} />
+              {lang === 'ar' ? 'حالة المخزون' : 'Stock Status'}
+            </label>
+            <select 
+              className="input-field" 
+              style={{ margin: 0, padding: '8px', fontSize: '0.9rem' }}
+              value={filterStatus} 
+              onChange={(e) => setFilterStatus(e.target.value)}
+            >
+              <option value="all">{lang === 'ar' ? 'جميع المنتجات' : 'All Products'}</option>
+              <option value="in_stock">{lang === 'ar' ? 'متوفر بالمخزون' : 'In Stock'}</option>
+              <option value="out_of_stock">{lang === 'ar' ? 'منتهي من المخزون' : 'Out of Stock'}</option>
+            </select>
+          </div>
+
+          {/* Reset Button */}
+          <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+            <button 
+              type="button"
+              onClick={handleResetFilters}
+              style={{
+                width: '100%',
+                padding: '9px 16px',
+                borderRadius: '8px',
+                backgroundColor: 'var(--bg-tertiary)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-color)',
+                fontWeight: '700',
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--border-color)'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = 'var(--bg-tertiary)'}
+            >
+              <RotateCcw size={14} />
+              {lang === 'ar' ? 'إعادة تعيين' : 'Reset Filters'}
+            </button>
+          </div>
         </div>
 
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'start' }}>

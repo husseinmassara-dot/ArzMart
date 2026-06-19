@@ -120,6 +120,15 @@ export default function App() {
   };
 
   const fetchProducts = async () => {
+    // Do NOT fetch products when on the main categories view (no filters active)
+    if (!selectedCategory && !searchVal && !minPrice && !maxPrice && !minRating) {
+      setProducts([]);
+      return;
+    }
+    // Do NOT fetch products if selected category has subcategories (it's a parent)
+    if (selectedCategory) {
+      // We'll handle this check in render; still fetch so filter dropdown works
+    }
     try {
       let url = `${apiBase}/products?`;
       if (selectedCategory) url += `category_id=${selectedCategory}&`;
@@ -861,18 +870,15 @@ export default function App() {
             <form onSubmit={currentView === 'login' ? handleLoginSubmit : handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
                 <label className="input-label">{t('username')}</label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type="text"
-                    required
-                    autocomplete="off" // No usernames hints
-                    className="input-field"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    style={{ paddingStart: '36px' }}
-                  />
-                  <User size={16} style={{ position: 'absolute', top: '12px', left: lang === 'ar' ? 'auto' : '12px', right: lang === 'ar' ? '12px' : 'auto', color: 'var(--text-light)' }} />
-                </div>
+                <input
+                  type="text"
+                  required
+                  autoComplete="off"
+                  className="input-field"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder={lang === 'ar' ? 'اسم المستخدم' : 'Username'}
+                />
               </div>
 
               {currentView === 'register' && (
@@ -880,86 +886,68 @@ export default function App() {
                   {/* Full Name */}
                   <div>
                     <label className="input-label">{lang === 'ar' ? 'الاسم الكامل' : 'Full Name'}</label>
-                    <div style={{ position: 'relative' }}>
-                      <input
-                        type="text"
-                        required
-                        className="input-field"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        style={{ paddingStart: '36px' }}
-                        placeholder={lang === 'ar' ? 'الاسم الثلاثي مثلاً' : 'e.g. John Doe'}
-                      />
-                      <User size={16} style={{ position: 'absolute', top: '12px', left: lang === 'ar' ? 'auto' : '12px', right: lang === 'ar' ? '12px' : 'auto', color: 'var(--text-light)' }} />
-                    </div>
+                    <input
+                      type="text"
+                      required
+                      className="input-field"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder={lang === 'ar' ? 'الاسم الثلاثي مثلاً' : 'e.g. John Doe'}
+                    />
                   </div>
 
                   {/* Phone */}
                   <div>
                     <label className="input-label">{lang === 'ar' ? 'رقم الهاتف' : 'Phone Number'}</label>
-                    <div style={{ position: 'relative' }}>
-                      <input
-                        type="tel"
-                        required
-                        className="input-field"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        style={{ paddingStart: '36px' }}
-                        placeholder="03 123 456"
-                      />
-                      <Smartphone size={16} style={{ position: 'absolute', top: '12px', left: lang === 'ar' ? 'auto' : '12px', right: lang === 'ar' ? '12px' : 'auto', color: 'var(--text-light)' }} />
-                    </div>
+                    <input
+                      type="tel"
+                      required
+                      className="input-field"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="03 123 456"
+                    />
                   </div>
 
                   {/* Email */}
                   <div>
                     <label className="input-label">{lang === 'ar' ? 'البريد الإلكتروني' : 'Email Address'}</label>
-                    <div style={{ position: 'relative' }}>
-                      <input
-                        type="email"
-                        required
-                        className="input-field"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        style={{ paddingStart: '36px' }}
-                        placeholder="example@mail.com"
-                      />
-                      <Globe size={16} style={{ position: 'absolute', top: '12px', left: lang === 'ar' ? 'auto' : '12px', right: lang === 'ar' ? '12px' : 'auto', color: 'var(--text-light)' }} />
-                    </div>
+                    <input
+                      type="email"
+                      required
+                      className="input-field"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="example@mail.com"
+                    />
                   </div>
                 </>
               )}
 
               <div>
                 <label className="input-label">{t('password')}</label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type="password"
-                    required
-                    autocomplete="new-password" // No username auto-linking
-                    className="input-field"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    style={{ paddingStart: '36px' }}
-                  />
-                  <Key size={16} style={{ position: 'absolute', top: '12px', left: lang === 'ar' ? 'auto' : '12px', right: lang === 'ar' ? '12px' : 'auto', color: 'var(--text-light)' }} />
-                </div>
+                <input
+                  type="password"
+                  required
+                  autoComplete="new-password"
+                  className="input-field"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={lang === 'ar' ? 'كلمة المرور' : 'Password'}
+                />
               </div>
 
               {currentView === 'register' && (
                 <div>
                   <label className="input-label">{lang === 'ar' ? 'تأكيد كلمة المرور' : 'Confirm Password'}</label>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      type="password"
-                      required
-                      className="input-field"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      style={{ paddingStart: '36px' }}
-                    />
-                    <Key size={16} style={{ position: 'absolute', top: '12px', left: lang === 'ar' ? 'auto' : '12px', right: lang === 'ar' ? '12px' : 'auto', color: 'var(--text-light)' }} />
-                  </div>
+                  <input
+                    type="password"
+                    required
+                    className="input-field"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder={lang === 'ar' ? 'أعد كتابة كلمة المرور' : 'Re-enter password'}
+                  />
                 </div>
               )}
 
@@ -1298,7 +1286,7 @@ export default function App() {
                     onChange={(e) => setMinRating(e.target.value)}
                     className="input-field"
                   >
-                    <option value="">كل التقييمات</option>
+                    <option value="">{lang === 'ar' ? 'كل التقييمات' : 'All Ratings'}</option>
                     <option value="4">4 ★ {t('rating_stars')}</option>
                     <option value="3">3 ★ {t('rating_stars')}</option>
                     <option value="2">2 ★ {t('rating_stars')}</option>
@@ -1421,194 +1409,206 @@ export default function App() {
               </div>
             ) : (
               /* --- 2. PRODUCT GRID & NAVIGATION VIEW --- */
-              <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                
-                {/* Back button and Category Details Header */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: '12px',
-                  borderBottom: '2px solid var(--border-color)',
-                  paddingBottom: '12px'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    {(() => {
-                      const currentCat = categories.find(c => c.id === parseInt(selectedCategory));
-                      if (currentCat && currentCat.parent_id) {
-                        return (
-                          <button
-                            onClick={() => setSelectedCategory(currentCat.parent_id)}
-                            className="input-field"
-                            style={{
-                              width: 'auto',
-                              padding: '6px 14px',
-                              backgroundColor: 'var(--bg-tertiary)',
-                              color: 'var(--text-primary)',
-                              border: '1px solid var(--border-color)',
-                              cursor: 'pointer',
-                              fontWeight: '700',
-                              fontSize: '0.85rem'
-                            }}
-                          >
-                            {lang === 'ar' 
-                              ? `← العودة إلى ${currentCat.parent_name_ar || 'السابق'}` 
-                              : `← Back to ${currentCat.parent_name_en || 'Parent'}`}
-                          </button>
-                        );
-                      } else {
-                        return (
-                          <button
-                            onClick={() => {
-                              setSelectedCategory('');
-                              clearFilters();
-                            }}
-                            className="input-field"
-                            style={{
-                              width: 'auto',
-                              padding: '6px 14px',
-                              backgroundColor: 'var(--bg-tertiary)',
-                              color: 'var(--text-primary)',
-                              border: '1px solid var(--border-color)',
-                              cursor: 'pointer',
-                              fontWeight: '700',
-                              fontSize: '0.85rem'
-                            }}
-                          >
-                            {lang === 'ar' ? '← العودة للأقسام' : '← Back to Categories'}
-                          </button>
-                        );
-                      }
-                    })()}
+              (() => {
+                // Determine if selected category has children (is a parent/intermediate category)
+                const selectedCatIdNum = parseInt(selectedCategory);
+                const hasSubcategories = selectedCategory !== '' && categories.some(c => c.parent_id === selectedCatIdNum);
+
+                return (
+                  <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     
-                    <h2 style={{ fontSize: '1.3rem', fontWeight: '800' }}>
-                      {selectedCategory !== '' ? (
-                        categories.find(c => c.id === parseInt(selectedCategory)) ? (
-                          lang === 'ar' 
-                            ? categories.find(c => c.id === parseInt(selectedCategory)).name_ar 
-                            : categories.find(c => c.id === parseInt(selectedCategory)).name_en
-                        ) : ''
-                      ) : (
-                        lang === 'ar' ? 'نتائج البحث' : 'Search Results'
-                      )}
-                    </h2>
-                  </div>
-                </div>
-
-                  {/* Sub-categories cards if active has children */}
-                  {selectedCategory !== '' && categories.filter(c => c.parent_id === parseInt(selectedCategory)).length > 0 && (
-                    <div style={{ margin: '24px 0 40px 0' }} className="animate-fade">
-                      <h3 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '16px', color: 'var(--text-primary)' }}>
-                        {lang === 'ar' ? 'الأقسام الفرعية' : 'Subcategories'}
-                      </h3>
-                      <div className="categories-grid" style={{ marginBottom: '24px' }}>
-                        {categories.filter(c => c.parent_id === parseInt(selectedCategory)).map((sub) => {
-                          const subName = lang === 'ar' ? sub.name_ar : sub.name_en;
-                          
-                          let bgImg = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=500&q=80';
-                          if (sub.name_en.toLowerCase().includes('soap') || sub.name_en.toLowerCase().includes('care')) {
-                            bgImg = 'https://images.unsplash.com/photo-1607006342466-4aa8d8d32be5?auto=format&fit=crop&w=500&q=80';
-                          } else if (sub.name_en.toLowerCase().includes('oil')) {
-                            bgImg = 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=500&q=80';
+                    {/* Back button and Category Details Header */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flexWrap: 'wrap',
+                      gap: '12px',
+                      borderBottom: '2px solid var(--border-color)',
+                      paddingBottom: '12px'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        {(() => {
+                          const currentCat = categories.find(c => c.id === selectedCatIdNum);
+                          if (currentCat && currentCat.parent_id) {
+                            return (
+                              <button
+                                onClick={() => setSelectedCategory(currentCat.parent_id)}
+                                className="input-field"
+                                style={{
+                                  width: 'auto',
+                                  padding: '6px 14px',
+                                  backgroundColor: 'var(--bg-tertiary)',
+                                  color: 'var(--text-primary)',
+                                  border: '1px solid var(--border-color)',
+                                  cursor: 'pointer',
+                                  fontWeight: '700',
+                                  fontSize: '0.85rem'
+                                }}
+                              >
+                                {lang === 'ar' 
+                                  ? `← العودة إلى ${currentCat.parent_name_ar || 'السابق'}` 
+                                  : `← Back to ${currentCat.parent_name_en || 'Parent'}`}
+                              </button>
+                            );
+                          } else {
+                            return (
+                              <button
+                                onClick={() => {
+                                  setSelectedCategory('');
+                                  clearFilters();
+                                }}
+                                className="input-field"
+                                style={{
+                                  width: 'auto',
+                                  padding: '6px 14px',
+                                  backgroundColor: 'var(--bg-tertiary)',
+                                  color: 'var(--text-primary)',
+                                  border: '1px solid var(--border-color)',
+                                  cursor: 'pointer',
+                                  fontWeight: '700',
+                                  fontSize: '0.85rem'
+                                }}
+                              >
+                                {lang === 'ar' ? '← العودة للأقسام' : '← Back to Categories'}
+                              </button>
+                            );
                           }
-
-                          const imageUrl = sub.image_url 
-                            ? (sub.image_url.startsWith('http') || sub.image_url.startsWith('data:') ? sub.image_url : `${apiHost}${sub.image_url}`)
-                            : bgImg;
-
-                          return (
-                            <div
-                              key={sub.id}
-                              onClick={() => setSelectedCategory(sub.id)}
-                              className="dashboard-card"
-                              style={{
-                                height: '180px',
-                                position: 'relative',
-                                overflow: 'hidden',
-                                borderRadius: '16px',
-                                cursor: 'pointer',
-                                padding: '0',
-                                border: '1px solid var(--border-color)',
-                                boxShadow: 'var(--shadow-sm)',
-                                transition: 'transform 0.3s ease, box-shadow 0.3s ease'
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = 'translateY(-6px)';
-                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'translateY(0)';
-                                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-                              }}
-                            >
-                              {/* Background Cover image */}
-                              <div style={{
-                                width: '100%',
-                                height: '100%',
-                                backgroundImage: `linear-gradient(to top, rgba(10, 14, 23, 0.95) 0%, rgba(10, 14, 23, 0.2) 60%, rgba(10, 14, 23, 0) 100%), url(${imageUrl})`,
-                                backgroundSize: 'cover',
-                                backgroundPosition: 'center'
-                              }} 
-                              />
-
-                              {/* Title text overlay */}
-                              <div style={{
-                                position: 'absolute',
-                                bottom: '0',
-                                left: '0',
-                                right: '0',
-                                padding: '16px',
-                                color: 'white',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '4px',
-                                zIndex: 5
-                              }}>
-                                <h4 style={{ fontSize: '1.15rem', fontWeight: '800', margin: '0', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
-                                  {subName}
-                                </h4>
-                                <span style={{ 
-                                  fontSize: '0.75rem', 
-                                  color: 'var(--accent-red-gold)', 
-                                  fontWeight: '700'
-                                }}>
-                                  {lang === 'ar' ? 'تصفح المنتجات ←' : 'Browse products →'}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
+                        })()}
+                        
+                        <h2 style={{ fontSize: '1.3rem', fontWeight: '800' }}>
+                          {selectedCategory !== '' ? (
+                            categories.find(c => c.id === selectedCatIdNum) ? (
+                              lang === 'ar' 
+                                ? categories.find(c => c.id === selectedCatIdNum).name_ar 
+                                : categories.find(c => c.id === selectedCatIdNum).name_en
+                            ) : ''
+                          ) : (
+                            lang === 'ar' ? 'نتائج البحث' : 'Search Results'
+                          )}
+                        </h2>
                       </div>
                     </div>
-                  )}
 
-                {/* Products Grid */}
-                <div className="categories-grid">
-                  {products.map((p) => (
-                    <ProductCard 
-                      key={p.id} 
-                      product={p} 
-                      onDetailsClick={setSelectedProduct} 
-                    />
-                  ))}
-                </div>
+                    {/* Sub-categories cards — shown when current category has children */}
+                    {hasSubcategories && (
+                      <div style={{ margin: '8px 0 0 0' }} className="animate-fade">
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '16px', color: 'var(--text-primary)' }}>
+                          {lang === 'ar' ? 'الأقسام الفرعية' : 'Subcategories'}
+                        </h3>
+                        <div className="categories-grid">
+                          {categories.filter(c => c.parent_id === selectedCatIdNum).map((sub) => {
+                            const subName = lang === 'ar' ? sub.name_ar : sub.name_en;
+                            
+                            let bgImg = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=500&q=80';
+                            if (sub.name_en.toLowerCase().includes('soap') || sub.name_en.toLowerCase().includes('care')) {
+                              bgImg = 'https://images.unsplash.com/photo-1607006342466-4aa8d8d32be5?auto=format&fit=crop&w=500&q=80';
+                            } else if (sub.name_en.toLowerCase().includes('oil')) {
+                              bgImg = 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=500&q=80';
+                            }
 
-                {products.length === 0 && (
-                  <div style={{
-                    textAlign: 'center',
-                    padding: '80px 0',
-                    color: 'var(--text-light)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '12px',
-                    alignItems: 'center'
-                  }}>
-                    <FileText size={48} strokeWidth={1} />
-                    <p style={{ fontWeight: '600' }}>{t('no_products')}</p>
+                            const imageUrl = sub.image_url 
+                              ? (sub.image_url.startsWith('http') || sub.image_url.startsWith('data:') ? sub.image_url : `${apiHost}${sub.image_url}`)
+                              : bgImg;
+
+                            return (
+                              <div
+                                key={sub.id}
+                                onClick={() => setSelectedCategory(sub.id)}
+                                className="dashboard-card"
+                                style={{
+                                  height: '180px',
+                                  position: 'relative',
+                                  overflow: 'hidden',
+                                  borderRadius: '16px',
+                                  cursor: 'pointer',
+                                  padding: '0',
+                                  border: '1px solid var(--border-color)',
+                                  boxShadow: 'var(--shadow-sm)',
+                                  transition: 'transform 0.3s ease, box-shadow 0.3s ease'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.transform = 'translateY(-6px)';
+                                  e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.transform = 'translateY(0)';
+                                  e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                                }}
+                              >
+                                {/* Background Cover image */}
+                                <div style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  backgroundImage: `linear-gradient(to top, rgba(10, 14, 23, 0.95) 0%, rgba(10, 14, 23, 0.2) 60%, rgba(10, 14, 23, 0) 100%), url(${imageUrl})`,
+                                  backgroundSize: 'cover',
+                                  backgroundPosition: 'center'
+                                }} 
+                                />
+
+                                {/* Title text overlay */}
+                                <div style={{
+                                  position: 'absolute',
+                                  bottom: '0',
+                                  left: '0',
+                                  right: '0',
+                                  padding: '16px',
+                                  color: 'white',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '4px',
+                                  zIndex: 5
+                                }}>
+                                  <h4 style={{ fontSize: '1.15rem', fontWeight: '800', margin: '0', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
+                                    {subName}
+                                  </h4>
+                                  <span style={{ 
+                                    fontSize: '0.75rem', 
+                                    color: 'var(--accent-red-gold)', 
+                                    fontWeight: '700'
+                                  }}>
+                                    {lang === 'ar' ? 'تصفح المنتجات ←' : 'Browse products →'}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Products Grid — shown ONLY for leaf categories (no subcategories) or search results */}
+                    {!hasSubcategories && (
+                      <>
+                        <div className="categories-grid">
+                          {products.map((p) => (
+                            <ProductCard 
+                              key={p.id} 
+                              product={p} 
+                              onDetailsClick={setSelectedProduct} 
+                            />
+                          ))}
+                        </div>
+
+                        {products.length === 0 && (
+                          <div style={{
+                            textAlign: 'center',
+                            padding: '80px 0',
+                            color: 'var(--text-light)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '12px',
+                            alignItems: 'center'
+                          }}>
+                            <FileText size={48} strokeWidth={1} />
+                            <p style={{ fontWeight: '600' }}>{t('no_products')}</p>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
-                )}
-              </div>
+                );
+              })()
             )}
 
           </div>
