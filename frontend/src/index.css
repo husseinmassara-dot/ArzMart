@@ -4,7 +4,14 @@
   padding: 0;
   box-sizing: border-box;
   font-family: 'Cairo', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Theme transition: only apply to elements that actually change with theme */
+body, .dashboard-card, nav, header, footer, aside,
+.input-field, select, textarea, button,
+[class*="card"], [class*="modal"], [class*="panel"],
+[class*="sidebar"], [class*="header"], [class*="footer"] {
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
 }
 
 /* Scrollbar styling */
@@ -145,7 +152,20 @@ button, input, select, textarea {
   font-size: 0.95rem;
   outline: none;
   font-weight: 500;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  cursor: text;
+}
+
+input.input-field, textarea.input-field {
+  cursor: text;
+}
+
+select.input-field {
+  cursor: pointer;
+}
+
+button.input-field {
+  cursor: pointer;
 }
 
 .input-field:focus {

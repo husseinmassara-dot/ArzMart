@@ -870,18 +870,15 @@ export default function App() {
             <form onSubmit={currentView === 'login' ? handleLoginSubmit : handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
                 <label className="input-label">{t('username')}</label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type="text"
-                    required
-                    autocomplete="off" // No usernames hints
-                    className="input-field"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    style={{ paddingStart: '36px' }}
-                  />
-                  <User size={16} style={{ position: 'absolute', top: '12px', left: lang === 'ar' ? 'auto' : '12px', right: lang === 'ar' ? '12px' : 'auto', color: 'var(--text-light)' }} />
-                </div>
+                <input
+                  type="text"
+                  required
+                  autoComplete="off"
+                  className="input-field"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder={lang === 'ar' ? 'اسم المستخدم' : 'Username'}
+                />
               </div>
 
               {currentView === 'register' && (
@@ -889,86 +886,68 @@ export default function App() {
                   {/* Full Name */}
                   <div>
                     <label className="input-label">{lang === 'ar' ? 'الاسم الكامل' : 'Full Name'}</label>
-                    <div style={{ position: 'relative' }}>
-                      <input
-                        type="text"
-                        required
-                        className="input-field"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        style={{ paddingStart: '36px' }}
-                        placeholder={lang === 'ar' ? 'الاسم الثلاثي مثلاً' : 'e.g. John Doe'}
-                      />
-                      <User size={16} style={{ position: 'absolute', top: '12px', left: lang === 'ar' ? 'auto' : '12px', right: lang === 'ar' ? '12px' : 'auto', color: 'var(--text-light)' }} />
-                    </div>
+                    <input
+                      type="text"
+                      required
+                      className="input-field"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder={lang === 'ar' ? 'الاسم الثلاثي مثلاً' : 'e.g. John Doe'}
+                    />
                   </div>
 
                   {/* Phone */}
                   <div>
                     <label className="input-label">{lang === 'ar' ? 'رقم الهاتف' : 'Phone Number'}</label>
-                    <div style={{ position: 'relative' }}>
-                      <input
-                        type="tel"
-                        required
-                        className="input-field"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        style={{ paddingStart: '36px' }}
-                        placeholder="03 123 456"
-                      />
-                      <Smartphone size={16} style={{ position: 'absolute', top: '12px', left: lang === 'ar' ? 'auto' : '12px', right: lang === 'ar' ? '12px' : 'auto', color: 'var(--text-light)' }} />
-                    </div>
+                    <input
+                      type="tel"
+                      required
+                      className="input-field"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="03 123 456"
+                    />
                   </div>
 
                   {/* Email */}
                   <div>
                     <label className="input-label">{lang === 'ar' ? 'البريد الإلكتروني' : 'Email Address'}</label>
-                    <div style={{ position: 'relative' }}>
-                      <input
-                        type="email"
-                        required
-                        className="input-field"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        style={{ paddingStart: '36px' }}
-                        placeholder="example@mail.com"
-                      />
-                      <Globe size={16} style={{ position: 'absolute', top: '12px', left: lang === 'ar' ? 'auto' : '12px', right: lang === 'ar' ? '12px' : 'auto', color: 'var(--text-light)' }} />
-                    </div>
+                    <input
+                      type="email"
+                      required
+                      className="input-field"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="example@mail.com"
+                    />
                   </div>
                 </>
               )}
 
               <div>
                 <label className="input-label">{t('password')}</label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type="password"
-                    required
-                    autocomplete="new-password" // No username auto-linking
-                    className="input-field"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    style={{ paddingStart: '36px' }}
-                  />
-                  <Key size={16} style={{ position: 'absolute', top: '12px', left: lang === 'ar' ? 'auto' : '12px', right: lang === 'ar' ? '12px' : 'auto', color: 'var(--text-light)' }} />
-                </div>
+                <input
+                  type="password"
+                  required
+                  autoComplete="new-password"
+                  className="input-field"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={lang === 'ar' ? 'كلمة المرور' : 'Password'}
+                />
               </div>
 
               {currentView === 'register' && (
                 <div>
                   <label className="input-label">{lang === 'ar' ? 'تأكيد كلمة المرور' : 'Confirm Password'}</label>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      type="password"
-                      required
-                      className="input-field"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      style={{ paddingStart: '36px' }}
-                    />
-                    <Key size={16} style={{ position: 'absolute', top: '12px', left: lang === 'ar' ? 'auto' : '12px', right: lang === 'ar' ? '12px' : 'auto', color: 'var(--text-light)' }} />
-                  </div>
+                  <input
+                    type="password"
+                    required
+                    className="input-field"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder={lang === 'ar' ? 'أعد كتابة كلمة المرور' : 'Re-enter password'}
+                  />
                 </div>
               )}
 
@@ -1307,7 +1286,7 @@ export default function App() {
                     onChange={(e) => setMinRating(e.target.value)}
                     className="input-field"
                   >
-                    <option value="">كل التقييمات</option>
+                    <option value="">{lang === 'ar' ? 'كل التقييمات' : 'All Ratings'}</option>
                     <option value="4">4 ★ {t('rating_stars')}</option>
                     <option value="3">3 ★ {t('rating_stars')}</option>
                     <option value="2">2 ★ {t('rating_stars')}</option>

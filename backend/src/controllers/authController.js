@@ -53,7 +53,7 @@ exports.register = async (req, res) => {
       return res.status(400).json({ error_ar: 'اسم المستخدم مسجل مسبقاً', error_en: 'Username is already taken' });
     }
 
-    const hashedPassword = bcrypt.hashSync(cleanPassword, 10);
+    const hashedPassword = await bcrypt.hash(cleanPassword, 10);
     const result = await db.runAsync(
       "INSERT INTO users (username, password, role, permissions, phone, email, full_name) VALUES (?, ?, 'user', '[]', ?, ?, ?)",
       [cleanUsername, hashedPassword, cleanPhone, cleanEmail, cleanFullName]
@@ -93,7 +93,7 @@ exports.login = async (req, res) => {
       return res.status(400).json({ error_ar: 'اسم المستخدم أو كلمة المرور غير صحيحة', error_en: 'Invalid username or password' });
     }
 
-    const isMatch = bcrypt.compareSync(password, user.password);
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ error_ar: 'اسم المستخدم أو كلمة المرور غير صحيحة', error_en: 'Invalid username or password' });
     }
