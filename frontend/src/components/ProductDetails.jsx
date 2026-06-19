@@ -31,7 +31,19 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
     return (product && product.colors && product.colors.length > 0) ? product.colors[0] : null;
   });
   const [selectedSize, setSelectedSize] = useState(() => {
-    return (product && product.sizes && product.sizes.length > 0) ? product.sizes[0] : null;
+    let initialSizes = [];
+    if (product && product.sizes) {
+      if (Array.isArray(product.sizes)) {
+        initialSizes = product.sizes;
+      } else if (typeof product.sizes === 'string') {
+        try {
+          initialSizes = JSON.parse(product.sizes);
+        } catch (e) {
+          initialSizes = [];
+        }
+      }
+    }
+    return initialSizes.length > 0 ? initialSizes[0] : null;
   });
 
   // Fetch full product data (with all images) when modal opens
@@ -56,8 +68,20 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
 
   if (!product) return null;
 
-  // Use fullProduct (fetched fresh) or fallback to passed product
   const displayProduct = fullProduct || product;
+
+  let parsedSizes = [];
+  if (displayProduct && displayProduct.sizes) {
+    if (Array.isArray(displayProduct.sizes)) {
+      parsedSizes = displayProduct.sizes;
+    } else if (typeof displayProduct.sizes === 'string') {
+      try {
+        parsedSizes = JSON.parse(displayProduct.sizes);
+      } catch (e) {
+        parsedSizes = [];
+      }
+    }
+  }
 
   const name = lang === 'ar' ? displayProduct.name_ar : displayProduct.name_en;
   const desc = lang === 'ar' ? displayProduct.description_ar : displayProduct.description_en;
@@ -390,12 +414,12 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
             )}
 
             {/* Size Selector */}
-            {displayProduct.sizes && displayProduct.sizes.length > 0 && (
+            {parsedSizes && parsedSizes.length > 0 && (
               <div style={{ margin: '12px 0' }}>
                 <span className="input-label" style={{ display: 'block', marginBottom: '6px' }}>
                   {lang === 'ar' ? 'الخيار المتاح:' : 'Available Option:'}
                 </span>
-                {displayProduct.sizes.length >= 4 ? (
+                {parsedSizes.length >= 4 ? (
                   <select
                     value={selectedSize}
                     onChange={(e) => setSelectedSize(e.target.value)}
@@ -413,7 +437,7 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
                       outline: 'none'
                     }}
                   >
-                    {displayProduct.sizes.map(size => {
+                    {parsedSizes.map(size => {
                       const optPrice = getOptionPrice(size, displayProduct.price_usd);
                       const priceDiff = optPrice - displayProduct.price_usd;
                       let priceLabel = '';
@@ -433,7 +457,7 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
                   </select>
                 ) : (
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    {displayProduct.sizes.map(size => {
+                    {parsedSizes.map(size => {
                       const optStock = getOptionStock(size, displayProduct.stock);
                       const isOutOfStock = optStock <= 0;
                       return (
