@@ -3,9 +3,19 @@ import { useApp } from '../context/AppContext';
 import { useCart, getOptionPrice } from '../context/CartContext';
 import { Star, ShoppingCart, X, Images } from 'lucide-react';
 
+function getOptionStock(optionString, defaultStock) {
+  if (!optionString) return defaultStock;
+  const stockMatch = optionString.match(/\[Stock:\s*([0-9]+)\]/);
+  if (stockMatch) {
+    return parseInt(stockMatch[1], 10);
+  }
+  return defaultStock;
+}
+
 function getOptionName(optionString) {
   if (!optionString) return '';
-  return optionString.replace(/\s*\(\s*[+-]?\s*\$?\s*[0-9.]+\s*\$?_?\)/g, '').trim();
+  const cleanS = optionString.replace(/\[Stock:\s*[0-9]+\]/g, '').trim();
+  return cleanS.replace(/\s*\(\s*[+-]?\s*\$?\s*[0-9.]+\s*\$?_?\)/g, '').trim();
 }
 
 export default function ProductDetails({ product, onClose, onRefresh }) {
@@ -37,6 +47,12 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
       .catch(() => {/* fallback to passed product */})
       .finally(() => setLoadingImages(false));
   }, [product?.id, apiBase]);
+  useEffect(() => {
+    if (selectedSize) {
+      const optStock = getOptionStock(selectedSize, displayProduct.stock);
+      setQty(q => Math.min(q, Math.max(1, optStock)));
+    }
+  }, [selectedSize, displayProduct.stock]);
 
   if (!product) return null;
 
@@ -50,6 +66,7 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
   const rating = displayProduct.rating || 0;
   
   const currentPrice = getOptionPrice(selectedSize, displayProduct.price_usd);
+  const currentStock = getOptionStock(selectedSize, displayProduct.stock);
   let adjustedOldPrice = displayProduct.old_price_usd;
   if (displayProduct.old_price_usd && selectedSize) {
     const relativeMatch = selectedSize.match(/\(\s*([+-])\s*\$?\s*([0-9.]+)\s*\$?_?\)/);
@@ -405,35 +422,43 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
                       } else if (priceDiff < 0) {
                         priceLabel = ` (-${formatPrice(Math.abs(priceDiff))})`;
                       }
+                      const optStock = getOptionStock(size, displayProduct.stock);
+                      const stockLabel = ` (${lang === 'ar' ? 'المخزون' : 'Stock'}: ${optStock})`;
                       return (
                         <option key={size} value={size}>
-                          {getOptionName(size)}{priceLabel}
+                          {getOptionName(size)}{priceLabel}{stockLabel}
                         </option>
                       );
                     })}
                   </select>
                 ) : (
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    {displayProduct.sizes.map(size => (
-                      <button
-                        key={size}
-                        type="button"
-                        onClick={() => setSelectedSize(size)}
-                        style={{
-                          padding: '6px 16px',
-                          borderRadius: '20px',
-                          border: selectedSize === size ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)',
-                          backgroundColor: selectedSize === size ? 'var(--accent-blue)' : 'var(--bg-secondary)',
-                          color: selectedSize === size ? 'white' : 'var(--text-primary)',
-                          fontSize: '0.85rem',
-                          fontWeight: '600',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s'
-                        }}
-                      >
-                        {getOptionName(size)}
-                      </button>
-                    ))}
+                    {displayProduct.sizes.map(size => {
+                      const optStock = getOptionStock(size, displayProduct.stock);
+                      const isOutOfStock = optStock <= 0;
+                      return (
+                        <button
+                          key={size}
+                          type="button"
+                          onClick={() => setSelectedSize(size)}
+                          disabled={isOutOfStock}
+                          style={{
+                            padding: '6px 16px',
+                            borderRadius: '20px',
+                            border: selectedSize === size ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)',
+                            backgroundColor: selectedSize === size ? 'var(--accent-blue)' : 'var(--bg-secondary)',
+                            color: selectedSize === size ? 'white' : 'var(--text-primary)',
+                            fontSize: '0.85rem',
+                            fontWeight: '600',
+                            cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                            opacity: isOutOfStock ? 0.5 : 1,
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          {getOptionName(size)} ({lang === 'ar' ? 'المخزون' : 'Stock'}: {optStock})
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -453,10 +478,10 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
                   </button>
                   <span style={{ fontWeight: '700', minWidth: '24px', textAlign: 'center' }}>{qty}</span>
                   <button 
-                    onClick={() => setQty(q => Math.min(displayProduct.stock, q + 1))}
-                    disabled={qty >= displayProduct.stock}
+                    onClick={() => setQty(q => Math.min(currentStock, q + 1))}
+                    disabled={qty >= currentStock}
                     className="input-field"
-                    style={{ width: '36px', height: '36px', padding: 0, cursor: qty >= displayProduct.stock ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
+                    style={{ width: '36px', height: '36px', padding: 0, cursor: qty >= currentStock ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
                   >
                     +
                   </button>
@@ -470,14 +495,14 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
                     addToCart(displayProduct, qty, selectedColor, selectedSize);
                     onClose();
                   }}
-                  disabled={displayProduct.stock <= 0}
+                  disabled={currentStock <= 0}
                   className="input-field"
                   style={{
-                    backgroundColor: displayProduct.stock > 0 ? 'var(--accent-blue)' : 'var(--border-color)',
-                    color: displayProduct.stock > 0 ? 'white' : 'var(--text-light)',
+                    backgroundColor: currentStock > 0 ? 'var(--accent-blue)' : 'var(--border-color)',
+                    color: currentStock > 0 ? 'white' : 'var(--text-light)',
                     border: 'none',
                     fontWeight: '700',
-                    cursor: displayProduct.stock > 0 ? 'pointer' : 'not-allowed',
+                    cursor: currentStock > 0 ? 'pointer' : 'not-allowed',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',

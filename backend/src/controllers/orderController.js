@@ -48,6 +48,16 @@ exports.createOrder = async (req, res) => {
             return cleanS.startsWith(cleanSelected) || cleanSelected.startsWith(cleanS);
           });
           if (matchingSizeOption) {
+            const stockMatch = matchingSizeOption.match(/\[Stock:\s*([0-9]+)\]/);
+            if (stockMatch) {
+              const optionStock = parseInt(stockMatch[1], 10);
+              if (optionStock < item.quantity) {
+                return res.status(400).json({
+                  error_ar: `عذراً، الكمية المطلوبة من الخيار ${item.selectedSize} غير متوفرة. المتبقي: ${optionStock}`,
+                  error_en: `Sorry, requested quantity for option ${item.selectedSize} is not available. In stock: ${optionStock}`
+                });
+              }
+            }
             const priceRegex = /\(\s*([+-]?\s*\$?\s*[0-9.]+)(?:\/([0-9.]+))?\s*\$?_?\)/;
             const match = matchingSizeOption.match(priceRegex);
             if (match) {
@@ -97,6 +107,30 @@ exports.createOrder = async (req, res) => {
 
       // Deduct stock
       await db.runAsync('UPDATE products SET stock = stock - ? WHERE id = ?', [item.quantity, product.id]);
+
+      // Deduct stock of selected option if exists
+      if (item.selectedSize && product.sizes) {
+        try {
+          const parsedSizes = JSON.parse(product.sizes || '[]');
+          const updatedSizes = parsedSizes.map(s => {
+            const cleanS = s.replace(/\[Stock:\s*[0-9]+\]/g, '').trim().replace(/\s+/g, '').toUpperCase();
+            const cleanSelected = item.selectedSize.replace(/\[Stock:\s*[0-9]+\]/g, '').trim().replace(/\s+/g, '').toUpperCase();
+            if (cleanS.startsWith(cleanSelected) || cleanSelected.startsWith(cleanS)) {
+              const stockMatch = s.match(/\[Stock:\s*([0-9]+)\]/);
+              if (stockMatch) {
+                const currentStock = parseInt(stockMatch[1], 10);
+                const newStock = Math.max(0, currentStock - item.quantity);
+                return s.replace(/\[Stock:\s*[0-9]+\]/, `[Stock: ${newStock}]`);
+              }
+            }
+            return s;
+          });
+          const sizesStr = JSON.stringify(updatedSizes);
+          await db.runAsync('UPDATE products SET sizes = ? WHERE id = ?', [sizesStr, product.id]);
+        } catch (e) {
+          console.error('Error updating sizes stock during checkout:', e);
+        }
+      }
     }
 
     // Handle discounts

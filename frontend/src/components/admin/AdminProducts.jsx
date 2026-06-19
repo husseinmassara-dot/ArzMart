@@ -84,7 +84,7 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
   const [colorsInput, setColorsInput] = useState('');
-  const [sizesList, setSizesList] = useState([{ name: '', price: '', cost: '', type: 'absolute' }]);
+  const [sizesList, setSizesList] = useState([{ name: '', price: '', cost: '', stock: '10', type: 'relative' }]);
 
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
@@ -199,11 +199,12 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     const colorsArray = colorsInput ? colorsInput.split(',').map(c => c.trim()).filter(Boolean) : [];
     const sizesArray = sizesList.map(opt => {
       if (!opt.name) return null;
-      if (!opt.price) return opt.name;
+      const priceVal = opt.price || '0';
       const costPart = opt.cost ? `/${opt.cost}` : '';
-      if (opt.type === 'relative') return `${opt.name} (+${opt.price}${costPart})`;
-      if (opt.type === 'negative') return `${opt.name} (-${opt.price}${costPart})`;
-      return `${opt.name} ($${opt.price}${costPart})`;
+      const stockPart = opt.stock !== undefined && opt.stock !== null && opt.stock !== '' ? ` [Stock: ${opt.stock}]` : ' [Stock: 10]';
+      if (opt.type === 'relative') return `${opt.name} (+${priceVal}${costPart})${stockPart}`;
+      if (opt.type === 'negative') return `${opt.name} (-${priceVal}${costPart})${stockPart}`;
+      return `${opt.name} (+${priceVal}${costPart})${stockPart}`;
     }).filter(Boolean);
     formData.append('colors', JSON.stringify(colorsArray));
     formData.append('sizes', JSON.stringify(sizesArray));
@@ -258,21 +259,25 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     let parsedSizes = [];
     if (product.sizes && Array.isArray(product.sizes)) {
       parsedSizes = product.sizes.map(s => {
+        const stockMatch = s.match(/\[Stock:\s*([0-9]+)\]/);
+        const stockVal = stockMatch ? stockMatch[1] : '';
+        const cleanS = s.replace(/\[Stock:\s*[0-9]+\]/g, '').trim();
+
         const priceRegex = /\(\s*([+-]?\s*\$?\s*[0-9.]+)(?:\/([0-9.]+))?\s*\$?_?\)/;
-        const match = s.match(priceRegex);
+        const match = cleanS.match(priceRegex);
         if (match) {
-          const name = s.replace(/\s*\(\s*[+-]?\s*\$?\s*[0-9.]+(?:\/[0-9.]+)?\s*\$?_?\)/g, '').trim();
+          const name = cleanS.replace(/\s*\(\s*[+-]?\s*\$?\s*[0-9.]+(?:\/[0-9.]+)?\s*\$?_?\)/g, '').trim();
           const priceVal = match[1].replace(/[+\-$]/g, '').trim();
           const costVal = match[2] ? match[2].trim() : '';
-          let type = 'absolute';
-          if (s.includes('+')) type = 'relative';
-          else if (s.includes('-')) type = 'negative';
-          return { name, price: priceVal, cost: costVal, type };
+          let type = 'relative';
+          if (cleanS.includes('+')) type = 'relative';
+          else if (cleanS.includes('-')) type = 'negative';
+          return { name, price: priceVal, cost: costVal, stock: stockVal, type };
         }
-        return { name: s, price: '', cost: '', type: 'absolute' };
+        return { name: cleanS, price: '', cost: '', stock: stockVal, type: 'relative' };
       });
     }
-    setSizesList(parsedSizes.length > 0 ? parsedSizes : [{ name: '', price: '', cost: '', type: 'absolute' }]);
+    setSizesList(parsedSizes.length > 0 ? parsedSizes : [{ name: '', price: '', cost: '', stock: '10', type: 'relative' }]);
   };
 
   const handleDelete = async (id) => {
@@ -324,7 +329,7 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     setSelectedFiles([]);
     setExistingImages([]);
     setColorsInput('');
-    setSizesList([{ name: '', price: '', cost: '', type: 'absolute' }]);
+    setSizesList([{ name: '', price: '', cost: '', stock: '10', type: 'relative' }]);
   };
 
   const handleResetFilters = () => {
@@ -492,16 +497,15 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
                     <select 
                       className="input-field" 
                       style={{ margin: 0, padding: '8px' }}
-                      value={item.type} 
+                      value={item.type || 'relative'} 
                       onChange={(e) => {
                         const newList = [...sizesList];
                         newList[index].type = e.target.value;
                         setSizesList(newList);
                       }}
                     >
-                      <option value="absolute">{lang === 'ar' ? 'سعر يدوي مباشر ($)' : 'Absolute Price ($)'}</option>
                       <option value="relative">{lang === 'ar' ? 'زيادة نسبية (+)' : 'Price Increase (+)'}</option>
-                      <option value="negative">{lang === 'ar' ? 'خصم نسبي (-)' : 'Price Decrease (-)'}</option>
+                      <option value="negative">{lang === 'ar' ? 'خصم نسبى (-)' : 'Price Decrease (-)'}</option>
                     </select>
                   </div>
 
@@ -539,12 +543,28 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
                     />
                   </div>
 
+                  {/* Stock Value */}
+                  <div style={{ width: '100px' }}>
+                    <input 
+                      type="number" 
+                      placeholder={lang === 'ar' ? 'المخزون' : 'Stock'} 
+                      className="input-field" 
+                      style={{ margin: 0 }}
+                      value={item.stock !== undefined ? item.stock : '10'} 
+                      onChange={(e) => {
+                        const newList = [...sizesList];
+                        newList[index].stock = e.target.value;
+                        setSizesList(newList);
+                      }} 
+                    />
+                  </div>
+
                   {/* Delete Button */}
                   <button 
                     type="button" 
                     onClick={() => {
                       const newList = sizesList.filter((_, i) => i !== index);
-                      setSizesList(newList.length > 0 ? newList : [{ name: '', price: '', type: 'absolute' }]);
+                      setSizesList(newList.length > 0 ? newList : [{ name: '', price: '', cost: '', stock: '10', type: 'relative' }]);
                     }}
                     style={{
                       border: 'none',
@@ -565,7 +585,7 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
             {/* Add Option Button */}
             <button 
               type="button" 
-              onClick={() => setSizesList([...sizesList, { name: '', price: '', cost: '', type: 'absolute' }])}
+              onClick={() => setSizesList([...sizesList, { name: '', price: '', cost: '', stock: '10', type: 'relative' }])}
               style={{
                 marginTop: '12px',
                 padding: '6px 16px',
