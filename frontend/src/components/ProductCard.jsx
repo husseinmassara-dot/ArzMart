@@ -168,9 +168,11 @@ export default function ProductCard({ product, onDetailsClick }) {
         </div>
 
         {/* Stock status indicator */}
-        <div style={{ fontSize: '0.75rem', fontWeight: '600', color: product.stock > 0 ? '#10b981' : '#ef4444' }}>
-          {product.stock > 0 ? `${t('in_stock')}: ${product.stock}` : t('out_of_stock')}
-        </div>
+        {product.stock <= 0 && (
+          <div style={{ fontSize: '0.75rem', fontWeight: '600', color: '#ef4444', marginTop: '4px' }}>
+            {lang === 'ar' ? 'غير موجود بإشارة من المدير' : 'Not available by order of the manager'}
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>

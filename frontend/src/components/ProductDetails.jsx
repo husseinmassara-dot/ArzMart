@@ -423,7 +423,7 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
                         priceLabel = ` (-${formatPrice(Math.abs(priceDiff))})`;
                       }
                       const optStock = getOptionStock(size, displayProduct.stock);
-                      const stockLabel = ` (${lang === 'ar' ? 'المخزون' : 'Stock'}: ${optStock})`;
+                      const stockLabel = optStock > 0 ? '' : ` (${lang === 'ar' ? 'غير موجود بإشارة من المدير' : 'Not available by order of the manager'})`;
                       return (
                         <option key={size} value={size}>
                           {getOptionName(size)}{priceLabel}{stockLabel}
@@ -455,7 +455,7 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
                             transition: 'all 0.2s'
                           }}
                         >
-                          {getOptionName(size)} ({lang === 'ar' ? 'المخزون' : 'Stock'}: {optStock})
+                          {getOptionName(size)}{isOutOfStock ? ` (${lang === 'ar' ? 'غير موجود بإشارة من المدير' : 'Not available by order of the manager'})` : ''}
                         </button>
                       );
                     })}
@@ -511,7 +511,7 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
                   }}
                 >
                   <ShoppingCart size={16} />
-                  <span>{t('add_to_cart')}</span>
+                  <span>{currentStock > 0 ? t('add_to_cart') : (lang === 'ar' ? 'غير موجود بإشارة من المدير' : 'Not available by order of the manager')}</span>
                 </button>
               </div>
             </div>
