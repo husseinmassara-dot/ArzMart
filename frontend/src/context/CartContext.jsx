@@ -33,7 +33,18 @@ export const CartProvider = ({ children }) => {
 
   useEffect(() => {
     const localData = localStorage.getItem(cartKey);
-    setCartItems(localData ? JSON.parse(localData) : []);
+    let items = [];
+    if (localData) {
+      try {
+        const parsed = JSON.parse(localData);
+        if (Array.isArray(parsed)) {
+          items = parsed.filter(item => item && item.product && item.product.id);
+        }
+      } catch (e) {
+        items = [];
+      }
+    }
+    setCartItems(items);
     setLoadedKey(cartKey);
   }, [cartKey]);
 
@@ -102,8 +113,9 @@ export const CartProvider = ({ children }) => {
 
   // Subtotal in USD
   const subtotal = cartItems.reduce((sum, item) => {
-    const itemPrice = getOptionPrice(item.selectedSize, item.product.price_usd);
-    return sum + itemPrice * item.quantity;
+    if (!item || !item.product) return sum;
+    const itemPrice = getOptionPrice(item.selectedSize, item.product.price_usd || 0);
+    return sum + itemPrice * (item.quantity || 0);
   }, 0);
 
   // Delivery calculations
