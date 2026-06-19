@@ -77,6 +77,7 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
   const [priceUsd, setPriceUsd] = useState('');
   const [costPriceUsd, setCostPriceUsd] = useState('');
   const [oldPriceUsd, setOldPriceUsd] = useState('');
+  const [modelNumber, setModelNumber] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [merchantId, setMerchantId] = useState('');
   const [stock, setStock] = useState('10');
@@ -154,6 +155,7 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     formData.append('price_usd', priceUsd);
     formData.append('cost_price_usd', costPriceUsd || '0.0');
     formData.append('old_price_usd', oldPriceUsd || 'null');
+    formData.append('model_number', modelNumber || '');
     formData.append('category_id', categoryId || 'null');
     formData.append('merchant_id', merchantId || 'null');
     formData.append('stock', stock);
@@ -231,6 +233,7 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     setPriceUsd(product.price_usd);
     setCostPriceUsd(product.cost_price_usd || '0.0');
     setOldPriceUsd(product.old_price_usd || '');
+    setModelNumber(product.model_number || '');
     setCategoryId(product.category_id || '');
     setMerchantId(product.merchant_id || '');
     setStock(product.stock);
@@ -298,6 +301,7 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     setPriceUsd('');
     setCostPriceUsd('');
     setOldPriceUsd('');
+    setModelNumber('');
     setCategoryId('');
     setMerchantId('');
     setStock('10');
@@ -338,6 +342,10 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
           <div>
             <label className="input-label">Description (English)</label>
             <input type="text" className="input-field" value={descEn} onChange={(e) => setDescEn(e.target.value)} />
+          </div>
+          <div>
+            <label className="input-label">{lang === 'ar' ? 'رقم الموديل (Model Number)' : 'Model Number'}</label>
+            <input type="text" className="input-field" value={modelNumber} onChange={(e) => setModelNumber(e.target.value)} placeholder={lang === 'ar' ? 'مثال: Mod-102' : 'e.g., Mod-102'} />
           </div>
           <div>
             <label className="input-label">سعر البيع (Selling Price - USD) *</label>
@@ -783,7 +791,22 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
                     <img src={imageUrl} alt="" style={{ width: '40px', height: '40px', objectFit: 'contain', backgroundColor: 'white', borderRadius: '4px', border: '1px solid var(--border-color)' }} />
                   </td>
                   <td style={{ padding: '10px', fontWeight: '600' }}>
-                    {lang === 'ar' ? p.name_ar : p.name_en}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                      <span>{lang === 'ar' ? p.name_ar : p.name_en}</span>
+                      {p.model_number && (
+                        <span style={{ 
+                          fontSize: '0.75rem', 
+                          fontWeight: '700',
+                          backgroundColor: 'rgba(59,130,246,0.1)', 
+                          color: 'var(--accent-blue)', 
+                          padding: '2px 6px', 
+                          borderRadius: '4px',
+                          display: 'inline-block'
+                        }}>
+                          {p.model_number}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td style={{ padding: '10px', color: 'var(--text-light)' }}>
                     {lang === 'ar' ? p.category_name_ar : p.category_name_en}

@@ -134,7 +134,7 @@ exports.getProductById = async (req, res) => {
 };
 
 exports.createProduct = async (req, res) => {
-  const { name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, stock, colors, sizes } = req.body;
+  const { name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, stock, colors, sizes, model_number } = req.body;
   
   let imageUrls = [];
   if (req.files && req.files.length > 0) {
@@ -156,9 +156,9 @@ exports.createProduct = async (req, res) => {
 
   try {
     const result = await db.runAsync(`
-      INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, colors, sizes)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [name_ar, name_en, description_ar, description_en, parseFloat(price_usd), costPrice, oldPrice, cid, mid, imageUrl, productStock, colorsStr, sizesStr]);
+      INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, colors, sizes, model_number)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [name_ar, name_en, description_ar, description_en, parseFloat(price_usd), costPrice, oldPrice, cid, mid, imageUrl, productStock, colorsStr, sizesStr, model_number || '']);
 
     res.status(201).json({
       message_ar: 'تم إضافة المنتج بنجاح',
@@ -178,7 +178,8 @@ exports.createProduct = async (req, res) => {
         images: imageUrls,
         stock: productStock,
         colors: JSON.parse(colorsStr),
-        sizes: JSON.parse(sizesStr)
+        sizes: JSON.parse(sizesStr),
+        model_number: model_number || ''
       }
     });
   } catch (err) {
@@ -189,7 +190,7 @@ exports.createProduct = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
   const { id } = req.params;
-  const { name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, stock, colors, sizes, existing_images, keep_existing_images } = req.body;
+  const { name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, stock, colors, sizes, existing_images, keep_existing_images, model_number } = req.body;
 
   try {
     const product = await db.getAsync('SELECT * FROM products WHERE id = ?', [id]);
@@ -258,9 +259,9 @@ exports.updateProduct = async (req, res) => {
 
     await db.runAsync(`
       UPDATE products 
-      SET name_ar = ?, name_en = ?, description_ar = ?, description_en = ?, price_usd = ?, cost_price_usd = ?, old_price_usd = ?, category_id = ?, merchant_id = ?, image_url = ?, stock = ?, colors = ?, sizes = ?
+      SET name_ar = ?, name_en = ?, description_ar = ?, description_en = ?, price_usd = ?, cost_price_usd = ?, old_price_usd = ?, category_id = ?, merchant_id = ?, image_url = ?, stock = ?, colors = ?, sizes = ?, model_number = ?
       WHERE id = ?
-    `, [name_ar, name_en, description_ar, description_en, parseFloat(price_usd), costPrice, oldPrice, cid, mid, imageUrl, productStock, colorsStr, sizesStr, id]);
+    `, [name_ar, name_en, description_ar, description_en, parseFloat(price_usd), costPrice, oldPrice, cid, mid, imageUrl, productStock, colorsStr, sizesStr, model_number || '', id]);
 
     res.json({
       message_ar: 'تم تحديث المنتج بنجاح',
@@ -280,7 +281,8 @@ exports.updateProduct = async (req, res) => {
         images: imageUrls,
         stock: productStock,
         colors: JSON.parse(colorsStr),
-        sizes: JSON.parse(sizesStr)
+        sizes: JSON.parse(sizesStr),
+        model_number: model_number || ''
       }
     });
   } catch (err) {
