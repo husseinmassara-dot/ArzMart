@@ -84,7 +84,7 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
   const [colorsInput, setColorsInput] = useState('');
-  const [sizesList, setSizesList] = useState([{ name: '', price: '', type: 'absolute' }]);
+  const [sizesList, setSizesList] = useState([{ name: '', price: '', cost: '', type: 'absolute' }]);
 
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
@@ -186,9 +186,10 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     const sizesArray = sizesList.map(opt => {
       if (!opt.name) return null;
       if (!opt.price) return opt.name;
-      if (opt.type === 'relative') return `${opt.name} (+${opt.price})`;
-      if (opt.type === 'negative') return `${opt.name} (-${opt.price})`;
-      return `${opt.name} ($${opt.price})`;
+      const costPart = opt.cost ? `/${opt.cost}` : '';
+      if (opt.type === 'relative') return `${opt.name} (+${opt.price}${costPart})`;
+      if (opt.type === 'negative') return `${opt.name} (-${opt.price}${costPart})`;
+      return `${opt.name} ($${opt.price}${costPart})`;
     }).filter(Boolean);
     formData.append('colors', JSON.stringify(colorsArray));
     formData.append('sizes', JSON.stringify(sizesArray));
@@ -243,20 +244,21 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     let parsedSizes = [];
     if (product.sizes && Array.isArray(product.sizes)) {
       parsedSizes = product.sizes.map(s => {
-        const priceRegex = /\(\s*([+-]?\s*\$?\s*[0-9.]+)\s*\$?_?\)/;
+        const priceRegex = /\(\s*([+-]?\s*\$?\s*[0-9.]+)(?:\/([0-9.]+))?\s*\$?_?\)/;
         const match = s.match(priceRegex);
         if (match) {
-          const name = s.replace(/\s*\(\s*[+-]?\s*\$?\s*[0-9.]+\s*\$?_?\)/g, '').trim();
+          const name = s.replace(/\s*\(\s*[+-]?\s*\$?\s*[0-9.]+(?:\/[0-9.]+)?\s*\$?_?\)/g, '').trim();
           const priceVal = match[1].replace(/[+\-$]/g, '').trim();
+          const costVal = match[2] ? match[2].trim() : '';
           let type = 'absolute';
           if (s.includes('+')) type = 'relative';
           else if (s.includes('-')) type = 'negative';
-          return { name, price: priceVal, type };
+          return { name, price: priceVal, cost: costVal, type };
         }
-        return { name: s, price: '', type: 'absolute' };
+        return { name: s, price: '', cost: '', type: 'absolute' };
       });
     }
-    setSizesList(parsedSizes.length > 0 ? parsedSizes : [{ name: '', price: '', type: 'absolute' }]);
+    setSizesList(parsedSizes.length > 0 ? parsedSizes : [{ name: '', price: '', cost: '', type: 'absolute' }]);
   };
 
   const handleDelete = async (id) => {
@@ -308,7 +310,7 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     setSelectedFiles([]);
     setExistingImages([]);
     setColorsInput('');
-    setSizesList([{ name: '', price: '', type: 'absolute' }]);
+    setSizesList([{ name: '', price: '', cost: '', type: 'absolute' }]);
   };
 
   const displayedProducts = filterOutOfStock
@@ -475,6 +477,23 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
                     />
                   </div>
 
+                  {/* Cost Value */}
+                  <div style={{ width: '120px' }}>
+                    <input 
+                      type="number" 
+                      step="0.01" 
+                      placeholder={lang === 'ar' ? 'التكلفة/الفارق' : 'Cost/Offset'} 
+                      className="input-field" 
+                      style={{ margin: 0 }}
+                      value={item.cost || ''} 
+                      onChange={(e) => {
+                        const newList = [...sizesList];
+                        newList[index].cost = e.target.value;
+                        setSizesList(newList);
+                      }} 
+                    />
+                  </div>
+
                   {/* Delete Button */}
                   <button 
                     type="button" 
@@ -501,7 +520,7 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
             {/* Add Option Button */}
             <button 
               type="button" 
-              onClick={() => setSizesList([...sizesList, { name: '', price: '', type: 'absolute' }])}
+              onClick={() => setSizesList([...sizesList, { name: '', price: '', cost: '', type: 'absolute' }])}
               style={{
                 marginTop: '12px',
                 padding: '6px 16px',
