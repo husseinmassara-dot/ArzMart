@@ -259,9 +259,10 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     let parsedSizes = [];
     if (product.sizes && Array.isArray(product.sizes)) {
       parsedSizes = product.sizes.map(s => {
-        const stockMatch = s.match(/\[Stock:\s*([0-9]+)\]/);
+        const strS = String(s);
+        const stockMatch = strS.match(/\[Stock:\s*([0-9]+)\]/);
         const stockVal = stockMatch ? stockMatch[1] : '';
-        const cleanS = s.replace(/\[Stock:\s*[0-9]+\]/g, '').trim();
+        const cleanS = strS.replace(/\[Stock:\s*[0-9]+\]/g, '').trim();
 
         const priceRegex = /\(\s*([+-]?\s*\$?\s*[0-9.]+)(?:\/([0-9.]+))?\s*\$?_?\)/;
         const match = cleanS.match(priceRegex);

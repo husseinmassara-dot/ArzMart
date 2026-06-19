@@ -5,7 +5,7 @@ import { Star, ShoppingCart, X, Images } from 'lucide-react';
 
 function getOptionStock(optionString, defaultStock) {
   if (!optionString) return defaultStock;
-  const stockMatch = optionString.match(/\[Stock:\s*([0-9]+)\]/);
+  const stockMatch = String(optionString).match(/\[Stock:\s*([0-9]+)\]/);
   if (stockMatch) {
     return parseInt(stockMatch[1], 10);
   }
@@ -14,7 +14,7 @@ function getOptionStock(optionString, defaultStock) {
 
 function getOptionName(optionString) {
   if (!optionString) return '';
-  const cleanS = optionString.replace(/\[Stock:\s*[0-9]+\]/g, '').trim();
+  const cleanS = String(optionString).replace(/\[Stock:\s*[0-9]+\]/g, '').trim();
   return cleanS.replace(/\s*\(\s*[+-]?\s*\$?\s*[0-9.]+\s*\$?_?\)/g, '').trim();
 }
 
@@ -46,6 +46,10 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
     return initialSizes.length > 0 ? initialSizes[0] : null;
   });
 
+  if (!product) return null;
+
+  const displayProduct = fullProduct || product;
+
   // Fetch full product data (with all images) when modal opens
   useEffect(() => {
     if (!product?.id) return;
@@ -59,16 +63,13 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
       .catch(() => {/* fallback to passed product */})
       .finally(() => setLoadingImages(false));
   }, [product?.id, apiBase]);
+
   useEffect(() => {
     if (selectedSize) {
       const optStock = getOptionStock(selectedSize, displayProduct.stock);
       setQty(q => Math.min(q, Math.max(1, optStock)));
     }
   }, [selectedSize, displayProduct.stock]);
-
-  if (!product) return null;
-
-  const displayProduct = fullProduct || product;
 
   let parsedSizes = [];
   if (displayProduct && displayProduct.sizes) {
@@ -93,7 +94,7 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
   const currentStock = getOptionStock(selectedSize, displayProduct.stock);
   let adjustedOldPrice = displayProduct.old_price_usd;
   if (displayProduct.old_price_usd && selectedSize) {
-    const relativeMatch = selectedSize.match(/\(\s*([+-])\s*\$?\s*([0-9.]+)\s*\$?_?\)/);
+    const relativeMatch = String(selectedSize).match(/\(\s*([+-])\s*\$?\s*([0-9.]+)\s*\$?_?\)/);
     if (relativeMatch) {
       const sign = relativeMatch[1];
       const offset = parseFloat(relativeMatch[2]);

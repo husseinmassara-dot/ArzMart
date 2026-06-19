@@ -6,11 +6,12 @@ const CartContext = createContext();
 
 export function getOptionPrice(optionString, basePrice) {
   if (!optionString) return basePrice;
+  const strOpt = String(optionString);
   const priceRegex = /\(\s*[+-]?\s*\$?\s*([0-9.]+)\s*\$?_?\)/;
-  const match = optionString.match(priceRegex);
+  const match = strOpt.match(priceRegex);
   if (match) {
     const val = parseFloat(match[1]);
-    const relativeMatch = optionString.match(/\(\s*([+-])\s*\$?\s*([0-9.]+)\s*\$?_?\)/);
+    const relativeMatch = strOpt.match(/\(\s*([+-])\s*\$?\s*([0-9.]+)\s*\$?_?\)/);
     if (relativeMatch) {
       const sign = relativeMatch[1];
       const offset = parseFloat(relativeMatch[2]);
