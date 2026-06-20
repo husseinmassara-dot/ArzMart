@@ -1586,6 +1586,7 @@ export default function App() {
                               key={p.id} 
                               product={p} 
                               onDetailsClick={setSelectedProduct} 
+                              setCurrentView={setCurrentView}
                             />
                           ))}
                         </div>
@@ -1665,11 +1666,19 @@ export default function App() {
           product={selectedProduct} 
           onClose={() => setSelectedProduct(null)} 
           onRefresh={fetchProducts}
+          setCurrentView={setCurrentView}
         />
       )}
 
       {/* 5. Cart Drawer overlay */}
-      <Cart onCheckoutClick={() => setShowCheckout(true)} />
+      <Cart onCheckoutClick={() => {
+        if (!token) {
+          alert(lang === 'ar' ? 'يرجى تسجيل الدخول أولاً للمتابعة إلى إكمال الطلب والحصول على خصم 10%!' : 'Please log in first to proceed to checkout and get a 10% discount!');
+          setCurrentView('login');
+        } else {
+          setShowCheckout(true);
+        }
+      }} />
 
       {/* 6. Checkout Modal dialog */}
       {showCheckout && (

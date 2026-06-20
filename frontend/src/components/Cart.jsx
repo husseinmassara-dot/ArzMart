@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { useCart, getOptionPrice } from '../context/CartContext';
+import { useCart, getOptionPrice, getOptionName } from '../context/CartContext';
 import { X, Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
 
 export default function Cart({ onCheckoutClick }) {
@@ -156,7 +156,7 @@ export default function Cart({ onCheckoutClick }) {
                         {item.selectedSize && (
                           <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <span>{lang === 'ar' ? 'القياس:' : 'Size:'}</span>
-                            <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{item.selectedSize}</span>
+                            <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{getOptionName(item.selectedSize)}</span>
                           </span>
                         )}
                       </div>

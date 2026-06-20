@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { useCart, getOptionPrice } from '../context/CartContext';
+import { useCart, getOptionPrice, getOptionName } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { X, CheckCircle } from 'lucide-react';
 
 export default function Checkout({ onClose }) {
   const { lang, formatPrice, settings, t, apiBase } = useApp();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const { cartItems, subtotal, deliveryFee, total, clearCart } = useCart();
 
   const [phone, setPhone] = useState('');
@@ -30,6 +30,14 @@ export default function Checkout({ onClose }) {
   const [placedOrderInfo, setPlacedOrderInfo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
+
+  // Auto-apply welcome discount coupon if user hasn't used it yet
+  useEffect(() => {
+    if (token && user && user.discount_used === 0 && !appliedCode) {
+      setDiscountPercent(10);
+      setAppliedCode('WELCOME10');
+    }
+  }, [token, user, appliedCode]);
 
   const handleApplyCoupon = async () => {
     setCouponError('');
@@ -136,7 +144,37 @@ export default function Checkout({ onClose }) {
     }
   };
 
-  const finalSubtotal = subtotal - (subtotal * (discountPercent / 100));
+  const discountableSubtotal = cartItems.reduce((sum, item) => {
+    if (!item || !item.product) return sum;
+    const catAr = item.product.category_name_ar || '';
+    const catEn = item.product.category_name_en || '';
+    const isPhone = (
+      (catAr.includes('هاتف') || catAr.includes('هواتف') || catAr.includes('موبايل') || catAr.includes('جوال')) &&
+      !(catAr.includes('إكسسوار') || catAr.includes('اكسسوار') || catAr.includes('شاحن') || catAr.includes('شواحن') || 
+        catAr.includes('سماعة') || catAr.includes('سماعات') || catAr.includes('كفر') || catAr.includes('كفرات') || 
+        catAr.includes('جراب') || catAr.includes('جرابات') || catAr.includes('سلك') || catAr.includes('أسلاك') || 
+        catAr.includes('حماية') || catAr.includes('لاصق'))
+    ) || (
+      (catEn.toLowerCase().includes('phone') || catEn.toLowerCase().includes('mobile') || catEn.toLowerCase().includes('smartphone')) &&
+      !(catEn.toLowerCase().includes('access') || catEn.toLowerCase().includes('case') || catEn.toLowerCase().includes('cover') || 
+        catEn.toLowerCase().includes('charger') || catEn.toLowerCase().includes('headphone') || catEn.toLowerCase().includes('earphone') || 
+        catEn.toLowerCase().includes('cable') || catEn.toLowerCase().includes('screen') || catEn.toLowerCase().includes('glass') || 
+        catEn.toLowerCase().includes('holder') || catEn.toLowerCase().includes('stand') || catEn.toLowerCase().includes('powerbank') || 
+        catEn.toLowerCase().includes('power bank'))
+    );
+    
+    if (isPhone && discountPercent === 10) {
+      return sum;
+    }
+    const itemPrice = getOptionPrice(item.selectedSize, item.product.price_usd || 0);
+    return sum + itemPrice * (item.quantity || 0);
+  }, 0);
+
+  const discountAmount = discountPercent === 10 
+    ? discountableSubtotal * 0.1 
+    : subtotal * (discountPercent / 100);
+
+  const finalSubtotal = subtotal - discountAmount;
   const finalTotal = finalSubtotal + deliveryFee;
 
   if (orderSuccess) {
@@ -412,7 +450,7 @@ export default function Checkout({ onClose }) {
                         <span>{lang === 'ar' ? `اللون: ${item.selectedColor}` : `Color: ${item.selectedColor}`}</span>
                       )}
                       {item.selectedSize && (
-                        <span>{lang === 'ar' ? `القياس: ${item.selectedSize}` : `Size: ${item.selectedSize}`}</span>
+                        <span>{lang === 'ar' ? `القياس: ${getOptionName(item.selectedSize)}` : `Size: ${getOptionName(item.selectedSize)}`}</span>
                       )}
                     </div>
                   )}
@@ -454,7 +492,7 @@ export default function Checkout({ onClose }) {
               {discountPercent > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#10b981', fontWeight: '600' }}>
                   <span>خصم {discountPercent}%</span>
-                  <span>- {formatPrice(subtotal * (discountPercent / 100))}</span>
+                  <span>- {formatPrice(discountAmount)}</span>
                 </div>
               )}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>

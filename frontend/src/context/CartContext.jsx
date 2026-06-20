@@ -7,19 +7,22 @@ const CartContext = createContext();
 export function getOptionPrice(optionString, basePrice) {
   if (!optionString) return basePrice;
   const strOpt = String(optionString);
-  const priceRegex = /\(\s*[+-]?\s*\$?\s*([0-9.]+)\s*\$?_?\)/;
+  const priceRegex = /\(\s*([+-]?\s*\$?\s*[0-9.]+)(?:\/([0-9.]+))?\s*\$?_?\)/;
   const match = strOpt.match(priceRegex);
   if (match) {
-    const val = parseFloat(match[1]);
-    const relativeMatch = strOpt.match(/\(\s*([+-])\s*\$?\s*([0-9.]+)\s*\$?_?\)/);
-    if (relativeMatch) {
-      const sign = relativeMatch[1];
-      const offset = parseFloat(relativeMatch[2]);
-      return sign === '-' ? (basePrice - offset) : (basePrice + offset);
-    }
-    return val;
+    const signMatch = strOpt.match(/\(\s*([+-])/);
+    const sign = signMatch ? signMatch[1] : '+';
+    const offset = parseFloat(match[1].replace(/[+\-$]/g, '').trim());
+    return sign === '-' ? (basePrice - offset) : (basePrice + offset);
   }
   return basePrice;
+}
+
+export function getOptionName(optionString) {
+  if (!optionString) return '';
+  const strOpt = String(optionString);
+  const cleanS = strOpt.replace(/\[Stock:\s*[0-9]+\]/g, '').trim();
+  return cleanS.replace(/\s*\(\s*[+-]?\s*\$?\s*[0-9.]+(?:\/[0-9.]+)?\s*\$?_?\)/g, '').trim();
 }
 
 export const CartProvider = ({ children }) => {

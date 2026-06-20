@@ -1,11 +1,13 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { Star, ShoppingCart, Eye } from 'lucide-react';
 
-export default function ProductCard({ product, onDetailsClick }) {
+export default function ProductCard({ product, onDetailsClick, setCurrentView }) {
   const { lang, formatPrice, t, apiHost } = useApp();
   const { addToCart } = useCart();
+  const { token } = useAuth();
 
   const name = lang === 'ar' ? product.name_ar : product.name_en;
   const categoryName = lang === 'ar' ? product.category_name_ar : product.category_name_en;
@@ -203,7 +205,14 @@ export default function ProductCard({ product, onDetailsClick }) {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              addToCart(product);
+              if (!token) {
+                alert(lang === 'ar' 
+                  ? 'يرجى تسجيل الدخول أو إنشاء حساب أولاً للحصول على خصم 10% وإكمال الطلب!' 
+                  : 'Please login or register first to get a 10% discount and complete your order!');
+                setCurrentView('login');
+              } else {
+                addToCart(product);
+              }
             }}
             disabled={product.stock <= 0}
             className="input-field animate-fade"

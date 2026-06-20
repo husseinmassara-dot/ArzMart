@@ -16,6 +16,7 @@ exports.createOrder = async (req, res) => {
     const freeDeliveryThreshold = settings ? settings.free_delivery_threshold : 50;
 
     let subtotalUsd = 0;
+    let discountableSubtotalUsd = 0;
     let totalCostUsd = 0; // Cumulative cost price for the order
     const orderItemsDetails = [];
 
@@ -91,6 +92,28 @@ exports.createOrder = async (req, res) => {
       subtotalUsd += itemCost;
       totalCostUsd += itemCostPrice;
 
+      const category = await db.getAsync('SELECT name_ar, name_en FROM categories WHERE id = ?', [product.category_id]);
+      const catAr = category ? (category.name_ar || '') : '';
+      const catEn = category ? (category.name_en || '') : '';
+      const isPhone = (
+        (catAr.includes('هاتف') || catAr.includes('هواتف') || catAr.includes('موبايل') || catAr.includes('جوال')) &&
+        !(catAr.includes('إكسسوار') || catAr.includes('اكسسوار') || catAr.includes('شاحن') || catAr.includes('شواحن') || 
+          catAr.includes('سماعة') || catAr.includes('سماعات') || catAr.includes('كفر') || catAr.includes('كفرات') || 
+          catAr.includes('جراب') || catAr.includes('جرابات') || catAr.includes('سلك') || catAr.includes('أسلاك') || 
+          catAr.includes('حماية') || catAr.includes('لاصق'))
+      ) || (
+        (catEn.toLowerCase().includes('phone') || catEn.toLowerCase().includes('mobile') || catEn.toLowerCase().includes('smartphone')) &&
+        !(catEn.toLowerCase().includes('access') || catEn.toLowerCase().includes('case') || catEn.toLowerCase().includes('cover') || 
+          catEn.toLowerCase().includes('charger') || catEn.toLowerCase().includes('headphone') || catEn.toLowerCase().includes('earphone') || 
+          catEn.toLowerCase().includes('cable') || catEn.toLowerCase().includes('screen') || catEn.toLowerCase().includes('glass') || 
+          catEn.toLowerCase().includes('holder') || catEn.toLowerCase().includes('stand') || catEn.toLowerCase().includes('powerbank') || 
+          catEn.toLowerCase().includes('power bank'))
+      );
+
+      if (!isPhone) {
+        discountableSubtotalUsd += itemCost;
+      }
+
       orderItemsDetails.push({
         product_id: product.id,
         name_ar: product.name_ar,
@@ -157,7 +180,9 @@ exports.createOrder = async (req, res) => {
       }
     }
 
-    const discountAmountUsd = subtotalUsd * (discountPercent / 100);
+    const discountAmountUsd = discountPercent === 10
+      ? discountableSubtotalUsd * 0.1
+      : subtotalUsd * (discountPercent / 100);
     const subtotalAfterDiscountUsd = subtotalUsd - discountAmountUsd;
 
     const deliveryFeeUsd = subtotalAfterDiscountUsd >= freeDeliveryThreshold ? 0 : baseDeliveryFee;

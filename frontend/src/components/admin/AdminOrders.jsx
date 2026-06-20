@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { Printer, Eye, CheckCircle2, Trash2 } from 'lucide-react';
+import { getOptionName } from '../../context/CartContext';
 
 export default function AdminOrders() {
   const { lang, formatPrice, apiBase, settings, apiHost } = useApp();
@@ -585,7 +586,7 @@ export default function AdminOrders() {
                                 )}
                                 {item.selectedSize && (
                                   <span style={{ backgroundColor: 'var(--bg-tertiary)', padding: '2px 6px', borderRadius: '4px' }}>
-                                    {lang === 'ar' ? `القياس: ${item.selectedSize}` : `Size: ${item.selectedSize}`}
+                                    {lang === 'ar' ? `القياس: ${getOptionName(item.selectedSize)}` : `Size: ${getOptionName(item.selectedSize)}`}
                                   </span>
                                 )}
                               </div>

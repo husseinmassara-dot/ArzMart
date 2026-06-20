@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { useCart, getOptionPrice } from '../context/CartContext';
+import { useCart, getOptionPrice, getOptionName } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { Star, ShoppingCart, X, Images } from 'lucide-react';
 
 function getOptionStock(optionString, defaultStock) {
@@ -12,15 +13,10 @@ function getOptionStock(optionString, defaultStock) {
   return defaultStock;
 }
 
-function getOptionName(optionString) {
-  if (!optionString) return '';
-  const cleanS = String(optionString).replace(/\[Stock:\s*[0-9]+\]/g, '').trim();
-  return cleanS.replace(/\s*\(\s*[+-]?\s*\$?\s*[0-9.]+\s*\$?_?\)/g, '').trim();
-}
-
-export default function ProductDetails({ product, onClose, onRefresh }) {
+export default function ProductDetails({ product, onClose, onRefresh, setCurrentView }) {
   const { lang, formatPrice, t, apiBase, apiHost } = useApp();
   const { addToCart } = useCart();
+  const { token } = useAuth();
   const [qty, setQty] = useState(1);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [userRating, setUserRating] = useState(5);
@@ -517,8 +513,16 @@ export default function ProductDetails({ product, onClose, onRefresh }) {
                 <span className="input-label" style={{ margin: 0, opacity: 0 }}>Action</span>
                 <button
                   onClick={() => {
-                    addToCart(displayProduct, qty, selectedColor, selectedSize);
-                    onClose();
+                    if (!token) {
+                      alert(lang === 'ar' 
+                        ? 'يرجى تسجيل الدخول أو إنشاء حساب أولاً للحصول على خصم 10% وإكمال الطلب!' 
+                        : 'Please login or register first to get a 10% discount and complete your order!');
+                      setCurrentView('login');
+                      onClose();
+                    } else {
+                      addToCart(displayProduct, qty, selectedColor, selectedSize);
+                      onClose();
+                    }
                   }}
                   disabled={currentStock <= 0}
                   className="input-field"
