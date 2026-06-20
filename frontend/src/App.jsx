@@ -1411,8 +1411,8 @@ export default function App() {
               /* --- 2. PRODUCT GRID & NAVIGATION VIEW --- */
               (() => {
                 // Determine if selected category has children (is a parent/intermediate category)
-                const selectedCatIdNum = parseInt(selectedCategory);
-                const hasSubcategories = selectedCategory !== '' && categories.some(c => c.parent_id === selectedCatIdNum);
+                const selectedCatIdNum = Number(selectedCategory);
+                const hasSubcategories = selectedCategory !== '' && !isNaN(selectedCatIdNum) && categories.some(c => c.parent_id !== null && c.parent_id !== undefined && Number(c.parent_id) === selectedCatIdNum);
 
                 return (
                   <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -1429,7 +1429,7 @@ export default function App() {
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         {(() => {
-                          const currentCat = categories.find(c => c.id === selectedCatIdNum);
+                          const currentCat = categories.find(c => Number(c.id) === selectedCatIdNum);
                           if (currentCat && currentCat.parent_id) {
                             return (
                               <button
@@ -1478,10 +1478,10 @@ export default function App() {
                         
                         <h2 style={{ fontSize: '1.3rem', fontWeight: '800' }}>
                           {selectedCategory !== '' ? (
-                            categories.find(c => c.id === selectedCatIdNum) ? (
+                            categories.find(c => Number(c.id) === selectedCatIdNum) ? (
                               lang === 'ar' 
-                                ? categories.find(c => c.id === selectedCatIdNum).name_ar 
-                                : categories.find(c => c.id === selectedCatIdNum).name_en
+                                ? categories.find(c => Number(c.id) === selectedCatIdNum).name_ar 
+                                : categories.find(c => Number(c.id) === selectedCatIdNum).name_en
                             ) : ''
                           ) : (
                             lang === 'ar' ? 'نتائج البحث' : 'Search Results'
@@ -1497,7 +1497,7 @@ export default function App() {
                           {lang === 'ar' ? 'الأقسام الفرعية' : 'Subcategories'}
                         </h3>
                         <div className="categories-grid">
-                          {categories.filter(c => c.parent_id === selectedCatIdNum).map((sub) => {
+                          {categories.filter(c => c.parent_id !== null && c.parent_id !== undefined && Number(c.parent_id) === selectedCatIdNum).map((sub) => {
                             const subName = lang === 'ar' ? sub.name_ar : sub.name_en;
                             
                             let bgImg = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=500&q=80';

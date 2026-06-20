@@ -17,15 +17,20 @@ exports.getProducts = async (req, res) => {
     try {
       const allCats = await db.allAsync('SELECT id, parent_id FROM categories');
       const getDescendants = (parentId) => {
-        const ids = [parseInt(parentId)];
-        const queue = [parseInt(parentId)];
-        while (queue.length > 0) {
+        const targetId = Number(parentId);
+        if (isNaN(targetId)) return [];
+        const ids = [targetId];
+        const queue = [targetId];
+        let iterations = 0;
+        while (queue.length > 0 && iterations < 1000) {
+          iterations++;
           const curr = queue.shift();
-          const children = allCats.filter(c => c.parent_id === curr);
+          const children = allCats.filter(c => c.parent_id !== null && c.parent_id !== undefined && Number(c.parent_id) === curr);
           children.forEach(ch => {
-            if (!ids.includes(ch.id)) {
-              ids.push(ch.id);
-              queue.push(ch.id);
+            const childId = Number(ch.id);
+            if (!isNaN(childId) && !ids.includes(childId)) {
+              ids.push(childId);
+              queue.push(childId);
             }
           });
         }
@@ -38,7 +43,7 @@ exports.getProducts = async (req, res) => {
         catIds.forEach(id => params.push(id));
       } else {
         query += ' AND p.category_id = ?';
-        params.push(category_id);
+        params.push(Number(category_id));
       }
     } catch (err) {
       console.error('Subcategories fetch error:', err);

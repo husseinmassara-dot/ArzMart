@@ -389,16 +389,21 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
   };
 
   const getDescendantCategoryIds = (catId, categoriesList) => {
-    const ids = [parseInt(catId)];
-    const queue = [parseInt(catId)];
+    const targetId = Number(catId);
+    if (isNaN(targetId)) return [];
+    const ids = [targetId];
+    const queue = [targetId];
+    let iterations = 0;
     
-    while (queue.length > 0) {
+    while (queue.length > 0 && iterations < 1000) {
+      iterations++;
       const currentId = queue.shift();
-      const children = categoriesList.filter(c => c.parent_id === currentId);
+      const children = categoriesList.filter(c => c.parent_id !== null && c.parent_id !== undefined && Number(c.parent_id) === currentId);
       children.forEach(child => {
-        if (!ids.includes(child.id)) {
-          ids.push(child.id);
-          queue.push(child.id);
+        const childId = Number(child.id);
+        if (!isNaN(childId) && !ids.includes(childId)) {
+          ids.push(childId);
+          queue.push(childId);
         }
       });
     }
