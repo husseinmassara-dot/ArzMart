@@ -15,8 +15,24 @@ exports.getProducts = async (req, res) => {
 
   if (category_id) {
     try {
-      const subcats = await db.allAsync('SELECT id FROM categories WHERE parent_id = ? OR id = ?', [category_id, category_id]);
-      const catIds = subcats.map(s => s.id);
+      const allCats = await db.allAsync('SELECT id, parent_id FROM categories');
+      const getDescendants = (parentId) => {
+        const ids = [parseInt(parentId)];
+        const queue = [parseInt(parentId)];
+        while (queue.length > 0) {
+          const curr = queue.shift();
+          const children = allCats.filter(c => c.parent_id === curr);
+          children.forEach(ch => {
+            if (!ids.includes(ch.id)) {
+              ids.push(ch.id);
+              queue.push(ch.id);
+            }
+          });
+        }
+        return ids;
+      };
+
+      const catIds = getDescendants(category_id);
       if (catIds.length > 0) {
         query += ` AND p.category_id IN (${catIds.map(() => '?').join(',')})`;
         catIds.forEach(id => params.push(id));

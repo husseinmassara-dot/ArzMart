@@ -388,6 +388,25 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     }
   };
 
+  const getDescendantCategoryIds = (catId, categoriesList) => {
+    const ids = [parseInt(catId)];
+    const queue = [parseInt(catId)];
+    
+    while (queue.length > 0) {
+      const currentId = queue.shift();
+      const children = categoriesList.filter(c => c.parent_id === currentId);
+      children.forEach(child => {
+        if (!ids.includes(child.id)) {
+          ids.push(child.id);
+          queue.push(child.id);
+        }
+      });
+    }
+    return ids;
+  };
+
+  const allowedCategoryIds = filterCategory ? getDescendantCategoryIds(filterCategory, categories) : [];
+
   const displayedProducts = products.filter(p => {
     // Search Term
     const sTerm = searchTerm.trim().toLowerCase();
@@ -397,7 +416,7 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
       (p.model_number && p.model_number.toLowerCase().includes(sTerm));
 
     // Category
-    const matchesCategory = !filterCategory || String(p.category_id) === String(filterCategory);
+    const matchesCategory = !filterCategory || allowedCategoryIds.includes(Number(p.category_id));
 
     // Merchant
     const matchesMerchant = !filterMerchant || String(p.merchant_id) === String(filterMerchant);

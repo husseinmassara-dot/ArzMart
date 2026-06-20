@@ -1577,21 +1577,27 @@ export default function App() {
                       </div>
                     )}
 
-                    {/* Products Grid — shown ONLY for leaf categories (no subcategories) or search results */}
-                    {!hasSubcategories && (
-                      <>
-                        <div className="categories-grid">
-                          {products.map((p) => (
-                            <ProductCard 
-                              key={p.id} 
-                              product={p} 
-                              onDetailsClick={setSelectedProduct} 
-                              setCurrentView={setCurrentView}
-                            />
-                          ))}
-                        </div>
-
-                        {products.length === 0 && (
+                    {/* Products Grid */}
+                    {(products.length > 0 || !hasSubcategories) && (
+                      <div style={{ marginTop: hasSubcategories ? '30px' : '0' }}>
+                        {hasSubcategories && products.length > 0 && (
+                          <h3 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '16px', color: 'var(--text-primary)' }}>
+                            {lang === 'ar' ? 'منتجات هذا القسم' : 'Products in this Category'}
+                          </h3>
+                        )}
+                        
+                        {products.length > 0 ? (
+                          <div className="categories-grid">
+                            {products.map((p) => (
+                              <ProductCard 
+                                key={p.id} 
+                                product={p} 
+                                onDetailsClick={setSelectedProduct} 
+                                setCurrentView={setCurrentView}
+                              />
+                            ))}
+                          </div>
+                        ) : (
                           <div style={{
                             textAlign: 'center',
                             padding: '80px 0',
@@ -1605,7 +1611,7 @@ export default function App() {
                             <p style={{ fontWeight: '600' }}>{t('no_products')}</p>
                           </div>
                         )}
-                      </>
+                      </div>
                     )}
                   </div>
                 );
