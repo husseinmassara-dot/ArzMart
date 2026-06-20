@@ -206,6 +206,7 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
       const stockPart = opt.stock !== undefined && opt.stock !== null && opt.stock !== '' ? ` [Stock: ${opt.stock}]` : ' [Stock: 10]';
       if (opt.type === 'relative') return `${opt.name} (+${priceVal}${costPart})${stockPart}`;
       if (opt.type === 'negative') return `${opt.name} (-${priceVal}${costPart})${stockPart}`;
+      if (opt.type === 'fixed') return `${opt.name} (${priceVal}${costPart})${stockPart}`;
       return `${opt.name} (+${priceVal}${costPart})${stockPart}`;
     }).filter(Boolean);
     formData.append('colors', JSON.stringify(colorsArray));
@@ -272,12 +273,12 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
           const name = cleanS.replace(/\s*\(\s*[+-]?\s*\$?\s*[0-9.]+(?:\/[0-9.]+)?\s*\$?_?\)/g, '').trim();
           const priceVal = match[1].replace(/[+\-$]/g, '').trim();
           const costVal = match[2] ? match[2].trim() : '';
-          let type = 'relative';
+          let type = 'fixed';
           if (cleanS.includes('+')) type = 'relative';
           else if (cleanS.includes('-')) type = 'negative';
           return { name, price: priceVal, cost: costVal, stock: stockVal, type };
         }
-        return { name: cleanS, price: '', cost: '', stock: stockVal, type: 'relative' };
+        return { name: cleanS, price: '', cost: '', stock: stockVal, type: 'fixed' };
       });
     }
     setSizesList(parsedSizes.length > 0 ? parsedSizes : [{ name: '', price: '', cost: '', stock: '10', type: 'relative' }]);
@@ -574,6 +575,7 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
                     >
                       <option value="relative">{lang === 'ar' ? 'زيادة نسبية (+)' : 'Price Increase (+)'}</option>
                       <option value="negative">{lang === 'ar' ? 'خصم نسبى (-)' : 'Price Decrease (-)'}</option>
+                      <option value="fixed">{lang === 'ar' ? 'سعر ثابت (مباشر)' : 'Fixed/Absolute Price'}</option>
                     </select>
                   </div>
 
