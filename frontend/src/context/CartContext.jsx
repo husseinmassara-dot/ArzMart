@@ -10,6 +10,10 @@ export function getOptionPrice(optionString, basePrice) {
   const priceRegex = /\(\s*([+-]?\s*\$?\s*[0-9.]+)(?:\/([0-9.]+))?\s*\$?_?\)/;
   const match = strOpt.match(priceRegex);
   if (match) {
+    if (strOpt.includes('/')) {
+      const val = parseFloat(match[1].replace(/[+\-$]/g, '').trim());
+      return val;
+    }
     const signMatch = strOpt.match(/\(\s*([+-])/);
     const sign = signMatch ? signMatch[1] : '+';
     const offset = parseFloat(match[1].replace(/[+\-$]/g, '').trim());

@@ -65,8 +65,9 @@ exports.createOrder = async (req, res) => {
               const priceVal = parseFloat(match[1].replace(/[+\-$]/g, ''));
               const costVal = match[2] ? parseFloat(match[2]) : null;
               
-              const isRelative = matchingSizeOption.includes('+') || matchingSizeOption.includes('-');
-              const isNegative = matchingSizeOption.includes('-');
+              const hasSlash = matchingSizeOption.includes('/');
+              const isRelative = !hasSlash && (matchingSizeOption.includes('+') || matchingSizeOption.includes('-'));
+              const isNegative = !hasSlash && matchingSizeOption.includes('-');
               
               if (isRelative) {
                 itemPrice = isNegative ? (product.price_usd - priceVal) : (product.price_usd + priceVal);
