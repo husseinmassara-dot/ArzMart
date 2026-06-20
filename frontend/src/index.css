@@ -57,6 +57,28 @@ body, .dashboard-card, nav, header, footer, aside,
 
   --font-family-ar: 'Cairo', sans-serif;
   --font-family-en: 'Inter', sans-serif;
+
+  /* Responsive Card Layout Tokens */
+  --card-img-height: 200px;
+  --card-padding: 16px;
+  --card-title-size: 1rem;
+  --card-title-height: 42px;
+  --card-stars-display: flex;
+  --card-price-size: 1.25rem;
+  --card-eye-display: flex;
+  --card-btn-font-size: 0.85rem;
+  --card-btn-padding: 8px 12px;
+  --card-btn-gap: 6px;
+  --card-btn-text-display: inline;
+  --card-badge-top: 10px;
+  --card-badge-font: 0.75rem;
+  --card-badge-padding: 2px 8px;
+  
+  --category-card-height: 280px;
+  --category-card-title-size: 1.45rem;
+  --category-card-padding: 24px;
+  --category-card-sub-display: block;
+  --subcategory-card-height: 180px;
 }
 
 :root.dark {
@@ -344,7 +366,7 @@ button.input-field {
   }
 }
 
-/* Categories Grid - 4 columns on desktop, 3 on tablet, 2 on mobile */
+/* Categories Grid - 4 columns on desktop, tablet, and mobile */
 .categories-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -353,20 +375,68 @@ button.input-field {
 
 @media (max-width: 1024px) {
   .categories-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .categories-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 16px;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
+  :root {
+    --card-img-height: 110px;
+    --card-padding: 8px;
+    --card-title-size: 0.8rem;
+    --card-title-height: 36px;
+    --card-stars-display: none;
+    --card-price-size: 0.95rem;
+    --card-eye-display: none;
+    --card-btn-font-size: 0.8rem;
+    --card-btn-padding: 6px 10px;
+    --card-btn-gap: 0px;
+    --card-btn-text-display: none;
+    --card-badge-top: 6px;
+    --card-badge-font: 0.65rem;
+    --card-badge-padding: 1px 4px;
+    
+    --category-card-height: 130px;
+    --category-card-title-size: 0.95rem;
+    --category-card-padding: 10px;
+    --category-card-sub-display: none;
+    --subcategory-card-height: 110px;
+  }
+
   .categories-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 8px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --card-img-height: 80px;
+    --card-padding: 6px;
+    --card-title-size: 0.72rem;
+    --card-title-height: 32px;
+    --card-stars-display: none;
+    --card-price-size: 0.85rem;
+    --card-eye-display: none;
+    --card-btn-font-size: 0.75rem;
+    --card-btn-padding: 4px 8px;
+    --card-btn-gap: 0px;
+    --card-btn-text-display: none;
+    --card-badge-top: 4px;
+    --card-badge-font: 0.6rem;
+    --card-badge-padding: 1px 3px;
+    
+    --category-card-height: 100px;
+    --category-card-title-size: 0.8rem;
+    --category-card-padding: 6px;
+    --category-card-sub-display: none;
+    --subcategory-card-height: 80px;
+  }
+
+  .categories-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 6px !important;
   }
 }
 

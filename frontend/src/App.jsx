@@ -1357,7 +1357,7 @@ export default function App() {
                         onClick={() => setSelectedCategory(cat.id)}
                         className="dashboard-card animate-fade"
                         style={{
-                          height: '280px', // Grander height
+                          height: 'var(--category-card-height, 280px)', // Grander height
                           position: 'relative',
                           overflow: 'hidden',
                           borderRadius: '20px', // Extra rounded corners
@@ -1393,14 +1393,14 @@ export default function App() {
                           bottom: '0',
                           left: '0',
                           right: '0',
-                          padding: '24px', // Taller padding for luxury look
+                          padding: 'var(--category-card-padding, 24px)', // Taller padding for luxury look
                           color: 'white',
                           display: 'flex',
                           flexDirection: 'column',
-                          gap: '8px',
+                          gap: 'var(--card-btn-gap, 8px)',
                           zIndex: 5
                         }}>
-                          <h3 style={{ fontSize: '1.45rem', fontWeight: '800', textShadow: '0 2px 4px rgba(0,0,0,0.9)' }}>
+                          <h3 style={{ fontSize: 'var(--category-card-title-size, 1.45rem)', fontWeight: '800', textShadow: '0 2px 4px rgba(0,0,0,0.9)' }}>
                             {catName}
                           </h3>
                           <span style={{ 
@@ -1408,7 +1408,8 @@ export default function App() {
                             color: 'var(--accent-red-gold)', 
                             fontWeight: '700',
                             textTransform: 'uppercase',
-                            letterSpacing: '0.5px'
+                            letterSpacing: '0.5px',
+                            display: 'var(--category-card-sub-display, block)'
                           }}>
                             {lang === 'ar' ? 'تصفح المنتجات ←' : 'Browse products →'}
                           </span>
@@ -1526,9 +1527,9 @@ export default function App() {
                               <div
                                 key={sub.id}
                                 onClick={() => setSelectedCategory(sub.id)}
-                                className="dashboard-card"
+                                className="dashboard-card animate-fade"
                                 style={{
-                                  height: '180px',
+                                  height: 'var(--subcategory-card-height, 180px)',
                                   position: 'relative',
                                   overflow: 'hidden',
                                   borderRadius: '16px',
@@ -1563,20 +1564,21 @@ export default function App() {
                                   bottom: '0',
                                   left: '0',
                                   right: '0',
-                                  padding: '16px',
+                                  padding: 'var(--category-card-padding, 16px)',
                                   color: 'white',
                                   display: 'flex',
                                   flexDirection: 'column',
-                                  gap: '4px',
+                                  gap: 'var(--card-btn-gap, 4px)',
                                   zIndex: 5
                                 }}>
-                                  <h4 style={{ fontSize: '1.15rem', fontWeight: '800', margin: '0', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
+                                  <h4 style={{ fontSize: 'var(--category-card-title-size, 1.15rem)', fontWeight: '800', margin: '0', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
                                     {subName}
                                   </h4>
                                   <span style={{ 
                                     fontSize: '0.75rem', 
                                     color: 'var(--accent-red-gold)', 
-                                    fontWeight: '700'
+                                    fontWeight: '700',
+                                    display: 'var(--category-card-sub-display, block)'
                                   }}>
                                     {lang === 'ar' ? 'تصفح المنتجات ←' : 'Browse products →'}
                                   </span>
