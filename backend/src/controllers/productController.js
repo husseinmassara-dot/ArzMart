@@ -53,7 +53,9 @@ exports.getProducts = async (req, res) => {
   }
 
   if (search) {
-    query += ' AND (p.name_ar LIKE ? OR p.name_en LIKE ? OR p.description_ar LIKE ? OR p.description_en LIKE ?)';
+    const isPostgres = process.env.DB_TYPE === 'postgres' || !!process.env.DATABASE_URL;
+    const likeOperator = isPostgres ? 'ILIKE' : 'LIKE';
+    query += ` AND (p.name_ar ${likeOperator} ? OR p.name_en ${likeOperator} ? OR p.description_ar ${likeOperator} ? OR p.description_en ${likeOperator} ?)`;
     const searchParam = `%${search}%`;
     params.push(searchParam, searchParam, searchParam, searchParam);
   }
