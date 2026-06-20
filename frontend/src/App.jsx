@@ -187,6 +187,25 @@ export default function App() {
 
   useEffect(() => {
     fetchProducts();
+
+    // Save to local recent searches
+    const cleanSearch = debouncedSearchVal.trim();
+    if (cleanSearch) {
+      try {
+        const stored = localStorage.getItem('arz_mart_recent_searches');
+        let searches = stored ? JSON.parse(stored) : [];
+        if (!Array.isArray(searches)) searches = [];
+        
+        // Remove duplicate if it exists, and prepend to front
+        searches = [cleanSearch, ...searches.filter(s => s !== cleanSearch)].slice(0, 10);
+        localStorage.setItem('arz_mart_recent_searches', JSON.stringify(searches));
+        
+        // Dispatch custom event to notify Header
+        window.dispatchEvent(new Event('arz_mart_recent_searches_updated'));
+      } catch (err) {
+        console.error('Error saving recent search:', err);
+      }
+    }
   }, [selectedCategory, debouncedSearchVal, minPrice, maxPrice, minRating]);
 
   // Analytics: Track visitor page views

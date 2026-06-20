@@ -11,6 +11,26 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
   const { cartItems, setIsCartOpen } = useCart();
   const { setIsChatOpen, unreadCount } = useChat();
 
+  const [showRecent, setShowRecent] = React.useState(false);
+  const [recentSearches, setRecentSearches] = React.useState([]);
+
+  React.useEffect(() => {
+    const loadSearches = () => {
+      try {
+        const stored = localStorage.getItem('arz_mart_recent_searches');
+        setRecentSearches(stored ? JSON.parse(stored) : []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    loadSearches();
+
+    window.addEventListener('arz_mart_recent_searches_updated', loadSearches);
+    return () => {
+      window.removeEventListener('arz_mart_recent_searches_updated', loadSearches);
+    };
+  }, []);
+
   const handleLanguageToggle = () => {
     setLang(lang === 'ar' ? 'en' : 'ar');
   };
@@ -79,19 +99,126 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
 
         {/* Search Bar */}
         {currentView === 'store' && (
-          <div style={{ flex: '1', maxWidth: '400px', minWidth: '200px' }}>
+          <div style={{ flex: '1', maxWidth: '400px', minWidth: '200px', position: 'relative' }}>
             <input
               type="text"
               className="input-field"
               placeholder={t('search_placeholder')}
               value={searchVal}
               onChange={(e) => setSearchVal(e.target.value)}
+              onFocus={() => setShowRecent(true)}
+              onBlur={() => {
+                setTimeout(() => setShowRecent(false), 200);
+              }}
               style={{
                 borderRadius: '24px',
                 padding: '8px 18px',
-                borderColor: 'var(--border-color)'
+                borderColor: 'var(--border-color)',
+                width: '100%'
               }}
             />
+            {showRecent && recentSearches.length > 0 && (
+              <div 
+                className="dashboard-card animate-fade animate-scale" 
+                style={{
+                  position: 'absolute',
+                  top: '46px',
+                  left: 0,
+                  right: 0,
+                  backgroundColor: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '12px',
+                  boxShadow: 'var(--shadow-lg)',
+                  zIndex: 1000,
+                  padding: '10px',
+                  maxHeight: '300px',
+                  overflowY: 'auto'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--text-secondary)' }}>
+                    {lang === 'ar' ? 'سجل البحث الأخير' : 'Recent Searches'}
+                  </span>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      try {
+                        localStorage.removeItem('arz_mart_recent_searches');
+                        setRecentSearches([]);
+                      } catch (err) {
+                        console.error(err);
+                      }
+                    }}
+                    style={{
+                      border: 'none',
+                      backgroundColor: 'transparent',
+                      color: 'var(--accent-red-gold)',
+                      fontSize: '0.75rem',
+                      fontWeight: '700',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {lang === 'ar' ? 'مسح الكل' : 'Clear All'}
+                  </button>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {recentSearches.map((term, index) => (
+                    <div 
+                      key={index}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '6px 10px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setSearchVal(term);
+                        setShowRecent(false);
+                      }}
+                    >
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: '600' }}>
+                        {term}
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          try {
+                            const updated = recentSearches.filter(t => t !== term);
+                            localStorage.setItem('arz_mart_recent_searches', JSON.stringify(updated));
+                            setRecentSearches(updated);
+                          } catch (err) {
+                            console.error(err);
+                          }
+                        }}
+                        style={{
+                          border: 'none',
+                          backgroundColor: 'transparent',
+                          color: 'var(--text-light)',
+                          fontSize: '0.8rem',
+                          cursor: 'pointer',
+                          padding: '0 4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                        title={lang === 'ar' ? 'إزالة' : 'Remove'}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
