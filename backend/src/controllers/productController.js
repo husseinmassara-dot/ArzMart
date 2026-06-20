@@ -55,9 +55,17 @@ exports.getProducts = async (req, res) => {
   if (search) {
     const isPostgres = process.env.DB_TYPE === 'postgres' || !!process.env.DATABASE_URL;
     const likeOperator = isPostgres ? 'ILIKE' : 'LIKE';
-    query += ` AND (p.name_ar ${likeOperator} ? OR p.name_en ${likeOperator} ? OR p.description_ar ${likeOperator} ? OR p.description_en ${likeOperator} ?)`;
+    query += ` AND (p.name_ar ${likeOperator} ? OR p.name_en ${likeOperator} ?)`;
     const searchParam = `%${search}%`;
-    params.push(searchParam, searchParam, searchParam, searchParam);
+    params.push(searchParam, searchParam);
+
+    // Log the search query in database asynchronously
+    const cleanSearch = String(search).trim();
+    if (cleanSearch) {
+      const visitorId = req.query.visitor_id || req.headers['x-visitor-id'] || '';
+      db.runAsync('INSERT INTO search_history (query, visitor_id) VALUES (?, ?)', [cleanSearch, visitorId])
+        .catch(err => console.error('[Search History] Failed to save search query:', err.message));
+    }
   }
 
   if (min_price) {

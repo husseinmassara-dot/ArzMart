@@ -67,6 +67,7 @@ router.get('/settings', settingsController.getSettings);
 router.put('/settings', authenticateToken, requirePermission('settings'), upload.single('logo'), settingsController.updateSettings);
 router.put('/settings/banners', authenticateToken, requirePermission('settings'), upload.any(), settingsController.updateBanners);
 router.post('/analytics/hit', settingsController.trackHit);
+router.get('/analytics/search-history', authenticateToken, requirePermission('reports'), settingsController.getSearchHistory);
 router.get('/reports', authenticateToken, requirePermission('reports'), orderController.getReports);
 router.get('/admin/backup', authenticateToken, requireAdmin, settingsController.backupDatabase);
 router.post('/admin/restore', authenticateToken, requireAdmin, settingsController.restoreDatabase);

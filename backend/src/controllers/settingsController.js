@@ -143,7 +143,7 @@ exports.trackHit = async (req, res) => {
 
 exports.backupDatabase = async (req, res) => {
   try {
-    const tables = ['settings', 'users', 'categories', 'merchants', 'products', 'orders', 'chats', 'coupons', 'notifications', 'page_views'];
+    const tables = ['settings', 'users', 'categories', 'merchants', 'products', 'orders', 'chats', 'coupons', 'notifications', 'page_views', 'search_history'];
     const backupData = {};
     for (const table of tables) {
       try {
@@ -174,7 +174,7 @@ exports.restoreDatabase = async (req, res) => {
     });
   }
 
-  const tables = ['settings', 'users', 'categories', 'merchants', 'products', 'orders', 'chats', 'coupons', 'notifications', 'page_views'];
+  const tables = ['settings', 'users', 'categories', 'merchants', 'products', 'orders', 'chats', 'coupons', 'notifications', 'page_views', 'search_history'];
   
   // Verify that at least some key tables are present to check validity
   if (!backupData.settings && !backupData.users && !backupData.products) {
@@ -222,5 +222,22 @@ exports.restoreDatabase = async (req, res) => {
     });
   }
 };
+
+exports.getSearchHistory = async (req, res) => {
+  try {
+    const history = await db.allAsync(`
+      SELECT query, COUNT(*) as count, MAX(created_at) as last_searched
+      FROM search_history
+      GROUP BY query
+      ORDER BY count DESC, last_searched DESC
+      LIMIT 100
+    `);
+    res.json(history);
+  } catch (err) {
+    console.error('Error fetching search history:', err);
+    res.status(500).json({ error_ar: 'خطأ في جلب سجل البحث', error_en: 'Error fetching search history' });
+  }
+};
+
 
 

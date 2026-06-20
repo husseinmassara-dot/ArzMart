@@ -8,6 +8,7 @@ export default function AdminReports() {
   const { token } = useAuth();
 
   const [reportData, setReportData] = useState(null);
+  const [searchHistory, setSearchHistory] = useState([]);
 
   const fetchReports = async () => {
     try {
@@ -23,8 +24,23 @@ export default function AdminReports() {
     }
   };
 
+  const fetchSearchHistory = async () => {
+    try {
+      const res = await fetch(`${apiBase}/analytics/search-history`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSearchHistory(data || []);
+      }
+    } catch (err) {
+      console.error('Error fetching search history:', err);
+    }
+  };
+
   useEffect(() => {
     fetchReports();
+    fetchSearchHistory();
   }, []);
 
   const handlePrint = () => {
@@ -278,6 +294,42 @@ export default function AdminReports() {
           </table>
         </div>
 
+      </div>
+
+      {/* Search Trends Section */}
+      <div className="no-print" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px', marginTop: '10px' }}>
+        <div className="dashboard-card" style={{ padding: '20px' }}>
+          <h4 style={{ fontSize: '1rem', fontWeight: '800', marginBottom: '14px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
+            {lang === 'ar' ? 'سجل عبارات البحث الأكثر شعبية بالمتجر' : 'Most Popular Store Search Queries'}
+          </h4>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'start' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-light)', fontSize: '0.8rem' }}>
+                <th style={{ padding: '8px 0', textAlign: 'start' }}>{lang === 'ar' ? 'عبارة البحث' : 'Search Query'}</th>
+                <th style={{ padding: '8px 0', textAlign: 'center' }}>{lang === 'ar' ? 'مرات البحث' : 'Search Count'}</th>
+                <th style={{ padding: '8px 0', textAlign: 'end' }}>{lang === 'ar' ? 'آخر تاريخ بحث' : 'Last Searched'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {searchHistory.slice(0, 15).map((sh, i) => (
+                <tr key={i} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '0.85rem' }}>
+                  <td style={{ padding: '8px 0', fontWeight: '700', color: 'var(--accent-blue)' }}>{sh.query}</td>
+                  <td style={{ padding: '8px 0', textAlign: 'center', fontWeight: '700' }}>{sh.count}</td>
+                  <td style={{ padding: '8px 0', textAlign: 'end', color: 'var(--text-light)' }}>
+                    {new Date(sh.last_searched).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')}
+                  </td>
+                </tr>
+              ))}
+              {searchHistory.length === 0 && (
+                <tr>
+                  <td colSpan="3" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-light)' }}>
+                    {lang === 'ar' ? 'لا يوجد عمليات بحث مسجلة بعد.' : 'No search queries logged yet.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
     </div>

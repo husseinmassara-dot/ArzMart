@@ -405,6 +405,16 @@ async function initializeDatabasePostgres() {
       )
     `);
 
+    // 11. Search History Table
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS search_history (
+        id SERIAL PRIMARY KEY,
+        query TEXT NOT NULL,
+        visitor_id TEXT DEFAULT '',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     console.log('[Database] PostgreSQL tables created successfully. Checking seeding...');
 
 
@@ -696,6 +706,16 @@ function initializeDatabase() {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         visitor_id TEXT NOT NULL,
         url TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // 11. Search History Table
+    runInit(`
+      CREATE TABLE IF NOT EXISTS search_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        query TEXT NOT NULL,
+        visitor_id TEXT DEFAULT '',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);

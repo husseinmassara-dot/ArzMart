@@ -36,6 +36,7 @@ export default function App() {
 
   // Search & Filter states
   const [searchVal, setSearchVal] = useState('');
+  const [debouncedSearchVal, setDebouncedSearchVal] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
@@ -121,7 +122,7 @@ export default function App() {
 
   const fetchProducts = async () => {
     // Do NOT fetch products when on the main categories view (no filters active)
-    if (!selectedCategory && !searchVal && !minPrice && !maxPrice && !minRating) {
+    if (!selectedCategory && !debouncedSearchVal && !minPrice && !maxPrice && !minRating) {
       setProducts([]);
       return;
     }
@@ -132,7 +133,9 @@ export default function App() {
     try {
       let url = `${apiBase}/products?`;
       if (selectedCategory) url += `category_id=${selectedCategory}&`;
-      if (searchVal) url += `search=${encodeURIComponent(searchVal)}&`;
+      if (debouncedSearchVal) url += `search=${encodeURIComponent(debouncedSearchVal)}&`;
+      const visitorId = localStorage.getItem('arz_mart_visitor_id') || '';
+      if (visitorId) url += `visitor_id=${visitorId}&`;
       if (minPrice) url += `min_price=${minPrice}&`;
       if (maxPrice) url += `max_price=${maxPrice}&`;
       if (minRating) url += `min_rating=${minRating}&`;
@@ -174,9 +177,17 @@ export default function App() {
     }
   };
 
+  // Debounce search value updates
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchVal(searchVal);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [searchVal]);
+
   useEffect(() => {
     fetchProducts();
-  }, [selectedCategory, searchVal, minPrice, maxPrice, minRating]);
+  }, [selectedCategory, debouncedSearchVal, minPrice, maxPrice, minRating]);
 
   // Analytics: Track visitor page views
   useEffect(() => {
