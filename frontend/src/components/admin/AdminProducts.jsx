@@ -66,6 +66,8 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
   const [categories, setCategories] = useState([]);
   const [merchants, setMerchants] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkTargetCategory, setBulkTargetCategory] = useState('');
+  const [isBulkMoving, setIsBulkMoving] = useState(false);
   
   // Form states
   const [isEditing, setIsEditing] = useState(false);
@@ -313,6 +315,49 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     }
   };
 
+  const handleBulkMoveCategory = async () => {
+    if (selectedIds.length === 0) return;
+    
+    const confirmMsg = lang === 'ar' 
+      ? `هل أنت متأكد من نقل ${selectedIds.length} منتجات إلى التصنيف المختار؟`
+      : `Are you sure you want to move ${selectedIds.length} products to the selected category?`;
+      
+    if (!window.confirm(confirmMsg)) return;
+    
+    setIsBulkMoving(true);
+    try {
+      const res = await fetch(`${apiBase}/products/bulk-update-category`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({
+          productIds: selectedIds,
+          categoryId: bulkTargetCategory || null
+        })
+      });
+      
+      if (res.ok) {
+        setFormSuccess(lang === 'ar' ? 'تم نقل المنتجات بنجاح ✓' : 'Products moved successfully ✓');
+        setSelectedIds([]);
+        setBulkTargetCategory('');
+        fetchProducts();
+        setTimeout(() => setFormSuccess(''), 4000);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        setFormError(errData.error_ar || errData.error || (lang === 'ar' ? 'فشل النقل' : 'Failed to move'));
+        setTimeout(() => setFormError(''), 4000);
+      }
+    } catch (err) {
+      console.error('Bulk move category error:', err);
+      setFormError(lang === 'ar' ? 'خطأ في الاتصال بالخادم' : 'Server connection error');
+      setTimeout(() => setFormError(''), 4000);
+    } finally {
+      setIsBulkMoving(false);
+    }
+  };
+
   const resetForm = () => {
     setIsEditing(false);
     setEditingId(null);
@@ -368,6 +413,28 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     return matchesSearch && matchesCategory && matchesMerchant && matchesStatus;
   });
 
+  const parents = categories.filter(c => !c.parent_id);
+  const children = categories.filter(c => c.parent_id);
+  
+  const nestedCategoriesList = [];
+  parents.forEach(p => {
+    nestedCategoriesList.push({ ...p, depth: 0 });
+    const subcats = children.filter(c => c.parent_id === p.id);
+    subcats.forEach(s => {
+      nestedCategoriesList.push({ ...s, depth: 1 });
+      const subsub = children.filter(c => c.parent_id === s.id);
+      subsub.forEach(ss => {
+        nestedCategoriesList.push({ ...ss, depth: 2 });
+      });
+    });
+  });
+  
+  categories.forEach(c => {
+    if (!nestedCategoriesList.some(item => item.id === c.id)) {
+      nestedCategoriesList.push({ ...c, depth: 0 });
+    }
+  });
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       
@@ -416,38 +483,14 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
             <label className="input-label">التصنيف (Category)</label>
             <select className="input-field" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
               <option value="">-- اختر التصنيف --</option>
-              {(() => {
-                const parents = categories.filter(c => !c.parent_id);
-                const children = categories.filter(c => c.parent_id);
-                
-                const list = [];
-                parents.forEach(p => {
-                  list.push({ ...p, depth: 0 });
-                  const subcats = children.filter(c => c.parent_id === p.id);
-                  subcats.forEach(s => {
-                    list.push({ ...s, depth: 1 });
-                    const subsub = children.filter(c => c.parent_id === s.id);
-                    subsub.forEach(ss => {
-                      list.push({ ...ss, depth: 2 });
-                    });
-                  });
-                });
-                
-                categories.forEach(c => {
-                  if (!list.some(item => item.id === c.id)) {
-                    list.push({ ...c, depth: 0 });
-                  }
-                });
-                
-                return list.map(c => {
-                  const indent = '　'.repeat(c.depth) + (c.depth > 0 ? '↳ ' : '');
-                  return (
-                    <option key={c.id} value={c.id}>
-                      {indent}{lang === 'ar' ? c.name_ar : c.name_en}
-                    </option>
-                  );
-                });
-              })()}
+              {nestedCategoriesList.map(c => {
+                const indent = '　'.repeat(c.depth) + (c.depth > 0 ? '↳ ' : '');
+                return (
+                  <option key={c.id} value={c.id}>
+                    {indent}{lang === 'ar' ? c.name_ar : c.name_en}
+                  </option>
+                );
+              })}
             </select>
           </div>
           <div>
@@ -796,28 +839,84 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
             {lang === 'ar' ? 'قائمة المنتجات الحالية' : 'Current Products List'}
           </h4>
           {selectedIds.length > 0 && (
-            <button
-              onClick={handleBulkDelete}
-              style={{
-                backgroundColor: '#ef4444',
-                color: 'white',
-                border: 'none',
-                padding: '6px 14px',
-                borderRadius: '6px',
-                fontWeight: '700',
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                transition: 'opacity 0.2s'
-              }}
-              onMouseEnter={(e) => e.target.style.opacity = '0.9'}
-              onMouseLeave={(e) => e.target.style.opacity = '1'}
-            >
-              <Trash2 size={14} />
-              <span>{lang === 'ar' ? `حذف المحدد (${selectedIds.length})` : `Delete Selected (${selectedIds.length})`}</span>
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+              {/* Bulk Move Category */}
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '8px', 
+                backgroundColor: 'var(--bg-secondary)', 
+                padding: '6px 12px', 
+                borderRadius: '8px', 
+                border: '1px solid var(--border-color)' 
+              }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-primary)' }}>
+                  {lang === 'ar' ? 'نقل المحدد إلى تصنيف:' : 'Move selected to:'}
+                </span>
+                <select
+                  className="input-field"
+                  style={{ margin: 0, padding: '4px 8px', fontSize: '0.85rem', width: 'auto', minWidth: '160px', height: '32px' }}
+                  value={bulkTargetCategory}
+                  onChange={(e) => setBulkTargetCategory(e.target.value)}
+                >
+                  <option value="">{lang === 'ar' ? '-- بدون تصنيف --' : '-- No Category --'}</option>
+                  {nestedCategoriesList.map(c => {
+                    const indent = '　'.repeat(c.depth) + (c.depth > 0 ? '↳ ' : '');
+                    return (
+                      <option key={c.id} value={c.id}>
+                        {indent}{lang === 'ar' ? c.name_ar : c.name_en}
+                      </option>
+                    );
+                  })}
+                </select>
+                <button
+                  onClick={handleBulkMoveCategory}
+                  disabled={isBulkMoving}
+                  style={{
+                    backgroundColor: 'var(--accent-blue)',
+                    color: 'white',
+                    border: 'none',
+                    padding: '6px 14px',
+                    borderRadius: '6px',
+                    fontWeight: '700',
+                    fontSize: '0.85rem',
+                    cursor: isBulkMoving ? 'not-allowed' : 'pointer',
+                    opacity: isBulkMoving ? 0.7 : 1,
+                    height: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  {isBulkMoving ? (lang === 'ar' ? 'جاري النقل...' : 'Moving...') : (lang === 'ar' ? 'نقل' : 'Move')}
+                </button>
+              </div>
+
+              {/* Bulk Delete */}
+              <button
+                onClick={handleBulkDelete}
+                style={{
+                  backgroundColor: '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  padding: '6px 14px',
+                  borderRadius: '6px',
+                  fontWeight: '700',
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'opacity 0.2s',
+                  height: '32px'
+                }}
+                onMouseEnter={(e) => e.target.style.opacity = '0.9'}
+                onMouseLeave={(e) => e.target.style.opacity = '1'}
+              >
+                <Trash2 size={14} />
+                <span>{lang === 'ar' ? `حذف المحدد (${selectedIds.length})` : `Delete Selected (${selectedIds.length})`}</span>
+              </button>
+            </div>
           )}
         </div>
 
@@ -861,38 +960,14 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
               onChange={(e) => setFilterCategory(e.target.value)}
             >
               <option value="">{lang === 'ar' ? 'جميع التصنيفات' : 'All Categories'}</option>
-              {(() => {
-                const parents = categories.filter(c => !c.parent_id);
-                const children = categories.filter(c => c.parent_id);
-                
-                const list = [];
-                parents.forEach(p => {
-                  list.push({ ...p, depth: 0 });
-                  const subcats = children.filter(c => c.parent_id === p.id);
-                  subcats.forEach(s => {
-                    list.push({ ...s, depth: 1 });
-                    const subsub = children.filter(c => c.parent_id === s.id);
-                    subsub.forEach(ss => {
-                      list.push({ ...ss, depth: 2 });
-                    });
-                  });
-                });
-                
-                categories.forEach(c => {
-                  if (!list.some(item => item.id === c.id)) {
-                    list.push({ ...c, depth: 0 });
-                  }
-                });
-                
-                return list.map(c => {
-                  const indent = '　'.repeat(c.depth) + (c.depth > 0 ? '↳ ' : '');
-                  return (
-                    <option key={c.id} value={c.id}>
-                      {indent}{lang === 'ar' ? c.name_ar : c.name_en}
-                    </option>
-                  );
-                });
-              })()}
+              {nestedCategoriesList.map(c => {
+                const indent = '　'.repeat(c.depth) + (c.depth > 0 ? '↳ ' : '');
+                return (
+                  <option key={c.id} value={c.id}>
+                    {indent}{lang === 'ar' ? c.name_ar : c.name_en}
+                  </option>
+                );
+              })}
             </select>
           </div>
 

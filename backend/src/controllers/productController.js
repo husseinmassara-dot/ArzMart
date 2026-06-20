@@ -335,3 +335,34 @@ exports.rateProduct = async (req, res) => {
     res.status(500).json({ error_ar: 'خطأ أثناء تقييم المنتج', error_en: 'Error rating product' });
   }
 };
+
+exports.bulkUpdateCategory = async (req, res) => {
+  const { productIds, categoryId } = req.body;
+
+  if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+    return res.status(400).json({
+      error_ar: 'الرجاء تحديد منتج واحد على الأقل',
+      error_en: 'Please select at least one product'
+    });
+  }
+
+  const cid = categoryId && categoryId !== 'null' ? parseInt(categoryId) : null;
+
+  try {
+    const placeholders = productIds.map(() => '?').join(',');
+    const query = `UPDATE products SET category_id = ? WHERE id IN (${placeholders})`;
+    await db.runAsync(query, [cid, ...productIds]);
+
+    res.json({
+      message_ar: 'تم نقل المنتجات بنجاح',
+      message_en: 'Products moved successfully'
+    });
+  } catch (err) {
+    console.error('Bulk update category error:', err);
+    res.status(500).json({
+      error_ar: 'خطأ أثناء نقل المنتجات',
+      error_en: 'Error moving products'
+    });
+  }
+};
+

@@ -36,6 +36,7 @@ router.put('/categories-reorder', authenticateToken, requirePermission('categori
 router.get('/products', productController.getProducts);
 router.get('/products/:id', productController.getProductById);
 router.post('/products', authenticateToken, requirePermission('products'), upload.array('product_images', 10), productController.createProduct);
+router.put('/products/bulk-update-category', authenticateToken, requirePermission('products'), productController.bulkUpdateCategory);
 router.put('/products/:id', authenticateToken, requirePermission('products'), upload.array('product_images', 10), productController.updateProduct);
 router.delete('/products/:id', authenticateToken, requirePermission('products'), productController.deleteProduct);
 router.post('/products/:id/rate', productController.rateProduct);
