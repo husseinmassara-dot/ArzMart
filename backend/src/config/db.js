@@ -417,6 +417,16 @@ async function initializeDatabasePostgres() {
       )
     `);
 
+    // 12. Media Assets Table
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS media_assets (
+        id SERIAL PRIMARY KEY,
+        filename TEXT UNIQUE NOT NULL,
+        mime_type TEXT,
+        base64_data TEXT NOT NULL
+      )
+    `);
+
     console.log('[Database] PostgreSQL tables created successfully. Checking seeding...');
 
 
@@ -719,6 +729,16 @@ function initializeDatabase() {
         query TEXT NOT NULL,
         visitor_id TEXT DEFAULT '',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // 12. Media Assets Table
+    runInit(`
+      CREATE TABLE IF NOT EXISTS media_assets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        filename TEXT UNIQUE NOT NULL,
+        mime_type TEXT,
+        base64_data TEXT NOT NULL
       )
     `);
 

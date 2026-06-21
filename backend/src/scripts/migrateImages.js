@@ -2,8 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const db = require('../config/db');
 
-// Helper to save base64 string to a file
-function saveBase64ToFile(base64Str, subFolder) {
+// Helper to save base64 string to a file and database
+async function saveBase64ToFile(base64Str, subFolder) {
   if (!base64Str || !base64Str.startsWith('data:')) return base64Str;
   
   try {
@@ -25,9 +25,19 @@ function saveBase64ToFile(base64Str, subFolder) {
     fs.writeFileSync(filePath, buffer);
     
     console.log(`Saved migrated image to disk: /uploads/${subFolder}/${filename}`);
+    
+    // Backup to media_assets table in DB
+    const mimeType = match[0].replace('data:', '').replace(';base64,', '');
+    const insertQuery = db.isPostgres
+      ? 'INSERT INTO media_assets (filename, mime_type, base64_data) VALUES ($1, $2, $3) ON CONFLICT (filename) DO NOTHING'
+      : 'INSERT OR IGNORE INTO media_assets (filename, mime_type, base64_data) VALUES (?, ?, ?)';
+      
+    await db.runAsync(insertQuery, [filename, mimeType, dataPart]);
+    console.log(`Backed up migrated image to DB: ${filename}`);
+    
     return `/uploads/${subFolder}/${filename}`;
   } catch (err) {
-    console.error('Failed to save base64 image to file:', err.message);
+    console.error('Failed to save base64 image to file/db:', err.message);
     return base64Str;
   }
 }
@@ -36,6 +46,22 @@ async function migrate() {
   console.log('[Migration] Starting base64 images migration...');
   
   try {
+    // Ensure media_assets table exists first
+    const createTableQuery = db.isPostgres
+      ? `CREATE TABLE IF NOT EXISTS media_assets (
+          id SERIAL PRIMARY KEY,
+          filename TEXT UNIQUE NOT NULL,
+          mime_type TEXT,
+          base64_data TEXT NOT NULL
+         )`
+      : `CREATE TABLE IF NOT EXISTS media_assets (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          filename TEXT UNIQUE NOT NULL,
+          mime_type TEXT,
+          base64_data TEXT NOT NULL
+         )`;
+    await db.runAsync(createTableQuery);
+
     await db.runAsync('BEGIN TRANSACTION');
     
     // 1. Migrate Products
@@ -56,13 +82,16 @@ async function migrate() {
         imagesList = [p.image_url];
       }
       
-      const newImagesList = imagesList.map(img => {
+      const newImagesList = [];
+      for (const img of imagesList) {
         if (img && img.startsWith('data:')) {
           changed = true;
-          return saveBase64ToFile(img, 'products');
+          const newUrl = await saveBase64ToFile(img, 'products');
+          newImagesList.push(newUrl);
+        } else {
+          newImagesList.push(img);
         }
-        return img;
-      });
+      }
       
       if (changed) {
         const newImageUrlStr = JSON.stringify(newImagesList);
@@ -77,7 +106,7 @@ async function migrate() {
     let categoryCount = 0;
     for (const c of categories) {
       if (c.image_url && c.image_url.startsWith('data:')) {
-        const newUrl = saveBase64ToFile(c.image_url, 'categories');
+        const newUrl = await saveBase64ToFile(c.image_url, 'categories');
         await db.runAsync('UPDATE categories SET image_url = ? WHERE id = ?', [newUrl, c.id]);
         console.log(`Migrated image for category ID ${c.id} (${c.name_en})`);
         categoryCount++;
@@ -94,7 +123,7 @@ async function migrate() {
       let changedBanners = false;
       
       if (logoUrl && logoUrl.startsWith('data:')) {
-        logoUrl = saveBase64ToFile(logoUrl, 'banners');
+        logoUrl = await saveBase64ToFile(logoUrl, 'banners');
         changedLogo = true;
       }
       
@@ -104,14 +133,16 @@ async function migrate() {
         heroBanners = [];
       }
       
-      const newBanners = heroBanners.map(banner => {
+      const newBanners = [];
+      for (const banner of heroBanners) {
         if (banner.image && banner.image.startsWith('data:')) {
           changedBanners = true;
-          const newImg = saveBase64ToFile(banner.image, 'banners');
-          return { ...banner, image: newImg };
+          const newImg = await saveBase64ToFile(banner.image, 'banners');
+          newBanners.push({ ...banner, image: newImg });
+        } else {
+          newBanners.push(banner);
         }
-        return banner;
-      });
+      }
       
       if (changedLogo || changedBanners) {
         await db.runAsync(

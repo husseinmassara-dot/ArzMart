@@ -15,6 +15,23 @@ exports.fileToBase64 = (file) => {
       return null;
     }
     
+    // Backup to DB asynchronously (non-blocking)
+    try {
+      const data = fs.readFileSync(file.path);
+      const base64 = data.toString('base64');
+      const db = require('../config/db');
+      
+      const insertQuery = db.isPostgres
+        ? 'INSERT INTO media_assets (filename, mime_type, base64_data) VALUES ($1, $2, $3) ON CONFLICT (filename) DO NOTHING'
+        : 'INSERT OR IGNORE INTO media_assets (filename, mime_type, base64_data) VALUES (?, ?, ?)';
+        
+      db.runAsync(insertQuery, [file.filename, file.mimetype, base64])
+        .then(() => console.log(`[Backup] Successfully backed up ${file.filename} to database.`))
+        .catch(err => console.error(`[Backup Error] Failed for ${file.filename}:`, err.message));
+    } catch (backupErr) {
+      console.error('[Backup Error] Failed to read/queue file backup:', backupErr.message);
+    }
+    
     // Construct the relative URL path starting from /uploads/
     const uploadsIndex = file.path.lastIndexOf('uploads');
     if (uploadsIndex !== -1) {

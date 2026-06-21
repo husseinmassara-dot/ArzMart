@@ -69,6 +69,47 @@ if (fs.existsSync(persistentDir)) {
 // Serve uploaded images static folder
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
+// Fallback recovery route for missing static files (Render ephemeral disk recovery)
+app.get('/uploads/:folder(categories|products|banners)/:filename', async (req, res) => {
+  const { folder, filename } = req.params;
+  
+  // Prevent path traversal
+  if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+    return res.status(400).json({ error: 'Invalid filename' });
+  }
+  
+  const filePath = path.join(__dirname, '../uploads', folder, filename);
+  
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+  
+  try {
+    const db = require('./config/db');
+    const asset = await db.getAsync('SELECT * FROM media_assets WHERE filename = ?', [filename]);
+    if (asset) {
+      const buffer = Buffer.from(asset.base64_data, 'base64');
+      
+      // Ensure local subdirectories exist
+      const dir = path.dirname(filePath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      
+      // Cache back to disk
+      fs.writeFileSync(filePath, buffer);
+      console.log(`[Recovery] Restored missing file: /uploads/${folder}/${filename}`);
+      
+      res.setHeader('Content-Type', asset.mime_type || 'image/jpeg');
+      return res.send(buffer);
+    }
+  } catch (err) {
+    console.error('[Recovery Error] Failed to restore asset:', err);
+  }
+  
+  return res.status(404).json({ error: 'File not found' });
+});
+
 // Routes
 const apiRoutes = require('./routes/api');
 app.use('/api', apiRoutes);
