@@ -34,6 +34,8 @@ router.put('/categories-reorder', authenticateToken, requirePermission('categori
 
 // --- Product Routes ---
 router.get('/products', productController.getProducts);
+router.get('/admin/products/export-csv', authenticateToken, requirePermission('products'), productController.exportCSV);
+router.post('/admin/products/import-csv', authenticateToken, requirePermission('products'), upload.single('csv_file'), productController.importCSV);
 router.get('/products/:id', productController.getProductById);
 router.post('/products', authenticateToken, requirePermission('products'), upload.array('product_images', 10), productController.createProduct);
 router.put('/products/bulk-update-category', authenticateToken, requirePermission('products'), productController.bulkUpdateCategory);

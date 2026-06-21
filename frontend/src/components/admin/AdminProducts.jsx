@@ -92,6 +92,12 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
   const [formSuccess, setFormSuccess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // CSV States
+  const [isCsvExporting, setIsCsvExporting] = useState(false);
+  const [isCsvImporting, setIsCsvImporting] = useState(false);
+  const [csvMessage, setCsvMessage] = useState('');
+  const [csvError, setCsvError] = useState('');
+
   // Filter/Search states
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
@@ -105,6 +111,76 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
       setFilterStatus('all');
     }
   }, [filterOutOfStock]);
+
+  const handleExportCSV = async () => {
+    setIsCsvExporting(true);
+    setCsvError('');
+    setCsvMessage('');
+    try {
+      const res = await fetch(`${apiBase}/admin/products/export-csv`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!res.ok) {
+        throw new Error(lang === 'ar' ? 'فشل تصدير الملف' : 'Failed to export CSV');
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const dateStr = new Date().toISOString().slice(0, 10);
+      a.download = `arz_mart_products_${dateStr}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      setCsvMessage(lang === 'ar' ? 'تم التصدير بنجاح ✓' : 'Exported successfully ✓');
+      setTimeout(() => setCsvMessage(''), 4000);
+    } catch (err) {
+      console.error(err);
+      setCsvError(err.message || (lang === 'ar' ? 'خطأ أثناء تصدير المنتجات' : 'Error exporting CSV'));
+    } finally {
+      setIsCsvExporting(false);
+    }
+  };
+
+  const handleImportCSV = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsCsvImporting(true);
+    setCsvError('');
+    setCsvMessage('');
+
+    const formData = new FormData();
+    formData.append('csv_file', file);
+
+    try {
+      const res = await fetch(`${apiBase}/admin/products/import-csv`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setCsvMessage(lang === 'ar' ? data.message_ar : data.message_en);
+        fetchProducts(); // Refresh list
+        setTimeout(() => setCsvMessage(''), 8000);
+      } else {
+        setCsvError(lang === 'ar' ? data.error_ar : data.error_en || 'Import failed');
+      }
+    } catch (err) {
+      console.error(err);
+      setCsvError(lang === 'ar' ? 'خطأ في الاتصال بالخادم' : 'Server connection error');
+    } finally {
+      setIsCsvImporting(false);
+      e.target.value = ''; // Reset input
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -861,9 +937,74 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
       {/* Products Table */}
       <div className="dashboard-card" style={{ overflowX: 'auto', padding: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
-          <h4 style={{ fontSize: '1.1rem', fontWeight: '800', margin: 0 }}>
-            {lang === 'ar' ? 'قائمة المنتجات الحالية' : 'Current Products List'}
-          </h4>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+            <h4 style={{ fontSize: '1.1rem', fontWeight: '800', margin: 0 }}>
+              {lang === 'ar' ? 'قائمة المنتجات الحالية' : 'Current Products List'}
+            </h4>
+
+            {/* CSV Import/Export Buttons */}
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <button
+                onClick={handleExportCSV}
+                disabled={isCsvExporting}
+                type="button"
+                style={{
+                  backgroundColor: 'var(--bg-tertiary)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border-color)',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontWeight: '700',
+                  fontSize: '0.85rem',
+                  cursor: isCsvExporting ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  height: '32px'
+                }}
+              >
+                {isCsvExporting ? (lang === 'ar' ? 'جاري التصدير...' : 'Exporting...') : (lang === 'ar' ? 'تصدير CSV' : 'Export CSV')}
+              </button>
+
+              <label
+                style={{
+                  backgroundColor: 'var(--bg-tertiary)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border-color)',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontWeight: '700',
+                  fontSize: '0.85rem',
+                  cursor: isCsvImporting ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  height: '32px',
+                  margin: 0
+                }}
+              >
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleImportCSV}
+                  disabled={isCsvImporting}
+                  style={{ display: 'none' }}
+                />
+                {isCsvImporting ? (lang === 'ar' ? 'جاري الاستيراد...' : 'Importing...') : (lang === 'ar' ? 'استيراد CSV' : 'Import CSV')}
+              </label>
+
+              {csvMessage && (
+                <span style={{ color: '#10b981', fontWeight: '700', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  ✓ {csvMessage}
+                </span>
+              )}
+              {csvError && (
+                <span style={{ color: '#ef4444', fontWeight: '700', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  ⚠️ {csvError}
+                </span>
+              )}
+            </div>
+          </div>
           {selectedIds.length > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
               {/* Bulk Move Category */}

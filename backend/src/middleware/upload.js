@@ -35,6 +35,14 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
+  if (file.fieldname === 'csv_file') {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (ext === '.csv' || file.mimetype === 'text/csv' || file.mimetype === 'application/vnd.ms-excel') {
+      return cb(null, true);
+    }
+    return cb(new Error('Only CSV files are allowed'));
+  }
+
   const filetypes = /jpeg|jpg|png|webp|gif/;
   const mimetype = filetypes.test(file.mimetype);
   const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
