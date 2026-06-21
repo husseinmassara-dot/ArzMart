@@ -32,12 +32,18 @@ export default function App() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null); // Detail modal
-  const [showCheckout, setShowCheckout] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('checkout') === '1';
+  });
 
   // Search & Filter states
   const [searchVal, setSearchVal] = useState('');
   const [debouncedSearchVal, setDebouncedSearchVal] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('category_id') || '';
+  });
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [minRating, setMinRating] = useState('');
@@ -246,33 +252,104 @@ export default function App() {
     }
   }, [currentView, token]);
 
+  // Sync all navigation states to URL search parameters
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const viewParam = params.get('view') || 'store';
-    const tabParam = params.get('tab');
     
-    if (currentView !== viewParam) {
-      let url = `/?view=${currentView}`;
-      if (currentView === 'admin') {
-        const tab = tabParam || 'products';
-        url += `&tab=${tab}`;
-      }
+    // View
+    if (currentView === 'store') {
+      params.delete('view');
+    } else {
+      params.set('view', currentView);
+    }
+    
+    // Admin Tab
+    if (currentView === 'admin') {
+      const tabParam = params.get('tab');
+      params.set('tab', tabParam || 'products');
+    } else {
+      params.delete('tab');
+    }
+    
+    // Category
+    if (selectedCategory) {
+      params.set('category_id', selectedCategory);
+    } else {
+      params.delete('category_id');
+    }
+    
+    // Checkout
+    if (showCheckout) {
+      params.set('checkout', '1');
+    } else {
+      params.delete('checkout');
+    }
+    
+    // Product
+    if (selectedProduct) {
+      params.set('product_id', selectedProduct.id);
+    } else {
+      params.delete('product_id');
+    }
+    
+    const newSearch = params.toString();
+    const currentSearch = window.location.search.replace(/^\?/, '');
+    if (newSearch !== currentSearch) {
+      const url = newSearch ? `/?${newSearch}` : '/';
       window.history.pushState(null, '', url);
     }
-  }, [currentView]);
+  }, [currentView, selectedCategory, showCheckout, selectedProduct]);
 
+  // Handle product_id parameter on page load
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get('product_id');
+    if (productId) {
+      const fetchSelectedProduct = async () => {
+        try {
+          const res = await fetch(`${apiBase}/products/${productId}`);
+          if (res.ok) {
+            const data = await res.json();
+            setSelectedProduct(data);
+          }
+        } catch (err) {
+          console.error('Failed to fetch product for URL state:', err);
+        }
+      };
+      fetchSelectedProduct();
+    }
+  }, [apiBase]);
+
+  // Handle Back/Forward browser navigation buttons
   useEffect(() => {
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
+      
       const view = params.get('view') || 'store';
       setCurrentView(view);
+      
+      const categoryId = params.get('category_id') || '';
+      setSelectedCategory(categoryId);
+      
+      const checkoutVal = params.get('checkout') === '1';
+      setShowCheckout(checkoutVal);
+      
+      const productId = params.get('product_id');
+      if (productId) {
+        fetch(`${apiBase}/products/${productId}`)
+          .then(res => res.json())
+          .then(data => setSelectedProduct(data))
+          .catch(err => console.error(err));
+      } else {
+        setSelectedProduct(null);
+      }
     };
 
     window.addEventListener('popstate', handlePopState);
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, []);
+  }, [apiBase]);
 
   // Handle Biometric Login authentication
   const handleBiometricLogin = async () => {
