@@ -5,7 +5,7 @@ import { useChat } from '../../context/ChatContext';
 import { 
   Package, Folder, ShoppingBag, Users, BarChart3, Settings, Tag, ShieldAlert,
   DollarSign, TrendingUp, AlertTriangle, ArrowRight, MessageSquare, Send, Store,
-  ExternalLink, Database, Upload, X
+  ExternalLink, Database, Upload, X, Truck
 } from 'lucide-react';
 
 // Sub-components
@@ -17,6 +17,7 @@ import AdminReports from './AdminReports';
 import AdminSettings from './AdminSettings';
 import AdminCoupons from './AdminCoupons';
 import AdminMerchants from './AdminMerchants';
+import AdminDelivery from './AdminDelivery';
 
 export default function AdminDashboard({ setCurrentView }) {
   const { lang, formatPrice, t, apiBase } = useApp();
@@ -188,6 +189,7 @@ export default function AdminDashboard({ setCurrentView }) {
     { id: 'products', name: t('products'), icon: Package, perm: 'products' },
     { id: 'categories', name: t('categories'), icon: Folder, perm: 'categories' },
     { id: 'orders', name: t('orders'), icon: ShoppingBag, perm: 'orders' },
+    { id: 'delivery', name: lang === 'ar' ? 'توصيل الطلبيات' : 'Order Deliveries', icon: Truck, perm: 'delivery' },
     { id: 'chats', name: lang === 'ar' ? 'محادثات العملاء' : 'Customer Chats', icon: MessageSquare, perm: 'orders' },
     { id: 'merchants', name: lang === 'ar' ? 'إدارة الموردين والتجار' : 'Merchants & Suppliers', icon: Store, perm: 'merchants' },
     { id: 'users', name: t('users'), icon: Users, perm: 'users' },
@@ -673,6 +675,7 @@ export default function AdminDashboard({ setCurrentView }) {
           )}
           {activeTab === 'categories' && hasPermission('categories') && <AdminCategories />}
           {activeTab === 'orders' && hasPermission('orders') && <AdminOrders />}
+          {activeTab === 'delivery' && hasPermission('delivery') && <AdminDelivery />}
           {activeTab === 'merchants' && hasPermission('merchants') && <AdminMerchants />}
           {activeTab === 'users' && hasPermission('users') && <AdminUsers />}
           {activeTab === 'coupons' && hasPermission('coupons') && <AdminCoupons />}

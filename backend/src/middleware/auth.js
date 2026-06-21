@@ -42,9 +42,25 @@ function requirePermission(permissionName) {
   };
 }
 
+function requireAnyPermission(permissionNames) {
+  return (req, res, next) => {
+    if (req.user && req.user.role === 'admin') {
+      return next(); // Admin has all permissions
+    }
+    if (req.user && req.user.role === 'employee') {
+      const permissions = JSON.parse(req.user.permissions || '[]');
+      if (permissionNames.some(p => permissions.includes(p))) {
+        return next();
+      }
+    }
+    res.status(403).json({ error_ar: 'ليس لديك الصلاحية الكافية لإجراء هذه العملية', error_en: 'You do not have permission to perform this action' });
+  };
+}
+
 module.exports = {
   authenticateToken,
   requireAdmin,
   requirePermission,
+  requireAnyPermission,
   JWT_SECRET
 };

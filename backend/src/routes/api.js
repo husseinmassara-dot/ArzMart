@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const upload = require('../middleware/upload');
-const { authenticateToken, requireAdmin, requirePermission } = require('../middleware/auth');
+const { authenticateToken, requireAdmin, requirePermission, requireAnyPermission } = require('../middleware/auth');
 
 // Controllers
 const authController = require('../controllers/authController');
@@ -53,10 +53,10 @@ router.post('/orders', (req, res, next) => {
   }
 }, orderController.createOrder);
 
-router.get('/orders', authenticateToken, requirePermission('orders'), orderController.getOrders);
+router.get('/orders', authenticateToken, requireAnyPermission(['orders', 'delivery']), orderController.getOrders);
 router.get('/orders/history', authenticateToken, orderController.getUserOrders);
 router.get('/orders/:id', authenticateToken, orderController.getOrderById);
-router.put('/orders/:id/status', authenticateToken, requirePermission('orders'), orderController.updateOrderStatus);
+router.put('/orders/:id/status', authenticateToken, requireAnyPermission(['orders', 'delivery']), orderController.updateOrderStatus);
 router.delete('/orders/:id', authenticateToken, requireAdmin, orderController.deleteOrder);
 
 // --- Coupon Routes ---

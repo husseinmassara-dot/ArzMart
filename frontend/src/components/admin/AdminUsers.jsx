@@ -19,6 +19,7 @@ export default function AdminUsers() {
     { id: 'products', name_ar: 'إدارة المنتجات', name_en: 'Manage Products' },
     { id: 'categories', name_ar: 'إدارة التصنيفات', name_en: 'Manage Categories' },
     { id: 'orders', name_ar: 'إدارة الطلبيات', name_en: 'Manage Orders' },
+    { id: 'delivery', name_ar: 'توصيل الطلبيات (موظف دليفري)', name_en: 'Delivery Orders (Driver)' },
     { id: 'users', name_ar: 'إدارة الصلاحيات والمستخدمين', name_en: 'Manage Users & Permissions' },
     { id: 'coupons', name_ar: 'إدارة الكوبونات والخصم', name_en: 'Manage Coupons' },
     { id: 'reports', name_ar: 'عرض التقارير والأرباح', name_en: 'View Reports & Profits' },
