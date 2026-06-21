@@ -8,7 +8,9 @@ const isPostgres = process.env.DB_TYPE === 'postgres' || !!process.env.DATABASE_
 let pgPool = null;
 let sqliteDb = null;
 
-const db = {};
+const db = {
+  isPostgres
+};
 
 const newGeneralCategories = [];
 

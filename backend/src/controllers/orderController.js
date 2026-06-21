@@ -393,6 +393,7 @@ exports.deleteOrder = async (req, res) => {
 exports.getReports = async (req, res) => {
   try {
     // Sales, cost of sales, and true profit summaries
+    // pending_orders is calculated as all active/pending orders (not delivered, cancelled, or archived)
     const stats = await db.getAsync(`
       SELECT 
         COUNT(CASE WHEN status != 'archived' THEN 1 END) as total_orders,
@@ -400,7 +401,7 @@ exports.getReports = async (req, res) => {
         SUM(CASE WHEN status = 'delivered' THEN total_lbp ELSE 0 END) as delivered_revenue_lbp,
         SUM(CASE WHEN status = 'delivered' THEN total_cost_usd ELSE 0 END) as delivered_cost_usd,
         SUM(CASE WHEN status != 'delivered' AND status != 'cancelled' AND status != 'archived' THEN total_usd ELSE 0 END) as pending_revenue_usd,
-        COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_orders,
+        COUNT(CASE WHEN status != 'delivered' AND status != 'cancelled' AND status != 'archived' THEN 1 END) as pending_orders,
         COUNT(CASE WHEN status = 'delivered' THEN 1 END) as delivered_orders
       FROM orders
     `);
@@ -415,23 +416,47 @@ exports.getReports = async (req, res) => {
     const netProfitUsd = deliveredRevenueUsd - deliveredCostUsd;
     const netProfitLbp = netProfitUsd * exchangeRate;
 
-    const dailySales = await db.allAsync(`
-      SELECT DATE(created_at) as date, COUNT(id) as count, SUM(total_usd) as revenue_usd, SUM(total_cost_usd) as cost_usd
-      FROM orders
-      WHERE status = 'delivered'
-      GROUP BY DATE(created_at)
-      ORDER BY date DESC
-      LIMIT 30
-    `);
+    let dailySalesQuery;
+    let monthlySalesQuery;
 
-    const monthlySales = await db.allAsync(`
-      SELECT strftime('%Y-%m', created_at) as month, COUNT(id) as count, SUM(total_usd) as revenue_usd, SUM(total_cost_usd) as cost_usd
-      FROM orders
-      WHERE status = 'delivered'
-      GROUP BY strftime('%Y-%m', created_at)
-      ORDER BY month DESC
-      LIMIT 12
-    `);
+    if (db.isPostgres) {
+      dailySalesQuery = `
+        SELECT CAST(created_at AS DATE) as date, COUNT(id) as count, SUM(total_usd) as revenue_usd, SUM(total_cost_usd) as cost_usd
+        FROM orders
+        WHERE status = 'delivered'
+        GROUP BY CAST(created_at AS DATE)
+        ORDER BY date DESC
+        LIMIT 30
+      `;
+      monthlySalesQuery = `
+        SELECT to_char(created_at, 'YYYY-MM') as month, COUNT(id) as count, SUM(total_usd) as revenue_usd, SUM(total_cost_usd) as cost_usd
+        FROM orders
+        WHERE status = 'delivered'
+        GROUP BY to_char(created_at, 'YYYY-MM')
+        ORDER BY month DESC
+        LIMIT 12
+      `;
+    } else {
+      dailySalesQuery = `
+        SELECT DATE(created_at) as date, COUNT(id) as count, SUM(total_usd) as revenue_usd, SUM(total_cost_usd) as cost_usd
+        FROM orders
+        WHERE status = 'delivered'
+        GROUP BY DATE(created_at)
+        ORDER BY date DESC
+        LIMIT 30
+      `;
+      monthlySalesQuery = `
+        SELECT strftime('%Y-%m', created_at) as month, COUNT(id) as count, SUM(total_usd) as revenue_usd, SUM(total_cost_usd) as cost_usd
+        FROM orders
+        WHERE status = 'delivered'
+        GROUP BY strftime('%Y-%m', created_at)
+        ORDER BY month DESC
+        LIMIT 12
+      `;
+    }
+
+    const dailySales = await db.allAsync(dailySalesQuery);
+    const monthlySales = await db.allAsync(monthlySalesQuery);
 
     const inventory = await db.getAsync(`
       SELECT 
@@ -469,7 +494,8 @@ exports.getReports = async (req, res) => {
         estimated_profit_usd: netProfitUsd, // Exact net profit in USD
         estimated_profit_lbp: netProfitLbp,  // Exact net profit in LBP
         total_views: totalViews,
-        unique_visitors: uniqueVisitors
+        unique_visitors: uniqueVisitors,
+        out_of_stock: inventory.out_of_stock || 0
       },
       dailySales,
       monthlySales,
