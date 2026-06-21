@@ -15,17 +15,14 @@ exports.fileToBase64 = (file) => {
       return null;
     }
     
-    const data = fs.readFileSync(file.path);
-    const base64 = data.toString('base64');
-    
-    // Clean up file from local disk to save space
-    try {
-      fs.unlinkSync(file.path);
-    } catch (e) {
-      console.error('Failed to delete temp file:', e);
+    // Construct the relative URL path starting from /uploads/
+    const uploadsIndex = file.path.lastIndexOf('uploads');
+    if (uploadsIndex !== -1) {
+      const relativePath = '/' + file.path.substring(uploadsIndex).replace(/\\/g, '/');
+      return relativePath;
     }
-
-    return `data:${file.mimetype};base64,${base64}`;
+    
+    return `/uploads/${file.filename}`;
   } catch (err) {
     console.error('Error in fileHelper:', err);
     return null;
