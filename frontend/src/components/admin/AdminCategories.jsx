@@ -67,6 +67,7 @@ export default function AdminCategories() {
   const [orderChanged, setOrderChanged] = useState(false);
   const [savingOrder, setSavingOrder] = useState(false);
   const [saveOrderMsg, setSaveOrderMsg] = useState('');
+  const [lightboxSrc, setLightboxSrc] = useState(null);
 
   // Drag state (refs to avoid re-renders)
   const dragIndexRef = useRef(null);
@@ -516,8 +517,14 @@ export default function AdminCategories() {
                       style={{ cursor: 'pointer' }}
                     />
                   </td>
-                  <td style={{ padding: '10px' }}>
-                    <img src={imageUrl} alt="" style={{ width: '30px', height: '30px', objectFit: 'contain', backgroundColor: 'white', borderRadius: '4px', border: '1px solid var(--border-color)' }} />
+                   <td style={{ padding: '10px' }}>
+                    <img 
+                      src={imageUrl} 
+                      alt="" 
+                      onClick={() => setLightboxSrc(imageUrl)}
+                      style={{ width: '30px', height: '30px', objectFit: 'contain', backgroundColor: 'white', borderRadius: '4px', border: '1px solid var(--border-color)', cursor: 'zoom-in' }} 
+                      title={lang === 'ar' ? 'تكبير الصورة' : 'Enlarge Image'}
+                    />
                   </td>
                   <td style={{ padding: '10px', fontWeight: '600' }}>
                     {lang === 'ar' ? c.name_ar : c.name_en}
@@ -551,6 +558,61 @@ export default function AdminCategories() {
           </tbody>
         </table>
       </div>
+
+      {/* Lightbox Modal */}
+      {lightboxSrc && (
+        <div 
+          onClick={() => setLightboxSrc(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            cursor: 'zoom-out',
+            animation: 'fadeIn 0.25s ease'
+          }}
+        >
+          <div style={{ position: 'relative', maxWidth: '90%', maxHeight: '90%', display: 'flex', flexDirection: 'column', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
+            <img 
+              src={lightboxSrc} 
+              alt="Enlarged" 
+              style={{ 
+                maxWidth: '100%', 
+                maxHeight: '80vh', 
+                borderRadius: '8px', 
+                boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+                objectFit: 'contain',
+                border: '2px solid rgba(255,255,255,0.1)'
+              }} 
+            />
+            <button 
+              onClick={() => setLightboxSrc(null)}
+              style={{
+                marginTop: '15px',
+                padding: '8px 24px',
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                color: 'white',
+                border: '1px solid rgba(255, 255, 255, 0.4)',
+                borderRadius: '20px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                fontSize: '0.9rem',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.3)'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.2)'}
+            >
+              {lang === 'ar' ? 'إغلاق' : 'Close'}
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   );
