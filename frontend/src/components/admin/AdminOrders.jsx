@@ -54,10 +54,20 @@ export default function AdminOrders() {
   };
 
   const handlePrint = (hidePrices = false) => {
+    // Instantly toggle the CSS class in the DOM before printing to avoid any React render race condition
+    const invoiceElement = document.querySelector('.invoice-box');
+    if (invoiceElement) {
+      if (hidePrices) {
+        invoiceElement.classList.add('hide-price-on-print');
+      } else {
+        invoiceElement.classList.remove('hide-price-on-print');
+      }
+    }
+    
     setHidePricesInPrint(hidePrices);
     setTimeout(() => {
       window.print();
-    }, 200);
+    }, 150);
   };
 
   const handleDeleteOrder = async (id, isArchived) => {
@@ -555,8 +565,17 @@ export default function AdminOrders() {
                   </thead>
                   <tbody>
                     {selectedOrder.items.map((item, idx) => {
-                      const itemImg = item.image_url 
-                        ? (item.image_url.startsWith('http') || item.image_url.startsWith('data:') ? item.image_url : `${apiHost}${item.image_url}`)
+                      let resolvedImg = item.image_url || '';
+                      if (resolvedImg && resolvedImg.startsWith('[')) {
+                        try {
+                          const parsed = JSON.parse(resolvedImg);
+                          resolvedImg = parsed[0] || '';
+                        } catch (e) {
+                          console.error('Error parsing order item image_url:', e);
+                        }
+                      }
+                      const itemImg = resolvedImg 
+                        ? (resolvedImg.startsWith('http') || resolvedImg.startsWith('data:') ? resolvedImg : `${apiHost}${resolvedImg}`)
                         : '';
                       return (
                         <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '0.85rem', verticalAlign: 'middle' }}>

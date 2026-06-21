@@ -115,11 +115,21 @@ exports.createOrder = async (req, res) => {
         discountableSubtotalUsd += itemCost;
       }
 
+      let productImg = product.image_url || '';
+      if (productImg && productImg.startsWith('[')) {
+        try {
+          const parsed = JSON.parse(productImg);
+          productImg = parsed[0] || '';
+        } catch (e) {
+          console.error('Error parsing product image_url for order items:', e);
+        }
+      }
+
       orderItemsDetails.push({
         product_id: product.id,
         name_ar: product.name_ar,
         name_en: product.name_en,
-        image_url: product.image_url,
+        image_url: productImg,
         price_usd: itemPrice,
         cost_price_usd: itemSingleCostPrice,
         quantity: item.quantity,
