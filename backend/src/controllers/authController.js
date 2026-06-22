@@ -251,4 +251,86 @@ exports.adminDeleteUser = async (req, res) => {
   }
 };
 
+exports.adminCreateUser = async (req, res) => {
+  const { username, password, full_name, phone, email, role, permissions } = req.body;
+
+  if (!username || !password || !role) {
+    return res.status(400).json({ 
+      error_ar: 'الرجاء إدخال اسم المستخدم، كلمة المرور والدور', 
+      error_en: 'Please provide username, password and role' 
+    });
+  }
+
+  const cleanUsername = username.trim();
+  const cleanPassword = password;
+  const cleanFullName = (full_name || '').trim();
+  const cleanPhone = (phone || '').trim();
+  const cleanEmail = (email || '').trim();
+
+  if (cleanUsername.length < 3) {
+    return res.status(400).json({
+      error_ar: 'اسم المستخدم يجب أن يكون من ٣ حروف على الأقل',
+      error_en: 'Username must be at least 3 characters'
+    });
+  }
+
+  if (cleanPassword.length < 6) {
+    return res.status(400).json({
+      error_ar: 'كلمة المرور يجب أن تكون من ٦ خانات على الأقل لضمان الأمان',
+      error_en: 'Password must be at least 6 characters for security'
+    });
+  }
+
+  try {
+    const existingUser = await db.getAsync('SELECT * FROM users WHERE username = ?', [cleanUsername]);
+    if (existingUser) {
+      return res.status(400).json({ error_ar: 'اسم المستخدم مسجل مسبقاً', error_en: 'Username is already taken' });
+    }
+
+    const hashedPassword = await bcrypt.hash(cleanPassword, 10);
+    const permsStr = JSON.stringify(permissions || []);
+    
+    const result = await db.runAsync(
+      "INSERT INTO users (username, password, role, permissions, phone, email, full_name) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [cleanUsername, hashedPassword, role, permsStr, cleanPhone, cleanEmail, cleanFullName]
+    );
+
+    res.status(201).json({
+      message_ar: 'تم إنشاء المستخدم بنجاح',
+      message_en: 'User created successfully',
+      user: {
+        id: result.lastID,
+        username: cleanUsername,
+        role: role,
+        permissions: permissions || [],
+        phone: cleanPhone,
+        email: cleanEmail,
+        full_name: cleanFullName
+      }
+    });
+  } catch (err) {
+    console.error('Admin create user error:', err);
+    res.status(500).json({ error_ar: 'خطأ في الخادم أثناء إنشاء المستخدم', error_en: 'Server error during user creation' });
+  }
+};
+
+exports.getDrivers = async (req, res) => {
+  try {
+    const users = await db.allAsync("SELECT id, username, role, permissions, full_name, phone FROM users WHERE role = 'admin' OR role = 'employee'");
+    const drivers = users.filter(u => {
+      if (u.role === 'admin') return true;
+      try {
+        const perms = JSON.parse(u.permissions || '[]');
+        return perms.includes('delivery');
+      } catch (e) {
+        return false;
+      }
+    });
+    res.json(drivers);
+  } catch (err) {
+    console.error('Error fetching drivers:', err);
+    res.status(500).json({ error_ar: 'خطأ في تحميل قائمة السائقين', error_en: 'Error fetching drivers list' });
+  }
+};
+
 

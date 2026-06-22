@@ -192,7 +192,7 @@ export default function AdminDashboard({ setCurrentView }) {
     { id: 'delivery', name: lang === 'ar' ? 'توصيل الطلبيات' : 'Order Deliveries', icon: Truck, perm: 'delivery' },
     { id: 'chats', name: lang === 'ar' ? 'محادثات العملاء' : 'Customer Chats', icon: MessageSquare, perm: 'orders' },
     { id: 'merchants', name: lang === 'ar' ? 'إدارة الموردين والتجار' : 'Merchants & Suppliers', icon: Store, perm: 'merchants' },
-    { id: 'users', name: t('users'), icon: Users, perm: 'users' },
+    { id: 'users', name: lang === 'ar' ? 'الموظفين والصلاحيات' : 'Employees & Permissions', icon: Users, perm: 'users' },
     { id: 'coupons', name: t('coupons'), icon: Tag, perm: 'coupons' },
     { id: 'reports', name: t('reports'), icon: BarChart3, perm: 'reports' },
     { id: 'settings', name: t('settings'), icon: Settings, perm: 'settings' }
@@ -657,6 +657,47 @@ export default function AdminDashboard({ setCurrentView }) {
                   </div>
                   <div style={{ backgroundColor: 'rgba(217,119,6,0.1)', padding: '10px', borderRadius: '50%' }}>
                     <BarChart3 size={22} color="var(--accent-red-gold)" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Total Employees Card */}
+            {(currentUser?.role === 'admin' || hasPermission('users')) && (
+              <div 
+                className="dashboard-card" 
+                style={{ 
+                  borderLeft: '4px solid #3b82f6',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+                }}
+                onClick={() => {
+                  if (openInNewTab) {
+                    window.open('/?view=admin&tab=users', '_blank');
+                  } else {
+                    setActiveTab('users');
+                  }
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '600' }}>
+                      {lang === 'ar' ? 'عدد الموظفين' : 'Total Employees'}
+                    </span>
+                    <h3 style={{ fontSize: '1.5rem', fontWeight: '800', margin: '4px 0', color: '#3b82f6' }}>
+                      {stats.total_employees || 0}
+                    </h3>
+                  </div>
+                  <div style={{ backgroundColor: 'rgba(59,130,246,0.1)', padding: '10px', borderRadius: '50%' }}>
+                    <Users size={22} color="#3b82f6" />
                   </div>
                 </div>
               </div>

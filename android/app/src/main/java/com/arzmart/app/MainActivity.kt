@@ -56,6 +56,7 @@ class MainActivity : AppCompatActivity() {
             urlsToTry.add("http://localhost:5000")       // 1. USB Reverse Forwarding (الكابل)
             urlsToTry.add("http://10.0.2.2:5000")         // 2. Emulator Loopback (المحاكي)
             urlsToTry.add("http://192.168.1.104:5000")    // 3. Local Wi-Fi Network IP (الواي فاي)
+            urlsToTry.add("http://192.168.1.105:5000")    // 4. Current Wi-Fi Network IP
         }
 
         webView.webViewClient = object : WebViewClient() {

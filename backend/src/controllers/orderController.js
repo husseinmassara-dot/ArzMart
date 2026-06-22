@@ -259,15 +259,29 @@ exports.createOrder = async (req, res) => {
 
 exports.getOrders = async (req, res) => {
   const { status } = req.query;
-  let query = 'SELECT * FROM orders WHERE 1=1';
+  let query = `
+    SELECT o.*, u.full_name as driver_name, u.username as driver_username 
+    FROM orders o 
+    LEFT JOIN users u ON o.driver_id = u.id 
+    WHERE 1=1
+  `;
   const params = [];
 
+  const isEmployee = req.user.role === 'employee';
+  const permissions = isEmployee ? JSON.parse(req.user.permissions || '[]') : [];
+  const isDriverOnly = isEmployee && !permissions.includes('orders') && permissions.includes('delivery');
+
+  if (isDriverOnly) {
+    query += ' AND o.driver_id = ?';
+    params.push(req.user.id);
+  }
+
   if (status) {
-    query += ' AND status = ?';
+    query += ' AND o.status = ?';
     params.push(status);
   }
 
-  query += ' ORDER BY id DESC';
+  query += ' ORDER BY o.id DESC';
 
   try {
     const orders = await db.allAsync(query, params);
@@ -299,7 +313,12 @@ exports.getUserOrders = async (req, res) => {
 exports.getOrderById = async (req, res) => {
   const { id } = req.params;
   try {
-    const order = await db.getAsync('SELECT * FROM orders WHERE id = ?', [id]);
+    const order = await db.getAsync(`
+      SELECT o.*, u.full_name as driver_name, u.username as driver_username 
+      FROM orders o 
+      LEFT JOIN users u ON o.driver_id = u.id 
+      WHERE o.id = ?
+    `, [id]);
     if (!order) {
       return res.status(404).json({ error_ar: 'الطلبية غير موجودة', error_en: 'Order not found' });
     }
@@ -416,6 +435,9 @@ exports.getReports = async (req, res) => {
       FROM orders
     `);
 
+    const employeeStats = await db.getAsync("SELECT COUNT(*) as count FROM users WHERE role = 'employee' OR role = 'admin'");
+    const totalEmployees = employeeStats ? employeeStats.count : 0;
+
     const exchangeRateRow = await db.getAsync('SELECT exchange_rate FROM settings ORDER BY id DESC LIMIT 1');
     const exchangeRate = exchangeRateRow ? exchangeRateRow.exchange_rate : 89500;
 
@@ -505,7 +527,8 @@ exports.getReports = async (req, res) => {
         estimated_profit_lbp: netProfitLbp,  // Exact net profit in LBP
         total_views: totalViews,
         unique_visitors: uniqueVisitors,
-        out_of_stock: inventory.out_of_stock || 0
+        out_of_stock: inventory.out_of_stock || 0,
+        total_employees: totalEmployees
       },
       dailySales,
       monthlySales,
@@ -518,5 +541,36 @@ exports.getReports = async (req, res) => {
   } catch (err) {
     console.error('Reports error:', err);
     res.status(500).json({ error_ar: 'خطأ في حساب التقارير والأرباح', error_en: 'Error calculating reports and earnings' });
+  }
+};
+
+exports.bulkAssignOrders = async (req, res) => {
+  let { orderIds, driverId } = req.body;
+
+  if (!orderIds || !Array.isArray(orderIds) || orderIds.length === 0) {
+    return res.status(400).json({ error_ar: 'الرجاء تحديد الطلبيات', error_en: 'Please select orders' });
+  }
+
+  // Parse driverId as null or integer
+  const resolvedDriverId = driverId ? parseInt(driverId, 10) : null;
+
+  try {
+    if (resolvedDriverId) {
+      const driver = await db.getAsync('SELECT * FROM users WHERE id = ?', [resolvedDriverId]);
+      if (!driver) {
+        return res.status(404).json({ error_ar: 'موظف التوصيل غير موجود', error_en: 'Delivery driver not found' });
+      }
+    }
+
+    const placeholders = orderIds.map(() => '?').join(',');
+    await db.runAsync(
+      `UPDATE orders SET driver_id = ? WHERE id IN (${placeholders})`,
+      [resolvedDriverId, ...orderIds]
+    );
+
+    res.json({ message_ar: 'تم تعيين موظف التوصيل للطلبيات بنجاح', message_en: 'Delivery driver assigned to orders successfully' });
+  } catch (err) {
+    console.error('Bulk assign orders error:', err);
+    res.status(500).json({ error_ar: 'خطأ أثناء تعيين موظف التوصيل', error_en: 'Error assigning delivery driver' });
   }
 };

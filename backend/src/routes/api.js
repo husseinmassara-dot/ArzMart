@@ -21,6 +21,8 @@ router.delete('/auth/delete-account', authenticateToken, authController.deleteAc
 
 // --- User Management (Admin Only) ---
 router.get('/admin/users', authenticateToken, requirePermission('users'), authController.getUsers);
+router.post('/admin/users', authenticateToken, requirePermission('users'), authController.adminCreateUser);
+router.get('/admin/drivers', authenticateToken, requirePermission('orders'), authController.getDrivers);
 router.put('/admin/users/:id/permissions', authenticateToken, requirePermission('users'), authController.updateUserRoleAndPermissions);
 router.delete('/admin/users/:id', authenticateToken, requirePermission('users'), authController.adminDeleteUser);
 
@@ -57,6 +59,7 @@ router.get('/orders', authenticateToken, requireAnyPermission(['orders', 'delive
 router.get('/orders/history', authenticateToken, orderController.getUserOrders);
 router.get('/orders/:id', authenticateToken, orderController.getOrderById);
 router.put('/orders/:id/status', authenticateToken, requireAnyPermission(['orders', 'delivery']), orderController.updateOrderStatus);
+router.put('/admin/orders/bulk-assign', authenticateToken, requirePermission('orders'), orderController.bulkAssignOrders);
 router.delete('/orders/:id', authenticateToken, requireAdmin, orderController.deleteOrder);
 
 // --- Coupon Routes ---

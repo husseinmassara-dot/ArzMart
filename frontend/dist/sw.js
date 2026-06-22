@@ -1,4 +1,4 @@
-const CACHE_NAME = 'arz-mart-cache-v2';
+const CACHE_NAME = 'arz-mart-cache-v3';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -37,8 +37,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const isTargetApi = event.request.method === 'GET' && (
     event.request.url.includes('/api/products') ||
-    event.request.url.includes('/api/categories') ||
-    event.request.url.includes('/api/settings')
+    event.request.url.includes('/api/categories')
   );
 
   if (isTargetApi) {

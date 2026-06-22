@@ -15,6 +15,16 @@ export default function AdminUsers() {
   const [perms, setPerms] = useState([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  // New User Creation States
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newUsername, setNewUsername] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [newFullName, setNewFullName] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newRole, setNewRole] = useState('user');
+  const [newPerms, setNewPerms] = useState([]);
+
   const permissionList = [
     { id: 'products', name_ar: 'إدارة المنتجات', name_en: 'Manage Products' },
     { id: 'categories', name_ar: 'إدارة التصنيفات', name_en: 'Manage Categories' },
@@ -50,6 +60,25 @@ export default function AdminUsers() {
     setRole(user.role);
     setPerms(user.permissions || []);
     setConfirmDelete(false);
+    setShowCreateForm(false);
+  };
+
+  const handleShowCreate = () => {
+    setSelectedUser(null);
+    setShowCreateForm(true);
+    resetCreateForm();
+    setShowCreateForm(true);
+  };
+
+  const resetCreateForm = () => {
+    setNewUsername('');
+    setNewPassword('');
+    setNewFullName('');
+    setNewPhone('');
+    setNewEmail('');
+    setNewRole('user');
+    setNewPerms([]);
+    setShowCreateForm(false);
   };
 
   const handleDeleteUser = async () => {
@@ -110,6 +139,7 @@ export default function AdminUsers() {
       });
 
       if (res.ok) {
+        alert(lang === 'ar' ? 'تم تحديث صلاحيات المستخدم بنجاح' : 'User permissions updated successfully');
         fetchUsers();
         setSelectedUser(null);
       } else {
@@ -121,12 +151,70 @@ export default function AdminUsers() {
     }
   };
 
+  const handleCreateSubmit = async (e) => {
+    e.preventDefault();
+    if (!newUsername || !newPassword) return;
+
+    try {
+      const res = await fetch(`${apiBase}/admin/users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          username: newUsername,
+          password: newPassword,
+          full_name: newFullName,
+          phone: newPhone,
+          email: newEmail,
+          role: newRole,
+          permissions: newRole === 'employee' ? newPerms : []
+        })
+      });
+
+      if (res.ok) {
+        alert(lang === 'ar' ? 'تم إنشاء الحساب بنجاح' : 'Account created successfully');
+        resetCreateForm();
+        fetchUsers();
+      } else {
+        const errData = await res.json();
+        alert(errData.error_ar || errData.error_en || 'Error creating user');
+      }
+    } catch (err) {
+      console.error(err);
+      alert(lang === 'ar' ? 'حدث خطأ أثناء الاتصال بالخادم' : 'Error connecting to server');
+    }
+  };
+
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
       
       {/* Left Column: Users List */}
       <div className="dashboard-card" style={{ padding: '20px' }}>
-        <h4 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '16px' }}>قائمة المستخدمين والموظفين</h4>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+          <h4 style={{ fontSize: '1.1rem', fontWeight: '800', margin: 0 }}>
+            {lang === 'ar' ? 'قائمة المستخدمين والموظفين' : 'Users & Employees List'}
+          </h4>
+          <button
+            type="button"
+            onClick={handleShowCreate}
+            className="input-field animate-scale"
+            style={{
+              width: 'auto',
+              padding: '6px 12px',
+              backgroundColor: 'var(--accent-blue)',
+              color: 'white',
+              border: 'none',
+              fontWeight: '700',
+              cursor: 'pointer',
+              fontSize: '0.8rem',
+              margin: 0
+            }}
+          >
+            {lang === 'ar' ? '+ إضافة مستخدم جديد' : '+ Add New User'}
+          </button>
+        </div>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {users.map(u => {
@@ -139,7 +227,7 @@ export default function AdminUsers() {
                   padding: '12px',
                   borderRadius: '8px',
                   border: '1px solid var(--border-color)',
-                  backgroundColor: selectedUser?.id === u.id ? 'var(--bg-tertiary)' : 'var(--bg-primary)',
+                  backgroundColor: selectedUser?.id === u.id && !showCreateForm ? 'var(--bg-tertiary)' : 'var(--bg-primary)',
                   cursor: isSuperAdmin ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -150,7 +238,7 @@ export default function AdminUsers() {
                 <div>
                   <strong style={{ fontSize: '0.9rem' }}>{u.username}</strong>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '2px' }}>
-                    الدور: {u.role === 'admin' ? 'مدير عام (Super Admin)' : u.role === 'employee' ? 'موظف (Staff)' : 'عميل (Customer)'}
+                    {lang === 'ar' ? 'الدور: ' : 'Role: '} {u.role === 'admin' ? (lang === 'ar' ? 'مدير عام (Super Admin)' : 'Super Admin') : u.role === 'employee' ? (lang === 'ar' ? 'موظف (Staff)' : 'Staff') : (lang === 'ar' ? 'عميل (Customer)' : 'Customer')}
                   </div>
                 </div>
 
@@ -165,10 +253,125 @@ export default function AdminUsers() {
         </div>
       </div>
 
-      {/* Right Column: Edit Permissions Form */}
+      {/* Right Column: Edit Permissions or Create Form */}
       <div>
-        {selectedUser ? (
-          <form onSubmit={handleSubmit} className="dashboard-card" style={{ padding: '20px', gap: '16px' }}>
+        {showCreateForm ? (
+          <form onSubmit={handleCreateSubmit} className="dashboard-card" style={{ padding: '20px', gap: '16px', display: 'flex', flexDirection: 'column' }}>
+            <h4 style={{ fontSize: '1.1rem', fontWeight: '800', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+              {lang === 'ar' ? 'إضافة مستخدم جديد وصلاحياته' : 'Create New User & Permissions'}
+            </h4>
+            
+            <div>
+              <label className="input-label">{lang === 'ar' ? 'اسم المستخدم' : 'Username'}</label>
+              <input
+                type="text"
+                className="input-field"
+                required
+                value={newUsername}
+                onChange={e => setNewUsername(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="input-label">{lang === 'ar' ? 'كلمة المرور' : 'Password'}</label>
+              <input
+                type="password"
+                className="input-field"
+                required
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="input-label">{lang === 'ar' ? 'الاسم الكامل' : 'Full Name'}</label>
+              <input
+                type="text"
+                className="input-field"
+                value={newFullName}
+                onChange={e => setNewFullName(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="input-label">{lang === 'ar' ? 'رقم الهاتف' : 'Phone Number'}</label>
+              <input
+                type="text"
+                className="input-field"
+                value={newPhone}
+                onChange={e => setNewPhone(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="input-label">{lang === 'ar' ? 'البريد الإلكتروني' : 'Email Address'}</label>
+              <input
+                type="email"
+                className="input-field"
+                value={newEmail}
+                onChange={e => setNewEmail(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="input-label">{lang === 'ar' ? 'دور المستخدم' : 'User Role'}</label>
+              <select className="input-field" value={newRole} onChange={(e) => setNewRole(e.target.value)}>
+                <option value="user">{lang === 'ar' ? 'عميل عادي (Customer)' : 'Customer'}</option>
+                <option value="employee">{lang === 'ar' ? 'موظف بصلاحيات محددة (Staff)' : 'Staff'}</option>
+              </select>
+            </div>
+
+            {newRole === 'employee' && (
+              <div>
+                <label className="input-label" style={{ marginBottom: '10px' }}>
+                  {lang === 'ar' ? 'حدد الصلاحيات المتاحة للموظف:' : 'Select Permissions for Staff:'}
+                </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {permissionList.map((p) => {
+                    const isChecked = newPerms.includes(p.id);
+                    return (
+                      <div
+                        key={p.id}
+                        onClick={() => {
+                          setNewPerms(prev => {
+                            if (prev.includes(p.id)) return prev.filter(item => item !== p.id);
+                            return [...prev, p.id];
+                          });
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          cursor: 'pointer',
+                          fontSize: '0.85rem',
+                          fontWeight: '600'
+                        }}
+                      >
+                        {isChecked ? (
+                          <CheckSquare size={16} color="var(--accent-blue)" />
+                        ) : (
+                          <Square size={16} color="var(--text-light)" />
+                        )}
+                        <span>{lang === 'ar' ? p.name_ar : p.name_en}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+              <button type="submit" className="input-field" style={{ width: 'auto', padding: '8px 20px', backgroundColor: 'var(--accent-blue)', color: 'white', border: 'none', fontWeight: '700', cursor: 'pointer' }}>
+                {lang === 'ar' ? 'إنشاء الحساب' : 'Create Account'}
+              </button>
+              <button type="button" onClick={resetCreateForm} className="input-field" style={{ width: 'auto', padding: '8px 20px', backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: 'none', fontWeight: '600', cursor: 'pointer' }}>
+                {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+              </button>
+            </div>
+
+          </form>
+        ) : selectedUser ? (
+          <form onSubmit={handleSubmit} className="dashboard-card" style={{ padding: '20px', gap: '16px', display: 'flex', flexDirection: 'column' }}>
             <h4 style={{ fontSize: '1.1rem', fontWeight: '800', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
               تعديل صلاحيات المستخدم: <span style={{ color: 'var(--accent-blue)' }}>{selectedUser.username}</span>
             </h4>
@@ -284,7 +487,6 @@ export default function AdminUsers() {
           </div>
         )}
       </div>
-
     </div>
   );
 }

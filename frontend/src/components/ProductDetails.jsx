@@ -416,24 +416,7 @@ export default function ProductDetails({ product, onClose, onRefresh, setCurrent
                 <span className="input-label" style={{ display: 'block', marginBottom: '6px' }}>
                   {lang === 'ar' ? 'الخيار المتاح:' : 'Available Option:'}
                 </span>
-                {parsedSizes.length >= 4 ? (
-                  <select
-                    value={selectedSize}
-                    onChange={(e) => setSelectedSize(e.target.value)}
-                    className="input-field"
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: '8px',
-                      backgroundColor: 'var(--bg-secondary)',
-                      color: 'var(--text-primary)',
-                      border: '1px solid var(--border-color)',
-                      fontSize: '0.9rem',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      outline: 'none'
-                    }}
-                  >
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     {parsedSizes.map(size => {
                       const optPrice = getOptionPrice(size, displayProduct.price_usd);
                       const priceDiff = optPrice - displayProduct.price_usd;
@@ -443,18 +426,6 @@ export default function ProductDetails({ product, onClose, onRefresh, setCurrent
                       } else if (priceDiff < 0) {
                         priceLabel = ` (-${formatPrice(Math.abs(priceDiff))})`;
                       }
-                      const optStock = getOptionStock(size, displayProduct.stock);
-                      const stockLabel = optStock > 0 ? '' : ` (${lang === 'ar' ? 'غير موجود بإشارة من المدير' : 'Not available by order of the manager'})`;
-                      return (
-                        <option key={size} value={size}>
-                          {getOptionName(size)}{priceLabel}{stockLabel}
-                        </option>
-                      );
-                    })}
-                  </select>
-                ) : (
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    {parsedSizes.map(size => {
                       const optStock = getOptionStock(size, displayProduct.stock);
                       const isOutOfStock = optStock <= 0;
                       return (
@@ -476,12 +447,11 @@ export default function ProductDetails({ product, onClose, onRefresh, setCurrent
                             transition: 'all 0.2s'
                           }}
                         >
-                          {getOptionName(size)}{isOutOfStock ? ` (${lang === 'ar' ? 'غير موجود بإشارة من المدير' : 'Not available by order of the manager'})` : ''}
+                          {getOptionName(size)}{priceLabel}{isOutOfStock ? ` (${lang === 'ar' ? 'غير موجود بإشارة من المدير' : 'Not available by order of the manager'})` : ''}
                         </button>
                       );
                     })}
                   </div>
-                )}
               </div>
             )}
 

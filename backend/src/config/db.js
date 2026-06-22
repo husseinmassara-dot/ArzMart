@@ -359,10 +359,15 @@ async function initializeDatabasePostgres() {
         tracking_number TEXT,
         payment_method TEXT DEFAULT 'COD',
         show_price_on_print INTEGER DEFAULT 1,
+        driver_id INTEGER DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL
       )
     `);
+
+    try {
+      await pgPool.query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS driver_id INTEGER DEFAULT NULL");
+    } catch (e) {}
 
     // 7. Chats Table
     await pgPool.query(`
@@ -674,10 +679,16 @@ function initializeDatabase() {
         tracking_number TEXT,
         payment_method TEXT DEFAULT 'COD',
         show_price_on_print INTEGER DEFAULT 1,
+        driver_id INTEGER DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL
       )
-    `);
+    `, [], () => {
+      const alterDriverId = isPostgres 
+        ? "ALTER TABLE orders ADD COLUMN IF NOT EXISTS driver_id INTEGER DEFAULT NULL" 
+        : "ALTER TABLE orders ADD COLUMN driver_id INTEGER DEFAULT NULL";
+      db.run(alterDriverId, [], () => {});
+    });
 
     // 7. Chats Table
     runInit(`

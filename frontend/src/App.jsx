@@ -15,10 +15,10 @@ import PwaInstallBanner from './components/PwaInstallBanner';
 // Admin panel imports
 import AdminDashboard from './components/admin/AdminDashboard';
 
-import { Key, User, FileText, ChevronDown, Check, Star, RefreshCw, Fingerprint, Smartphone, Globe, Settings } from 'lucide-react';
+import { Key, User, FileText, ChevronDown, Check, Star, RefreshCw, Fingerprint, Smartphone, Globe, Settings, Moon, Sun } from 'lucide-react';
 
 export default function App() {
-  const { lang, formatPrice, t, apiBase, settings, currency, apiHost } = useApp();
+  const { lang, setLang, theme, setTheme, formatPrice, t, apiBase, settings, currency, apiHost } = useApp();
   const { user, login, register, token, logout } = useAuth();
   const { setIsCartOpen, cartItems } = useCart();
   const { isChatOpen, setIsChatOpen } = useChat();
@@ -485,9 +485,174 @@ export default function App() {
     setMinRating('');
   };
 
-  const isSiteOffline = settings?.site_offline === 1;
+  const isSiteOffline = Number(settings?.site_offline) === 1;
   const isManagementUser = user?.role === 'admin' || user?.role === 'employee';
   const showMaintenance = isSiteOffline && !isManagementUser && currentView !== 'login' && currentView !== 'register';
+
+  if (showMaintenance) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        backgroundColor: 'var(--bg-primary)',
+        color: 'var(--text-primary)'
+      }}>
+        {/* Minimal Header with Lang & Theme Toggles */}
+        <div style={{
+          padding: '16px 24px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          borderBottom: '1px solid var(--border-color)',
+          backgroundColor: 'var(--bg-secondary)',
+          boxShadow: 'var(--shadow-sm)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {settings?.logo_url ? (
+              <img src={settings.logo_url.startsWith('http') || settings.logo_url.startsWith('data:') ? settings.logo_url : `${apiHost}${settings.logo_url}`} alt="Logo" style={{ height: '36px', objectFit: 'contain' }} />
+            ) : (
+              <div style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--accent-blue)',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 'bold',
+                fontSize: '1.1rem'
+              }}>
+                {settings?.app_name ? settings.app_name[0] : 'A'}
+              </div>
+            )}
+            <span style={{ fontSize: '1.25rem', fontWeight: '700' }}>
+              {settings?.app_name || 'Arz-Mart'}
+            </span>
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {/* Language Toggle */}
+            <button
+              onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
+              className="input-field"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 10px',
+                cursor: 'pointer',
+                fontWeight: '600',
+                border: '1px solid var(--border-color)',
+                borderRadius: '6px',
+                width: 'auto',
+                backgroundColor: 'var(--bg-primary)'
+              }}
+            >
+              <Globe size={14} />
+              <span>{lang === 'ar' ? 'EN' : 'عربي'}</span>
+            </button>
+
+            {/* Theme Toggle */}
+            <button
+              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+              className="input-field"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '6px',
+                cursor: 'pointer',
+                border: '1px solid var(--border-color)',
+                borderRadius: '6px',
+                width: '34px',
+                height: '34px',
+                backgroundColor: 'var(--bg-primary)'
+              }}
+            >
+              {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Maintenance Box */}
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '40px 24px',
+          textAlign: 'center',
+          animation: 'fadeIn 0.5s ease-out'
+        }}>
+          <div style={{
+            maxWidth: '500px',
+            padding: '40px 30px',
+            borderRadius: '16px',
+            backgroundColor: 'var(--bg-secondary)',
+            border: '1px solid var(--border-color)',
+            boxShadow: 'var(--shadow-lg)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '20px'
+          }}>
+            <div style={{
+              width: '80px',
+              height: '80px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(217, 119, 6, 0.1)',
+              color: '#d97706',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '10px'
+            }}>
+              <Settings size={40} className="animate-spin" style={{ animationDuration: '6s' }} />
+            </div>
+
+            <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+              {lang === 'ar' ? 'الموقع قيد الصيانة مؤقتاً' : 'Website Under Maintenance'}
+            </h2>
+
+            <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+              {lang === 'ar'
+                ? 'نحن نقوم ببعض التحديثات والتحسينات لنوفر لكم تجربة تسوق أفضل. سنعود للعمل قريباً جداً، شكراً لتفهمكم وصبركم.'
+                : 'We are performing some scheduled updates and improvements to provide you with a better shopping experience. We will be back online shortly. Thank you for your patience.'}
+            </p>
+
+            <hr style={{ width: '100%', border: 'none', borderBottom: '1px solid var(--border-color)', margin: '10px 0' }} />
+
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>
+              {lang === 'ar' ? 'للاستفسارات الطارئة يرجى التواصل عبر البريد الإلكتروني:' : 'For urgent inquiries, please contact us at:'}
+              {settings?.contact_email && (
+                <div style={{ marginTop: '4px', fontWeight: 'bold', color: 'var(--accent-blue)' }}>
+                  {settings.contact_email}
+                </div>
+              )}
+            </div>
+            
+            <button
+              onClick={() => setCurrentView('login')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-light)',
+                fontSize: '0.75rem',
+                textDecoration: 'underline',
+                cursor: 'pointer',
+                marginTop: '10px'
+              }}
+            >
+              {lang === 'ar' ? 'تسجيل دخول الإدارة (Admin Login)' : 'Admin Login'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -682,84 +847,7 @@ export default function App() {
       )}
 
       {/* 3. Main Views router */}
-      {showMaintenance ? (
-        <div style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '40px 24px',
-          textAlign: 'center',
-          backgroundColor: 'var(--bg-primary)',
-          color: 'var(--text-primary)',
-          minHeight: '70vh',
-          animation: 'fadeIn 0.5s ease-out'
-        }}>
-          <div style={{
-            maxWidth: '500px',
-            padding: '40px 30px',
-            borderRadius: '16px',
-            backgroundColor: 'var(--bg-secondary)',
-            border: '1px solid var(--border-color)',
-            boxShadow: 'var(--shadow-lg)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '20px'
-          }}>
-            <div style={{
-              width: '80px',
-              height: '80px',
-              borderRadius: '50%',
-              backgroundColor: 'rgba(217, 119, 6, 0.1)',
-              color: '#d97706',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: '10px'
-            }}>
-              <Settings size={40} className="animate-spin" style={{ animationDuration: '6s' }} />
-            </div>
-
-            <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-primary)' }}>
-              {lang === 'ar' ? 'الموقع قيد الصيانة مؤقتاً' : 'Website Under Maintenance'}
-            </h2>
-
-            <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-              {lang === 'ar'
-                ? 'نحن نقوم ببعض التحديثات والتحسينات لنوفر لكم تجربة تسوق أفضل. سنعود للعمل قريباً جداً، شكراً لتفهمكم وصبركم.'
-                : 'We are performing some scheduled updates and improvements to provide you with a better shopping experience. We will be back online shortly. Thank you for your patience.'}
-            </p>
-
-            <hr style={{ width: '100%', border: 'none', borderBottom: '1px solid var(--border-color)', margin: '10px 0' }} />
-
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>
-              {lang === 'ar' ? 'للاستفسارات الطارئة يرجى التواصل عبر البريد الإلكتروني:' : 'For urgent inquiries, please contact us at:'}
-              {settings?.contact_email && (
-                <div style={{ marginTop: '4px', fontWeight: 'bold', color: 'var(--accent-blue)' }}>
-                  {settings.contact_email}
-                </div>
-              )}
-            </div>
-            
-            <button
-              onClick={() => setCurrentView('login')}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--text-light)',
-                fontSize: '0.75rem',
-                textDecoration: 'underline',
-                cursor: 'pointer',
-                marginTop: '10px'
-              }}
-            >
-              {lang === 'ar' ? 'تسجيل دخول الإدارة (Admin Login)' : 'Admin Login'}
-            </button>
-          </div>
-        </div>
-      ) : currentView === 'admin' ? (
+      {currentView === 'admin' ? (
         <AdminDashboard setCurrentView={setCurrentView} />
       ) : currentView === 'privacy' ? (
         /* PRIVACY POLICY VIEW */

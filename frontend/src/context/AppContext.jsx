@@ -215,7 +215,7 @@ export const AppProvider = ({ children }) => {
   );
 
   const apiHost = import.meta.env.VITE_API_URL || (isLocal
-    ? (window.AndroidApp ? 'http://192.168.1.104:5000' : `${window.location.protocol}//${window.location.hostname}:5000`)
+    ? (window.location.hostname ? `${window.location.protocol}//${window.location.hostname}:5000` : 'http://localhost:5000')
     : 'https://api.arzmart.com');
 
   const apiBase = `${apiHost}/api`;

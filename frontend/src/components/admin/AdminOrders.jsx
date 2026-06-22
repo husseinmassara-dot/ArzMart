@@ -13,6 +13,7 @@ export default function AdminOrders() {
   const [activeSubTab, setActiveSubTab] = useState('active'); // 'active', 'delivered', 'cancelled'
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [hidePricesInPrint, setHidePricesInPrint] = useState(false);
+  const [drivers, setDrivers] = useState([]);
 
   const fetchOrders = async () => {
     try {
@@ -28,8 +29,23 @@ export default function AdminOrders() {
     }
   };
 
+  const fetchDrivers = async () => {
+    try {
+      const res = await fetch(`${apiBase}/admin/drivers`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDrivers(data);
+      }
+    } catch (err) {
+      console.error('Error fetching drivers:', err);
+    }
+  };
+
   useEffect(() => {
     fetchOrders();
+    fetchDrivers();
   }, []);
 
   const handleUpdateStatus = async (id, newStatus) => {
@@ -137,6 +153,66 @@ export default function AdminOrders() {
       setSelectedOrder(null);
     } catch (err) {
       console.error('Bulk update orders status error:', err);
+    }
+  };
+
+  const handleSingleAssignDriver = async (orderId, driverId) => {
+    try {
+      const res = await fetch(`${apiBase}/admin/orders/bulk-assign`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          orderIds: [orderId],
+          driverId: driverId
+        })
+      });
+      if (res.ok) {
+        fetchOrders();
+        setSelectedOrder(prev => ({
+          ...prev,
+          driver_id: driverId,
+          driver_name: driverId ? drivers.find(d => d.id === parseInt(driverId, 10))?.full_name : null,
+          driver_username: driverId ? drivers.find(d => d.id === parseInt(driverId, 10))?.username : null
+        }));
+      } else {
+        alert(lang === 'ar' ? 'خطأ في تعيين الموظف' : 'Error assigning driver');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleBulkAssignDriver = async (driverId) => {
+    const confirmMsg = lang === 'ar'
+      ? `هل أنت متأكد من تعيين موظف التوصيل المختار لـ ${selectedIds.length} طلبيات؟`
+      : `Are you sure you want to assign the selected delivery driver to ${selectedIds.length} orders?`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      const res = await fetch(`${apiBase}/admin/orders/bulk-assign`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          orderIds: selectedIds,
+          driverId: driverId || null
+        })
+      });
+      if (res.ok) {
+        setSelectedIds([]);
+        fetchOrders();
+        setSelectedOrder(null);
+        alert(lang === 'ar' ? 'تم تعيين موظف التوصيل للطلبيات بنجاح' : 'Delivery driver assigned successfully');
+      } else {
+        alert(lang === 'ar' ? 'خطأ في تعيين الموظف' : 'Error assigning driver');
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -288,6 +364,21 @@ export default function AdminOrders() {
                 )}
               </select>
 
+              <select
+                className="input-field"
+                style={{ width: 'auto', padding: '4px 8px', fontSize: '0.75rem', margin: 0, height: 'auto' }}
+                defaultValue=""
+                onChange={(e) => {
+                  handleBulkAssignDriver(e.target.value || null);
+                  e.target.value = "";
+                }}
+              >
+                <option value="">{lang === 'ar' ? '-- تعيين إلى موظف توصيل --' : '-- Assign to Delivery Driver --'}</option>
+                {drivers.map(d => (
+                  <option key={d.id} value={d.id}>{d.full_name || d.username}</option>
+                ))}
+              </select>
+
               {user?.role === 'admin' && (
                 <button
                   onClick={handleBulkDeleteOrders}
@@ -352,8 +443,23 @@ export default function AdminOrders() {
                         <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>{o.user_name}</strong>
                         <span style={{ fontSize: '0.72rem', color: 'var(--text-light)', fontFamily: 'monospace' }}>({o.tracking_number})</span>
                       </div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-light)' }}>
-                        {new Date(o.created_at).toLocaleDateString([], { day: 'numeric', month: 'short' })}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.7rem', color: 'var(--text-light)', flexWrap: 'wrap' }}>
+                        <span>{new Date(o.created_at).toLocaleDateString([], { day: 'numeric', month: 'short' })}</span>
+                        {(o.driver_name || o.driver_username) && (
+                          <span style={{ 
+                            backgroundColor: 'rgba(59,130,246,0.1)', 
+                            color: 'var(--accent-blue)', 
+                            padding: '1px 6px', 
+                            borderRadius: '4px',
+                            fontWeight: '700',
+                            fontSize: '0.68rem',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px'
+                          }}>
+                            🚚 {o.driver_name || o.driver_username}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -427,24 +533,45 @@ export default function AdminOrders() {
                 </div>
 
                 {((selectedOrder.status !== 'delivered' && selectedOrder.status !== 'cancelled' && selectedOrder.status !== 'archived') || 
-                  (selectedOrder.status === 'archived' && user?.role === 'admin')) && (
-                  <select
-                    className="input-field"
-                    style={{ width: 'auto', padding: '4px 10px', fontSize: '0.8rem' }}
-                    value={selectedOrder.status}
-                    onChange={(e) => handleUpdateStatus(selectedOrder.id, e.target.value)}
-                  >
-                    <option value="pending">قيد الانتظار (Pending)</option>
-                    <option value="processing">قيد التحضير (Processing)</option>
-                    <option value="shipped">تم الشحن (Shipped)</option>
-                    <option value="delivered">تم التسليم (Delivered)</option>
-                    {user?.role === 'admin' && (
-                      <option value="cancelled">ملغاة (Cancelled)</option>
-                    )}
-                    {user?.role === 'admin' && selectedOrder.status === 'archived' && (
-                      <option value="archived">مؤرشفة (Archived)</option>
-                    )}
-                  </select>
+                   (selectedOrder.status === 'archived' && user?.role === 'admin')) && (
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    
+                    {/* Driver Assignment Dropdown */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '0.78rem', fontWeight: 'bold', color: 'var(--text-light)' }}>
+                        {lang === 'ar' ? 'السائق:' : 'Driver:'}
+                      </span>
+                      <select
+                        className="input-field"
+                        style={{ width: 'auto', padding: '4px 10px', fontSize: '0.8rem', margin: 0 }}
+                        value={selectedOrder.driver_id || ""}
+                        onChange={(e) => handleSingleAssignDriver(selectedOrder.id, e.target.value || null)}
+                      >
+                        <option value="">{lang === 'ar' ? 'غير معين' : 'Unassigned'}</option>
+                        {drivers.map(d => (
+                          <option key={d.id} value={d.id}>{d.full_name || d.username}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <select
+                      className="input-field"
+                      style={{ width: 'auto', padding: '4px 10px', fontSize: '0.8rem', margin: 0 }}
+                      value={selectedOrder.status}
+                      onChange={(e) => handleUpdateStatus(selectedOrder.id, e.target.value)}
+                    >
+                      <option value="pending">قيد الانتظار (Pending)</option>
+                      <option value="processing">قيد التحضير (Processing)</option>
+                      <option value="shipped">تم الشحن (Shipped)</option>
+                      <option value="delivered">تم التسليم (Delivered)</option>
+                      {user?.role === 'admin' && (
+                        <option value="cancelled">ملغاة (Cancelled)</option>
+                      )}
+                      {user?.role === 'admin' && selectedOrder.status === 'archived' && (
+                        <option value="archived">مؤرشفة (Archived)</option>
+                      )}
+                    </select>
+                  </div>
                 )}
               </div>
 
