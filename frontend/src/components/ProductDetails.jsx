@@ -419,13 +419,7 @@ export default function ProductDetails({ product, onClose, onRefresh, setCurrent
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     {parsedSizes.map(size => {
                       const optPrice = getOptionPrice(size, displayProduct.price_usd);
-                      const priceDiff = optPrice - displayProduct.price_usd;
-                      let priceLabel = '';
-                      if (priceDiff > 0) {
-                        priceLabel = ` (+${formatPrice(priceDiff)})`;
-                      } else if (priceDiff < 0) {
-                        priceLabel = ` (-${formatPrice(Math.abs(priceDiff))})`;
-                      }
+                      const priceLabel = ` (${formatPrice(optPrice)})`;
                       const optStock = getOptionStock(size, displayProduct.stock);
                       const isOutOfStock = optStock <= 0;
                       return (
