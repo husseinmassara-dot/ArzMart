@@ -418,8 +418,6 @@ export default function ProductDetails({ product, onClose, onRefresh, setCurrent
                 </span>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     {parsedSizes.map(size => {
-                      const optPrice = getOptionPrice(size, displayProduct.price_usd);
-                      const priceLabel = ` (${formatPrice(optPrice)})`;
                       const optStock = getOptionStock(size, displayProduct.stock);
                       const isOutOfStock = optStock <= 0;
                       return (
@@ -441,7 +439,7 @@ export default function ProductDetails({ product, onClose, onRefresh, setCurrent
                             transition: 'all 0.2s'
                           }}
                         >
-                          {getOptionName(size)}{priceLabel}{isOutOfStock ? ` (${lang === 'ar' ? 'غير موجود بإشارة من المدير' : 'Not available by order of the manager'})` : ''}
+                          {getOptionName(size)}{isOutOfStock ? ` (${lang === 'ar' ? 'غير موجود بإشارة من المدير' : 'Not available by order of the manager'})` : ''}
                         </button>
                       );
                     })}
