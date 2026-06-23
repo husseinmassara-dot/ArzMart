@@ -5,7 +5,7 @@ import { useChat } from '../../context/ChatContext';
 import { 
   Package, Folder, ShoppingBag, Users, BarChart3, Settings, Tag, ShieldAlert,
   DollarSign, TrendingUp, AlertTriangle, ArrowRight, MessageSquare, Send, Store,
-  ExternalLink, Database, Upload, X, Truck
+  ExternalLink, Database, Upload, X, Truck, Menu
 } from 'lucide-react';
 
 // Sub-components
@@ -23,6 +23,23 @@ export default function AdminDashboard({ setCurrentView }) {
   const { lang, formatPrice, t, apiBase } = useApp();
   const { token, hasPermission, user: currentUser } = useAuth();
   const { chatUsers, activeChatUserId, setActiveChatUserId, messages, sendMessage } = useChat();
+
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (!mobile) {
+        setIsSidebarOpen(true);
+      } else {
+        setIsSidebarOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const [activeTab, setActiveTab] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -212,27 +229,52 @@ export default function AdminDashboard({ setCurrentView }) {
     setActiveChatUserId(null);
     setFilterProductsOutOfStock(false);
     
+    if (isMobile) {
+      setIsSidebarOpen(false);
+    }
+    
     // Update browser URL
     window.history.pushState(null, '', `/?view=admin&tab=${tabId}`);
+  };
+
+  const sidebarStyle = isMobile ? {
+    width: '240px',
+    backgroundColor: 'var(--bg-secondary)',
+    borderInlineEnd: '1px solid var(--border-color)',
+    padding: '20px 10px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '24px',
+    position: 'fixed',
+    top: '70px',
+    bottom: '0',
+    left: lang === 'ar' ? 'auto' : '0',
+    right: lang === 'ar' ? '0' : 'auto',
+    height: 'calc(100vh - 70px)',
+    overflowY: 'auto',
+    zIndex: 1100,
+    transform: isSidebarOpen ? 'translateX(0)' : (lang === 'ar' ? 'translateX(100%)' : 'translateX(-100%)'),
+    transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    boxShadow: isSidebarOpen ? '0 10px 25px -5px rgba(0,0,0,0.3), 0 8px 10px -6px rgba(0,0,0,0.3)' : 'none'
+  } : {
+    width: '240px',
+    backgroundColor: 'var(--bg-secondary)',
+    borderInlineEnd: '1px solid var(--border-color)',
+    padding: '20px 10px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '24px',
+    position: 'sticky',
+    top: '70px',
+    height: 'calc(100vh - 70px)',
+    overflowY: 'auto'
   };
 
   return (
     <div style={{ display: 'flex', minHeight: 'calc(100vh - 70px)', direction: lang === 'ar' ? 'rtl' : 'ltr' }}>
       
       {/* Sidebar Panel */}
-      <aside className="no-print" style={{
-        width: '240px',
-        backgroundColor: 'var(--bg-secondary)',
-        borderInlineEnd: '1px solid var(--border-color)',
-        padding: '20px 10px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '24px',
-        position: 'sticky',
-        top: '70px',
-        height: 'calc(100vh - 70px)',
-        overflowY: 'auto'
-      }}>
+      <aside className="no-print" style={sidebarStyle}>
         <div style={{ padding: '0 10px' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-primary)' }}>
             {t('admin_title')}
@@ -242,6 +284,9 @@ export default function AdminDashboard({ setCurrentView }) {
             onClick={(e) => {
               if (e.button === 1 || e.metaKey || e.ctrlKey) return;
               e.preventDefault();
+              if (isMobile) {
+                setIsSidebarOpen(false);
+              }
               setCurrentView('store');
             }}
             style={{
@@ -402,7 +447,10 @@ export default function AdminDashboard({ setCurrentView }) {
             <div style={{ padding: '0 10px', marginTop: 'auto' }}>
               <button
                 type="button"
-                onClick={() => setShowDbModal(true)}
+                onClick={() => {
+                  if (isMobile) setIsSidebarOpen(false);
+                  setShowDbModal(true);
+                }}
                 style={{
                   width: '100%',
                   padding: '10px 14px',
@@ -429,6 +477,59 @@ export default function AdminDashboard({ setCurrentView }) {
           </>
         )}
       </aside>
+
+      {/* Backdrop for Mobile Sidebar Drawer */}
+      {isMobile && isSidebarOpen && (
+        <div 
+          className="no-print"
+          onClick={() => setIsSidebarOpen(false)}
+          style={{
+            position: 'fixed',
+            top: '70px',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            backdropFilter: 'blur(3px)',
+            zIndex: 1050,
+            animation: 'fadeIn 0.2s ease-out'
+          }}
+        />
+      )}
+
+      {/* Floating Sidebar Trigger Button for Mobile */}
+      {isMobile && (
+        <button
+          type="button"
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          style={{
+            position: 'fixed',
+            top: '120px',
+            [lang === 'ar' ? 'right' : 'left']: isSidebarOpen ? '240px' : '0',
+            transform: 'translateY(-50%)',
+            zIndex: 1200,
+            backgroundColor: 'var(--accent-blue)',
+            color: 'white',
+            border: 'none',
+            outline: 'none',
+            width: '42px',
+            height: '46px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
+            cursor: 'pointer',
+            transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1), right 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease',
+            borderTopRightRadius: lang === 'ar' ? '0' : '8px',
+            borderBottomRightRadius: lang === 'ar' ? '0' : '8px',
+            borderTopLeftRadius: lang === 'ar' ? '8px' : '0',
+            borderBottomLeftRadius: lang === 'ar' ? '8px' : '0',
+            padding: 0
+          }}
+        >
+          {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+      )}
 
       {/* Main Content Area */}
       <main style={{ flex: '1', padding: '24px', backgroundColor: 'var(--bg-primary)', overflowY: 'auto' }}>
