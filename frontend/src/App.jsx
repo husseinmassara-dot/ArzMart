@@ -1516,6 +1516,7 @@ export default function App() {
 
             {/* Conditional Storefront Renderer */}
             {selectedCategory === '' && !searchVal ? (() => {
+              const isRtl = lang === 'ar';
               const findCategoryIdByName = (nameEn, nameAr) => {
                 const found = categories.find(c => {
                   const cNameEn = (c.name_en || '').toLowerCase();
