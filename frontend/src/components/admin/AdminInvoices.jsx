@@ -237,7 +237,7 @@ export default function AdminInvoices() {
 
               {/* Invoice Number */}
               <div>
-                <label className="input-label">{lang === 'ar' ? 'رقم مرجع الفاتورة (Invoice Ref #)' : 'Invoice Ref #'}</label>
+                <label className="input-label">{lang === 'ar' ? 'رقم الفاتورة (Invoice #)' : 'Invoice #'}</label>
                 <input 
                   type="text" 
                   className="input-field" 
@@ -528,7 +528,7 @@ export default function AdminInvoices() {
             <thead>
               <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-light)', fontSize: '0.85rem' }}>
                 <th style={{ padding: '10px', textAlign: 'start' }}>{lang === 'ar' ? 'المورد' : 'Supplier'}</th>
-                <th style={{ padding: '10px', textAlign: 'start' }}>{lang === 'ar' ? 'رقم الفاتورة' : 'Invoice Ref #'}</th>
+                <th style={{ padding: '10px', textAlign: 'start' }}>{lang === 'ar' ? 'رقم الفاتورة' : 'Invoice #'}</th>
                 <th style={{ padding: '10px', textAlign: 'start' }}>{lang === 'ar' ? 'تاريخ الفاتورة' : 'Invoice Date'}</th>
                 <th style={{ padding: '10px', textAlign: 'start' }}>{lang === 'ar' ? 'القيمة الإجمالية' : 'Grand Total'}</th>
                 <th style={{ padding: '10px', textAlign: 'center' }}>{lang === 'ar' ? 'الأصناف الموردة' : 'Supplied Items'}</th>
