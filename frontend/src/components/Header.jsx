@@ -746,7 +746,7 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
       {/* 4. SIDE DRAWER MENU (Hamburger Menu Details) */}
       {isDrawerOpen && (
         <>
-          {/* Overlay backdrop */}
+          {/* Overlay backdrop with glass blur */}
           <div 
             onClick={() => setIsDrawerOpen(false)}
             style={{
@@ -755,13 +755,14 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              backdropFilter: 'blur(4px)',
+              backgroundColor: 'rgba(15, 23, 42, 0.4)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
               zIndex: 99999
             }}
           />
 
-          {/* Drawer Panel */}
+          {/* Drawer Panel with Glassmorphism */}
           <div 
             style={{
               position: 'fixed',
@@ -769,23 +770,26 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
               bottom: 0,
               right: isRtl ? 0 : 'auto',
               left: isRtl ? 'auto' : 0,
-              width: '300px',
-              backgroundColor: 'var(--bg-secondary)',
-              boxShadow: isRtl ? '-10px 0 30px rgba(0,0,0,0.15)' : '10px 0 30px rgba(0,0,0,0.15)',
+              width: '85%',
+              maxWidth: '320px',
+              backgroundColor: theme === 'light' ? 'rgba(255, 255, 255, 0.92)' : 'rgba(15, 23, 42, 0.92)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              boxShadow: isRtl ? '-10px 0 35px rgba(0,0,0,0.2)' : '10px 0 35px rgba(0,0,0,0.2)',
               zIndex: 100000,
-              padding: '24px',
+              padding: '24px 20px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '24px',
-              transition: 'transform 0.3s ease-out',
-              borderLeft: isRtl ? '1px solid var(--border-color)' : 'none',
-              borderRight: isRtl ? 'none' : '1px solid var(--border-color)',
+              gap: '20px',
+              animation: isRtl ? 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)' : 'slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+              borderLeft: isRtl ? 'none' : '1px solid rgba(255,255,255,0.08)',
+              borderRight: isRtl ? '1px solid rgba(255,255,255,0.08)' : 'none',
             }}
           >
             {/* Header: Title and Close button */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>
-                {isRtl ? 'القائمة الرئيسية' : 'Main Menu'}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-primary)', margin: 0 }}>
+                {isRtl ? 'قائمة التحكم' : 'Control Menu'}
               </h3>
               <button 
                 onClick={() => setIsDrawerOpen(false)}
@@ -799,118 +803,230 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '1.1rem',
+                  fontSize: '1.2rem',
                   fontWeight: 'bold',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  boxShadow: 'var(--shadow-sm)',
+                  transition: 'background-color 0.2s'
                 }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--border-color)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
               >
                 ×
               </button>
             </div>
 
-            {/* Content: List of options */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
+            {/* Profile Greeting Section */}
+            {user ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px', backgroundColor: 'var(--bg-primary)', borderRadius: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  backgroundColor: '#10b981',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: '900',
+                  fontSize: '1.05rem',
+                  boxShadow: '0 2px 8px rgba(16,185,129,0.3)'
+                }}>
+                  {user.username.charAt(0).toUpperCase()}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-light)', fontWeight: '600' }}>
+                    {isRtl ? 'مرحباً بك' : 'Welcome'}
+                  </span>
+                  <span style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                    {user.username}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px', backgroundColor: 'var(--bg-primary)', borderRadius: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(16,185,129,0.08)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#10b981',
+                  flexShrink: 0
+                }}>
+                  <User size={18} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                    {isRtl ? 'زائر المتجر' : 'Store Guest'}
+                  </span>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-light)', fontWeight: '600', marginTop: '2px' }}>
+                    {isRtl ? 'تصفح كزائر' : 'Browsing as guest'}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Content: Capsule toggles and app card */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1, overflowY: 'auto' }} className="no-scrollbar">
               
-              {/* Language Selector Card */}
-              <button
-                onClick={() => {
-                  handleLanguageToggle();
-                  setIsDrawerOpen(false);
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '14px 18px',
-                  backgroundColor: 'var(--bg-primary)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '12px',
-                  cursor: 'pointer',
-                  color: 'var(--text-primary)',
-                  textAlign: isRtl ? 'right' : 'left',
-                  transition: 'background-color 0.2s'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-primary)'}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Globe size={18} style={{ color: '#10b981' }} />
-                  <span style={{ fontSize: '0.9rem', fontWeight: '700' }}>
-                    {isRtl ? 'لغة التطبيق' : 'App Language'}
+              {/* Language Selector Capsule Card */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '14px', backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '16px', boxShadow: 'var(--shadow-sm)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <Globe size={15} style={{ color: '#10b981' }} />
+                  <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                    {isRtl ? 'لغة التطبيق' : 'Language'}
                   </span>
                 </div>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-light)', fontWeight: '600' }}>
-                  {isRtl ? 'English' : 'العربية'}
-                </span>
-              </button>
+                <div style={{ display: 'flex', backgroundColor: 'var(--bg-tertiary)', borderRadius: '10px', padding: '3px' }}>
+                  <button
+                    onClick={() => { if (lang !== 'ar') { handleLanguageToggle(); setIsDrawerOpen(false); } }}
+                    style={{
+                      flex: 1,
+                      padding: '8px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      backgroundColor: lang === 'ar' ? '#10b981' : 'transparent',
+                      color: lang === 'ar' ? 'white' : 'var(--text-secondary)',
+                      fontWeight: '800',
+                      fontSize: '0.78rem',
+                      cursor: 'pointer',
+                      boxShadow: lang === 'ar' ? '0 2px 6px rgba(16,185,129,0.2)' : 'none',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    العربية
+                  </button>
+                  <button
+                    onClick={() => { if (lang !== 'en') { handleLanguageToggle(); setIsDrawerOpen(false); } }}
+                    style={{
+                      flex: 1,
+                      padding: '8px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      backgroundColor: lang === 'en' ? '#10b981' : 'transparent',
+                      color: lang === 'en' ? 'white' : 'var(--text-secondary)',
+                      fontWeight: '800',
+                      fontSize: '0.78rem',
+                      cursor: 'pointer',
+                      boxShadow: lang === 'en' ? '0 2px 6px rgba(16,185,129,0.2)' : 'none',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    English
+                  </button>
+                </div>
+              </div>
 
-              {/* Currency Selector Card */}
-              <button
-                onClick={() => {
-                  handleCurrencyToggle();
-                  setIsDrawerOpen(false);
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '14px 18px',
-                  backgroundColor: 'var(--bg-primary)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '12px',
-                  cursor: 'pointer',
-                  color: 'var(--text-primary)',
-                  textAlign: isRtl ? 'right' : 'left',
-                  transition: 'background-color 0.2s'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-primary)'}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <DollarSign size={18} style={{ color: '#10b981' }} />
-                  <span style={{ fontSize: '0.9rem', fontWeight: '700' }}>
-                    {isRtl ? 'عملة المتجر' : 'Store Currency'}
+              {/* Currency Selector Capsule Card */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '14px', backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '16px', boxShadow: 'var(--shadow-sm)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <DollarSign size={15} style={{ color: '#10b981' }} />
+                  <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                    {isRtl ? 'العملة المعروضة' : 'Display Currency'}
                   </span>
                 </div>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-light)', fontWeight: '600' }}>
-                  {currency === 'USD' ? 'USD $' : 'LBP ل.ل'}
-                </span>
-              </button>
+                <div style={{ display: 'flex', backgroundColor: 'var(--bg-tertiary)', borderRadius: '10px', padding: '3px' }}>
+                  <button
+                    onClick={() => { if (currency !== 'USD') { handleCurrencyToggle(); setIsDrawerOpen(false); } }}
+                    style={{
+                      flex: 1,
+                      padding: '8px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      backgroundColor: currency === 'USD' ? '#10b981' : 'transparent',
+                      color: currency === 'USD' ? 'white' : 'var(--text-secondary)',
+                      fontWeight: '800',
+                      fontSize: '0.78rem',
+                      cursor: 'pointer',
+                      boxShadow: currency === 'USD' ? '0 2px 6px rgba(16,185,129,0.2)' : 'none',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    USD $
+                  </button>
+                  <button
+                    onClick={() => { if (currency !== 'LBP') { handleCurrencyToggle(); setIsDrawerOpen(false); } }}
+                    style={{
+                      flex: 1,
+                      padding: '8px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      backgroundColor: currency === 'LBP' ? '#10b981' : 'transparent',
+                      color: currency === 'LBP' ? 'white' : 'var(--text-secondary)',
+                      fontWeight: '800',
+                      fontSize: '0.78rem',
+                      cursor: 'pointer',
+                      boxShadow: currency === 'LBP' ? '0 2px 6px rgba(16,185,129,0.2)' : 'none',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    LBP ل.ل
+                  </button>
+                </div>
+              </div>
 
-              {/* Theme Selector Card */}
-              <button
-                onClick={() => {
-                  handleThemeToggle();
-                  setIsDrawerOpen(false);
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '14px 18px',
-                  backgroundColor: 'var(--bg-primary)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '12px',
-                  cursor: 'pointer',
-                  color: 'var(--text-primary)',
-                  textAlign: isRtl ? 'right' : 'left',
-                  transition: 'background-color 0.2s'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-primary)'}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  {theme === 'light' ? <Moon size={18} style={{ color: '#10b981' }} /> : <Sun size={18} style={{ color: '#10b981' }} />}
-                  <span style={{ fontSize: '0.9rem', fontWeight: '700' }}>
+              {/* Theme Selector Capsule Card */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '14px', backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '16px', boxShadow: 'var(--shadow-sm)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  {theme === 'light' ? <Moon size={15} style={{ color: '#10b981' }} /> : <Sun size={15} style={{ color: '#10b981' }} />}
+                  <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-primary)' }}>
                     {isRtl ? 'مظهر التطبيق' : 'App Theme'}
                   </span>
                 </div>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-light)', fontWeight: '600' }}>
-                  {theme === 'light' ? (isRtl ? 'داكن' : 'Dark') : (isRtl ? 'مضيء' : 'Light')}
-                </span>
-              </button>
+                <div style={{ display: 'flex', backgroundColor: 'var(--bg-tertiary)', borderRadius: '10px', padding: '3px' }}>
+                  <button
+                    onClick={() => { if (theme !== 'light') { handleThemeToggle(); setIsDrawerOpen(false); } }}
+                    style={{
+                      flex: 1,
+                      padding: '8px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      backgroundColor: theme === 'light' ? '#10b981' : 'transparent',
+                      color: theme === 'light' ? 'white' : 'var(--text-secondary)',
+                      fontWeight: '800',
+                      fontSize: '0.78rem',
+                      cursor: 'pointer',
+                      boxShadow: theme === 'light' ? '0 2px 6px rgba(16,185,129,0.2)' : 'none',
+                      transition: 'all 0.2s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <Sun size={12} />
+                    <span>{isRtl ? 'مضيء' : 'Light'}</span>
+                  </button>
+                  <button
+                    onClick={() => { if (theme !== 'dark') { handleThemeToggle(); setIsDrawerOpen(false); } }}
+                    style={{
+                      flex: 1,
+                      padding: '8px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      backgroundColor: theme === 'dark' ? '#10b981' : 'transparent',
+                      color: theme === 'dark' ? 'white' : 'var(--text-secondary)',
+                      fontWeight: '800',
+                      fontSize: '0.78rem',
+                      cursor: 'pointer',
+                      boxShadow: theme === 'dark' ? '0 2px 6px rgba(16,185,129,0.2)' : 'none',
+                      transition: 'all 0.2s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <Moon size={12} />
+                    <span>{isRtl ? 'داكن' : 'Dark'}</span>
+                  </button>
+                </div>
+              </div>
 
-              {/* App Download Card */}
+              {/* App Download Glowing Card */}
               <a
                 href="/app.apk"
                 download
@@ -918,34 +1034,55 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '14px 18px',
-                  backgroundColor: 'var(--bg-primary)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '12px',
-                  cursor: 'pointer',
-                  color: 'var(--text-primary)',
+                  gap: '12px',
+                  padding: '14px 16px',
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  borderRadius: '16px',
+                  color: 'white',
                   textDecoration: 'none',
-                  transition: 'background-color 0.2s'
+                  boxShadow: '0 4px 15px rgba(16,185,129,0.3)',
+                  transition: 'transform 0.2s, boxShadow 0.2s',
+                  marginTop: '4px'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-primary)'}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.02)';
+                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(16,185,129,0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(16,185,129,0.3)';
+                }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Smartphone size={18} style={{ color: '#10b981' }} />
-                  <span style={{ fontSize: '0.9rem', fontWeight: '700' }}>
+                <div style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '10px',
+                  backgroundColor: 'rgba(255,255,255,0.18)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <Smartphone size={20} style={{ color: 'white' }} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', flex: 1, textAlign: isRtl ? 'right' : 'left' }}>
+                  <span style={{ fontSize: '0.88rem', fontWeight: '800', color: 'white', lineHeight: '1.2' }}>
                     {isRtl ? 'تحميل تطبيق الهاتف' : 'Download Mobile App'}
                   </span>
+                  <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.85)', fontWeight: '600', marginTop: '2px' }}>
+                    {isRtl ? 'ثبّت ملف APK مباشرة' : 'Install APK file directly'}
+                  </span>
                 </div>
-                <span style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: '800' }}>
-                  APK
-                </span>
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'white', transform: 'rotate(-45deg)' }}>
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <polyline points="19 12 12 19 5 12" />
+                </svg>
               </a>
 
             </div>
 
             {/* Footer */}
-            <div style={{ textAlign: 'center', color: 'var(--text-light)', fontSize: '0.78rem', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
+            <div style={{ textAlign: 'center', color: 'var(--text-light)', fontSize: '0.75rem', borderTop: '1px solid var(--border-color)', paddingTop: '12px', marginTop: 'auto' }}>
               <span>Arz-Mart v1.0.0</span>
             </div>
           </div>
