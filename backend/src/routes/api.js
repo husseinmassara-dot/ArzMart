@@ -12,6 +12,8 @@ const couponController = require('../controllers/couponController');
 const settingsController = require('../controllers/settingsController');
 const chatController = require('../controllers/chatController');
 const merchantController = require('../controllers/merchantController');
+const returnController = require('../controllers/returnController');
+const invoiceController = require('../controllers/invoiceController');
 
 // --- Auth Routes ---
 router.post('/auth/register', authController.register);
@@ -88,5 +90,15 @@ router.get('/merchants', authenticateToken, requirePermission('merchants'), merc
 router.post('/merchants', authenticateToken, requirePermission('merchants'), merchantController.createMerchant);
 router.put('/merchants/:id', authenticateToken, requirePermission('merchants'), merchantController.updateMerchant);
 router.delete('/merchants/:id', authenticateToken, requirePermission('merchants'), merchantController.deleteMerchant);
+
+// --- Returns Routes ---
+router.get('/returns', authenticateToken, requirePermission('products'), returnController.getReturns);
+router.post('/returns', authenticateToken, requirePermission('products'), returnController.createReturn);
+router.delete('/returns/:id', authenticateToken, requirePermission('products'), returnController.deleteReturn);
+
+// --- Invoices Routes ---
+router.get('/invoices', authenticateToken, requirePermission('merchants'), invoiceController.getInvoices);
+router.post('/invoices', authenticateToken, requirePermission('merchants'), invoiceController.createInvoice);
+router.delete('/invoices/:id', authenticateToken, requirePermission('merchants'), invoiceController.deleteInvoice);
 
 module.exports = router;

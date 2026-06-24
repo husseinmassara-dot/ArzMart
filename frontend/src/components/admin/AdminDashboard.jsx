@@ -5,7 +5,7 @@ import { useChat } from '../../context/ChatContext';
 import { 
   Package, Folder, ShoppingBag, Users, BarChart3, Settings, Tag, ShieldAlert,
   DollarSign, TrendingUp, AlertTriangle, ArrowRight, MessageSquare, Send, Store,
-  ExternalLink, Database, Upload, X, Truck, Menu
+  ExternalLink, Database, Upload, X, Truck, Menu, Undo2, ClipboardList
 } from 'lucide-react';
 
 // Sub-components
@@ -18,6 +18,8 @@ import AdminSettings from './AdminSettings';
 import AdminCoupons from './AdminCoupons';
 import AdminMerchants from './AdminMerchants';
 import AdminDelivery from './AdminDelivery';
+import AdminReturns from './AdminReturns';
+import AdminInvoices from './AdminInvoices';
 
 export default function AdminDashboard({ setCurrentView }) {
   const { lang, formatPrice, t, apiBase } = useApp();
@@ -206,6 +208,8 @@ export default function AdminDashboard({ setCurrentView }) {
     { id: 'products', name: t('products'), icon: Package, perm: 'products' },
     { id: 'categories', name: t('categories'), icon: Folder, perm: 'categories' },
     { id: 'orders', name: t('orders'), icon: ShoppingBag, perm: 'orders' },
+    { id: 'returns', name: lang === 'ar' ? 'مرتجع المبيعات' : 'Sales Returns', icon: Undo2, perm: 'products' },
+    { id: 'invoices', name: lang === 'ar' ? 'فواتير التوريد' : 'Supply Invoices', icon: ClipboardList, perm: 'merchants' },
     { id: 'delivery', name: lang === 'ar' ? 'توصيل الطلبيات' : 'Order Deliveries', icon: Truck, perm: 'delivery' },
     { id: 'chats', name: lang === 'ar' ? 'محادثات العملاء' : 'Customer Chats', icon: MessageSquare, perm: 'orders' },
     { id: 'merchants', name: lang === 'ar' ? 'إدارة الموردين والتجار' : 'Merchants & Suppliers', icon: Store, perm: 'merchants' },
@@ -817,6 +821,8 @@ export default function AdminDashboard({ setCurrentView }) {
           )}
           {activeTab === 'categories' && hasPermission('categories') && <AdminCategories />}
           {activeTab === 'orders' && hasPermission('orders') && <AdminOrders />}
+          {activeTab === 'returns' && hasPermission('products') && <AdminReturns />}
+          {activeTab === 'invoices' && hasPermission('merchants') && <AdminInvoices />}
           {activeTab === 'delivery' && hasPermission('delivery') && <AdminDelivery />}
           {activeTab === 'merchants' && hasPermission('merchants') && <AdminMerchants />}
           {activeTab === 'users' && hasPermission('users') && <AdminUsers />}

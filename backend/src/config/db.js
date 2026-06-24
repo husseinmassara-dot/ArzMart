@@ -436,6 +436,36 @@ async function initializeDatabasePostgres() {
       )
     `);
 
+    // 13. Returns Table
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS returns (
+        id SERIAL PRIMARY KEY,
+        order_id INTEGER,
+        product_id INTEGER NOT NULL,
+        quantity INTEGER NOT NULL,
+        refund_amount DOUBLE PRECISION NOT NULL,
+        stock_action TEXT NOT NULL,
+        reason TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE,
+        FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE SET NULL
+      )
+    `);
+
+    // 14. Invoices Table
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS invoices (
+        id SERIAL PRIMARY KEY,
+        merchant_id INTEGER NOT NULL,
+        invoice_number TEXT,
+        invoice_date TEXT NOT NULL,
+        total_amount DOUBLE PRECISION NOT NULL,
+        items TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (merchant_id) REFERENCES merchants (id) ON DELETE CASCADE
+      )
+    `);
+
     console.log('[Database] PostgreSQL tables created successfully. Checking seeding...');
 
 
@@ -761,6 +791,36 @@ function initializeDatabase() {
         filename TEXT UNIQUE NOT NULL,
         mime_type TEXT,
         base64_data TEXT NOT NULL
+      )
+    `);
+
+    // 13. Returns Table
+    runInit(`
+      CREATE TABLE IF NOT EXISTS returns (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        order_id INTEGER,
+        product_id INTEGER NOT NULL,
+        quantity INTEGER NOT NULL,
+        refund_amount REAL NOT NULL,
+        stock_action TEXT NOT NULL,
+        reason TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE,
+        FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE SET NULL
+      )
+    `);
+
+    // 14. Invoices Table
+    runInit(`
+      CREATE TABLE IF NOT EXISTS invoices (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        merchant_id INTEGER NOT NULL,
+        invoice_number TEXT,
+        invoice_date TEXT NOT NULL,
+        total_amount REAL NOT NULL,
+        items TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (merchant_id) REFERENCES merchants (id) ON DELETE CASCADE
       )
     `);
 
