@@ -192,8 +192,56 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
           gap: '16px'
         }}>
           
-          {/* Left Side: Circular White Buttons for Cart and User Account */}
+          {/* Left Side: Circular White Buttons for Cart and User Account, and Brand Logo */}
           <div className="header-actions-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
+            
+            {/* Brand Logo Link always next to cart */}
+            <a 
+              href="/"
+              onClick={(e) => {
+                if (e.button === 1 || e.metaKey || e.ctrlKey) return;
+                e.preventDefault();
+                if (onLogoClick) {
+                  onLogoClick();
+                } else {
+                  setCurrentView('store');
+                }
+              }}
+              className="brand-logo-link"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', textDecoration: 'none' }}
+            >
+              {/* Restored image logo */}
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+                backgroundColor: 'transparent'
+              }}>
+                <img 
+                  src={logoSrc} 
+                  alt="Arz Mart Logo" 
+                  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = '/logo.png';
+                  }}
+                />
+              </div>
+
+              <div className="brand-text" style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-primary)', lineHeight: '1.1' }}>
+                  Arz-Mart
+                </span>
+                <span style={{ fontSize: '0.68rem', color: 'var(--text-light)', fontWeight: '600', marginTop: '1px' }}>
+                  {isRtl ? 'متجرك الأول' : 'Your First Store'}
+                </span>
+              </div>
+            </a>
+
             {/* Cart Icon with green badge */}
             {currentView === 'store' && (
               <button
@@ -268,143 +316,280 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
               <User size={18} />
             </button>
 
-            {/* Profile Dropdown Menu */}
+            {/* Profile Drawer Menu Side-aligned */}
             {showUserDropdown && user && (
               <>
-                <div onClick={() => setShowUserDropdown(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99 }} />
-                <div className="dashboard-card animate-scale" style={{
-                  position: 'absolute',
-                  top: '55px',
-                  left: isRtl ? '0' : 'auto',
-                  right: isRtl ? 'auto' : '0',
-                  width: '200px',
-                  zIndex: 100,
-                  padding: '8px',
-                  boxShadow: 'var(--shadow-lg)',
-                  border: '1px solid var(--border-color)',
-                  backgroundColor: 'var(--bg-secondary)',
-                  borderRadius: '12px'
-                }}>
-                  <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--border-color)', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '0.78rem', color: 'var(--text-light)', display: 'block' }}>{isRtl ? 'مرحباً بك' : 'Welcome'}</span>
-                    <strong style={{ fontSize: '0.88rem', fontWeight: '700', color: 'var(--text-primary)' }}>{user.username}</strong>
+                {/* Fixed Backdrop Overlay */}
+                <div 
+                  onClick={() => setShowUserDropdown(false)} 
+                  style={{ 
+                    position: 'fixed', 
+                    top: 0, 
+                    left: 0, 
+                    right: 0, 
+                    bottom: 0, 
+                    backgroundColor: 'rgba(0, 0, 0, 0.4)', 
+                    backdropFilter: 'blur(5px)',
+                    zIndex: 9999
+                  }} 
+                  className="animate-fade"
+                />
+                
+                {/* Slide-out Drawer Panel */}
+                <div 
+                  className="dashboard-card" 
+                  style={{
+                    position: 'fixed',
+                    top: 0,
+                    right: isRtl ? 0 : 'auto',
+                    left: isRtl ? 'auto' : 0,
+                    width: '320px',
+                    height: '100vh',
+                    zIndex: 10000,
+                    padding: '24px',
+                    boxShadow: 'var(--shadow-xl)',
+                    border: 'none',
+                    borderLeft: isRtl ? '1px solid var(--border-color)' : 'none',
+                    borderRight: isRtl ? 'none' : '1px solid var(--border-color)',
+                    backgroundColor: 'var(--bg-secondary)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    animation: isRtl ? 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  {/* Drawer Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: '800', margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
+                      <User size={20} color="var(--accent-blue)" />
+                      <span>{isRtl ? 'حسابي' : 'My Profile'}</span>
+                    </h3>
+                    <button 
+                      onClick={() => setShowUserDropdown(false)}
+                      style={{
+                        background: 'var(--bg-tertiary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '1.1rem',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '1px solid var(--border-color)',
+                        transition: 'transform 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.08)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                    >
+                      ×
+                    </button>
                   </div>
-                  
-                  {/* Admin dashboard if has permission */}
-                  {(user.role === 'admin' || user.role === 'employee') && (
+
+                  {/* User Profile Summary Card */}
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '20px',
+                    backgroundColor: 'var(--bg-tertiary)',
+                    borderRadius: '16px',
+                    border: '1px solid var(--border-color)',
+                    marginBottom: '24px',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{
+                      width: '64px',
+                      height: '64px',
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--accent-brand-rgba)',
+                      color: 'var(--accent-brand)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.8rem',
+                      fontWeight: '800',
+                      border: '2px solid var(--accent-brand)'
+                    }}>
+                      {(user.username || 'U').substring(0, 1).toUpperCase()}
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', display: 'block', fontWeight: '600' }}>
+                        {isRtl ? 'مرحباً بك' : 'Welcome'}
+                      </span>
+                      <strong style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                        {user.username}
+                      </strong>
+                      {user.role && (
+                        <span style={{
+                          display: 'block',
+                          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                          color: 'var(--accent-blue)',
+                          padding: '3px 10px',
+                          borderRadius: '12px',
+                          fontSize: '0.72rem',
+                          fontWeight: '700',
+                          marginTop: '6px',
+                          textTransform: 'uppercase',
+                          width: 'fit-content',
+                          margin: '6px auto 0 auto'
+                        }}>
+                          {user.role === 'admin' ? (isRtl ? 'مدير النظام' : 'Administrator') : user.role === 'employee' ? (isRtl ? 'موظف' : 'Employee') : (isRtl ? 'عميل' : 'Customer')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Drawer Menu List */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: '1' }}>
+                    
+                    {/* Admin Dashboard Option */}
+                    {(user.role === 'admin' || user.role === 'employee') && (
+                      <button
+                        onClick={() => {
+                          setCurrentView(currentView === 'admin' ? 'store' : 'admin');
+                          setShowUserDropdown(false);
+                        }}
+                        style={{
+                          width: '100%',
+                          textAlign: 'start',
+                          padding: '12px 16px',
+                          border: '1px solid rgba(59, 130, 246, 0.15)',
+                          backgroundColor: 'rgba(59, 130, 246, 0.04)',
+                          borderRadius: '12px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          fontSize: '0.92rem',
+                          fontWeight: '700',
+                          color: 'var(--accent-blue)',
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.08)';
+                          e.currentTarget.style.transform = 'scale(1.02)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.04)';
+                          e.currentTarget.style.transform = 'scale(1)';
+                        }}
+                      >
+                        <Shield size={18} />
+                        <span>{currentView === 'admin' ? t('go_to_store') : t('dashboard')}</span>
+                      </button>
+                    )}
+
+                    {/* Orders Page Option */}
                     <button
                       onClick={() => {
-                        setCurrentView(currentView === 'admin' ? 'store' : 'admin');
+                        setCurrentView('orders');
                         setShowUserDropdown(false);
                       }}
                       style={{
                         width: '100%',
                         textAlign: 'start',
-                        padding: '8px 12px',
-                        border: 'none',
-                        background: 'transparent',
-                        borderRadius: '6px',
+                        padding: '12px 16px',
+                        border: '1px solid var(--border-color)',
+                        backgroundColor: 'var(--bg-tertiary)',
+                        borderRadius: '12px',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '8px',
-                        fontSize: '0.85rem',
-                        fontWeight: '600',
-                        color: 'var(--accent-blue)'
+                        gap: '12px',
+                        fontSize: '0.92rem',
+                        fontWeight: '700',
+                        color: 'var(--text-primary)',
+                        transition: 'all 0.2s'
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
+                        e.currentTarget.style.transform = 'scale(1.02)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }}
                     >
-                      <Shield size={14} />
-                      <span>{currentView === 'admin' ? t('go_to_store') : t('dashboard')}</span>
+                      <Package size={18} color="var(--accent-blue)" />
+                      <span>{t('myOrders')}</span>
                     </button>
-                  )}
 
-                  {/* Orders Page */}
-                  <button
-                    onClick={() => {
-                      setCurrentView('orders');
-                      setShowUserDropdown(false);
-                    }}
-                    style={{
-                      width: '100%',
-                      textAlign: 'start',
-                      padding: '8px 12px',
-                      border: 'none',
-                      background: 'transparent',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      fontSize: '0.85rem',
-                      fontWeight: '600',
-                      color: 'var(--text-primary)'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    <Package size={14} />
-                    <span>{t('myOrders')}</span>
-                  </button>
+                    {/* Chat with Admin Option */}
+                    <button
+                      onClick={() => {
+                        setIsChatOpen(true);
+                        setShowUserDropdown(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        textAlign: 'start',
+                        padding: '12px 16px',
+                        border: '1px solid var(--border-color)',
+                        backgroundColor: 'var(--bg-tertiary)',
+                        borderRadius: '12px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        fontSize: '0.92rem',
+                        fontWeight: '700',
+                        color: 'var(--text-primary)',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
+                        e.currentTarget.style.transform = 'scale(1.02)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }}
+                    >
+                      <MessageSquare size={18} color="var(--accent-brand)" />
+                      <span>{t('chat_admin')}</span>
+                    </button>
+                  </div>
 
-                  {/* Chat Panel */}
-                  <button
-                    onClick={() => {
-                      setIsChatOpen(true);
-                      setShowUserDropdown(false);
-                    }}
-                    style={{
-                      width: '100%',
-                      textAlign: 'start',
-                      padding: '8px 12px',
-                      border: 'none',
-                      background: 'transparent',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      fontSize: '0.85rem',
-                      fontWeight: '600',
-                      color: 'var(--text-primary)'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    <MessageSquare size={14} />
-                    <span>{t('chat_admin')}</span>
-                  </button>
-
-                  {/* Logout */}
-                  <button
-                    onClick={() => {
-                      logout();
-                      setShowUserDropdown(false);
-                    }}
-                    style={{
-                      width: '100%',
-                      textAlign: 'start',
-                      padding: '8px 12px',
-                      border: 'none',
-                      background: 'transparent',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      fontSize: '0.85rem',
-                      fontWeight: '600',
-                      color: '#ef4444',
-                      borderTop: '1px solid var(--border-color)',
-                      marginTop: '6px'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    <LogOut size={14} />
-                    <span>{t('logout')}</span>
-                  </button>
+                  {/* Drawer Footer / Logout Option */}
+                  <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', marginTop: 'auto' }}>
+                    <button
+                      onClick={() => {
+                        logout();
+                        setShowUserDropdown(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        textAlign: 'start',
+                        padding: '12px 16px',
+                        border: '1px solid rgba(239, 68, 68, 0.2)',
+                        backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                        borderRadius: '12px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        fontSize: '0.92rem',
+                        fontWeight: '700',
+                        color: '#ef4444',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                        e.currentTarget.style.transform = 'scale(1.02)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.05)';
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }}
+                    >
+                      <LogOut size={18} />
+                      <span>{t('logout')}</span>
+                    </button>
+                  </div>
                 </div>
               </>
             )}
@@ -562,52 +747,8 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
             </div>
           )}
 
-          {/* Right Side: Brand Logo (Red badge with green cedar tree) */}
-          <a 
-            href="/"
-            onClick={(e) => {
-              if (e.button === 1 || e.metaKey || e.ctrlKey) return;
-              e.preventDefault();
-              if (onLogoClick) {
-                onLogoClick();
-              } else {
-                setCurrentView('store');
-              }
-            }}
-            className="brand-logo-link"
-            style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', textDecoration: 'none' }}
-          >
-            {/* Restored image logo */}
-            <div style={{
-              width: '45px',
-              height: '45px',
-              borderRadius: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              overflow: 'hidden',
-              backgroundColor: 'transparent'
-            }}>
-              <img 
-                src={logoSrc} 
-                alt="Arz Mart Logo" 
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = '/logo.png';
-                }}
-              />
-            </div>
-
-            <div className="brand-text" style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-primary)', lineHeight: '1.1' }}>
-                Arz-Mart
-              </span>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-light)', fontWeight: '600', marginTop: '2px' }}>
-                {isRtl ? 'متجرك الأول' : 'Your First Store'}
-              </span>
-            </div>
-          </a>
+          {/* Logo removed from right side, now always displayed next to the cart */}
+          <div style={{ display: 'none' }} />
 
         </div>
       </header>

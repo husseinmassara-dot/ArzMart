@@ -1339,8 +1339,51 @@ const additionalProducts = {
 };
 
 async function seedDemoData() {
-  console.log('[Database] Checking additional demo categories and products... (Skipped per user request)');
+  console.log('[Database] Checking additional demo categories and products...');
   try {
+    for (const cat of additionalCategories) {
+      // Check if category exists
+      let category = await db.getAsync('SELECT id FROM categories WHERE name_en = ?', [cat.name_en]);
+      let categoryId;
+      if (!category) {
+        const result = await db.runAsync(
+          'INSERT INTO categories (name_ar, name_en, parent_id, image_url) VALUES (?, ?, NULL, ?)',
+          [cat.name_ar, cat.name_en, cat.image_url]
+        );
+        categoryId = result.lastID;
+        console.log(`[Database] Seeded category: ${cat.name_en}`);
+      } else {
+        categoryId = category.id;
+      }
+
+      // Now seed products for this category
+      const products = additionalProducts[cat.name_en] || [];
+      for (const prod of products) {
+        let product = await db.getAsync('SELECT id FROM products WHERE name_en = ?', [prod.name_en]);
+        if (!product) {
+          await db.runAsync(
+            `INSERT INTO products (name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, image_url, stock, rating_sum, rating_count, colors, sizes)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, 0, 0, ?, ?)`,
+            [
+              prod.name_ar,
+              prod.name_en,
+              prod.description_ar,
+              prod.description_en,
+              prod.price_usd,
+              prod.cost_price_usd,
+              prod.old_price_usd,
+              categoryId,
+              prod.image_url,
+              prod.stock,
+              prod.colors,
+              prod.sizes
+            ]
+          );
+          console.log(`[Database] Seeded product: ${prod.name_en}`);
+        }
+      }
+    }
+    console.log('[Database] Additional demo categories and products check/seeding finished.');
 
     // Update Settings Hero Banners to include tech/cosmetics/clothing banners
     const settings = await db.getAsync('SELECT id, hero_banners FROM settings LIMIT 1');
