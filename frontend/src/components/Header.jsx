@@ -14,6 +14,7 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
   const [showRecent, setShowRecent] = useState(false);
   const [recentSearches, setRecentSearches] = useState([]);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   useEffect(() => {
     const loadSearches = () => {
@@ -634,6 +635,7 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
           }}>
             {/* Hamburger Menu Toggle Icon */}
             <button
+              onClick={() => setIsDrawerOpen(true)}
               style={{
                 backgroundColor: 'var(--bg-primary)',
                 border: '1px solid var(--border-color)',
@@ -739,6 +741,215 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
             </div>
           </div>
         </div>
+      )}
+
+      {/* 4. SIDE DRAWER MENU (Hamburger Menu Details) */}
+      {isDrawerOpen && (
+        <>
+          {/* Overlay backdrop */}
+          <div 
+            onClick={() => setIsDrawerOpen(false)}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              backdropFilter: 'blur(4px)',
+              zIndex: 99999
+            }}
+          />
+
+          {/* Drawer Panel */}
+          <div 
+            style={{
+              position: 'fixed',
+              top: 0,
+              bottom: 0,
+              right: isRtl ? 0 : 'auto',
+              left: isRtl ? 'auto' : 0,
+              width: '300px',
+              backgroundColor: 'var(--bg-secondary)',
+              boxShadow: isRtl ? '-10px 0 30px rgba(0,0,0,0.15)' : '10px 0 30px rgba(0,0,0,0.15)',
+              zIndex: 100000,
+              padding: '24px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '24px',
+              transition: 'transform 0.3s ease-out',
+              borderLeft: isRtl ? '1px solid var(--border-color)' : 'none',
+              borderRight: isRtl ? 'none' : '1px solid var(--border-color)',
+            }}
+          >
+            {/* Header: Title and Close button */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>
+                {isRtl ? 'القائمة الرئيسية' : 'Main Menu'}
+              </h3>
+              <button 
+                onClick={() => setIsDrawerOpen(false)}
+                style={{
+                  border: 'none',
+                  backgroundColor: 'var(--bg-tertiary)',
+                  color: 'var(--text-primary)',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.1rem',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Content: List of options */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
+              
+              {/* Language Selector Card */}
+              <button
+                onClick={() => {
+                  handleLanguageToggle();
+                  setIsDrawerOpen(false);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '14px 18px',
+                  backgroundColor: 'var(--bg-primary)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  color: 'var(--text-primary)',
+                  textAlign: isRtl ? 'right' : 'left',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-primary)'}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Globe size={18} style={{ color: '#10b981' }} />
+                  <span style={{ fontSize: '0.9rem', fontWeight: '700' }}>
+                    {isRtl ? 'لغة التطبيق' : 'App Language'}
+                  </span>
+                </div>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-light)', fontWeight: '600' }}>
+                  {isRtl ? 'English' : 'العربية'}
+                </span>
+              </button>
+
+              {/* Currency Selector Card */}
+              <button
+                onClick={() => {
+                  handleCurrencyToggle();
+                  setIsDrawerOpen(false);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '14px 18px',
+                  backgroundColor: 'var(--bg-primary)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  color: 'var(--text-primary)',
+                  textAlign: isRtl ? 'right' : 'left',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-primary)'}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <DollarSign size={18} style={{ color: '#10b981' }} />
+                  <span style={{ fontSize: '0.9rem', fontWeight: '700' }}>
+                    {isRtl ? 'عملة المتجر' : 'Store Currency'}
+                  </span>
+                </div>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-light)', fontWeight: '600' }}>
+                  {currency === 'USD' ? 'USD $' : 'LBP ل.ل'}
+                </span>
+              </button>
+
+              {/* Theme Selector Card */}
+              <button
+                onClick={() => {
+                  handleThemeToggle();
+                  setIsDrawerOpen(false);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '14px 18px',
+                  backgroundColor: 'var(--bg-primary)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  color: 'var(--text-primary)',
+                  textAlign: isRtl ? 'right' : 'left',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-primary)'}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  {theme === 'light' ? <Moon size={18} style={{ color: '#10b981' }} /> : <Sun size={18} style={{ color: '#10b981' }} />}
+                  <span style={{ fontSize: '0.9rem', fontWeight: '700' }}>
+                    {isRtl ? 'مظهر التطبيق' : 'App Theme'}
+                  </span>
+                </div>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-light)', fontWeight: '600' }}>
+                  {theme === 'light' ? (isRtl ? 'داكن' : 'Dark') : (isRtl ? 'مضيء' : 'Light')}
+                </span>
+              </button>
+
+              {/* App Download Card */}
+              <a
+                href="/app.apk"
+                download
+                onClick={() => setIsDrawerOpen(false)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '14px 18px',
+                  backgroundColor: 'var(--bg-primary)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  color: 'var(--text-primary)',
+                  textDecoration: 'none',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-primary)'}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Smartphone size={18} style={{ color: '#10b981' }} />
+                  <span style={{ fontSize: '0.9rem', fontWeight: '700' }}>
+                    {isRtl ? 'تحميل تطبيق الهاتف' : 'Download Mobile App'}
+                  </span>
+                </div>
+                <span style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: '800' }}>
+                  APK
+                </span>
+              </a>
+
+            </div>
+
+            {/* Footer */}
+            <div style={{ textAlign: 'center', color: 'var(--text-light)', fontSize: '0.78rem', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
+              <span>Arz-Mart v1.0.0</span>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
