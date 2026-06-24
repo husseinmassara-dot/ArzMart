@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
-import { Trash2, Edit3, Image, Search, Filter, RotateCcw } from 'lucide-react';
+import { Trash2, Edit3, Image, Search, Filter, RotateCcw, GripVertical, Save, ArrowUpDown } from 'lucide-react';
 
 const compressImage = (file, maxWidth = 600, maxHeight = 600, quality = 0.7) => {
   return new Promise((resolve) => {
@@ -68,6 +68,90 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkTargetCategory, setBulkTargetCategory] = useState('');
   const [isBulkMoving, setIsBulkMoving] = useState(false);
+
+  // Drag state (refs to avoid re-renders)
+  const dragIndexRef = useRef(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
+  const [orderChanged, setOrderChanged] = useState(false);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const [saveOrderMsg, setSaveOrderMsg] = useState('');
+
+  // Drag & Drop handlers
+  const handleDragStart = (e, index) => {
+    dragIndexRef.current = index;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setDragImage(e.currentTarget, 20, 20);
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (index !== dragIndexRef.current) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDrop = (e, dropIndex) => {
+    e.preventDefault();
+    const dragIndex = dragIndexRef.current;
+    if (dragIndex === null || dragIndex === dropIndex) {
+      setDragOverIndex(null);
+      return;
+    }
+
+    const draggedProduct = displayedProducts[dragIndex];
+    const targetProduct = displayedProducts[dropIndex];
+
+    const mainDragIndex = products.findIndex(p => p.id === draggedProduct.id);
+    const mainDropIndex = products.findIndex(p => p.id === targetProduct.id);
+
+    if (mainDragIndex !== -1 && mainDropIndex !== -1) {
+      const newList = [...products];
+      const [removed] = newList.splice(mainDragIndex, 1);
+      newList.splice(mainDropIndex, 0, removed);
+      
+      setProducts(newList);
+      setOrderChanged(true);
+    }
+
+    dragIndexRef.current = null;
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    dragIndexRef.current = null;
+    setDragOverIndex(null);
+  };
+
+  const handleSaveOrder = async () => {
+    setSavingOrder(true);
+    setSaveOrderMsg('');
+    try {
+      const order = products.map((p, idx) => ({ id: p.id, sort_order: idx }));
+      const res = await fetch(`${apiBase}/products-reorder`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ order })
+      });
+      if (res.ok) {
+        setSaveOrderMsg(lang === 'ar' ? '✓ تم حفظ الترتيب بنجاح' : '✓ Order saved successfully');
+        setOrderChanged(false);
+        setTimeout(() => setSaveOrderMsg(''), 3000);
+      } else {
+        setSaveOrderMsg(lang === 'ar' ? '⚠️ فشل حفظ الترتيب' : '⚠️ Failed to save order');
+        setTimeout(() => setSaveOrderMsg(''), 3000);
+      }
+    } catch (err) {
+      console.error(err);
+      setSaveOrderMsg(lang === 'ar' ? '⚠️ خطأ في الاتصال' : '⚠️ Connection error');
+      setTimeout(() => setSaveOrderMsg(''), 3000);
+    } finally {
+      setSavingOrder(false);
+    }
+  };
   
   // Form states
   const [isEditing, setIsEditing] = useState(false);
@@ -189,6 +273,7 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
       if (res.ok) {
         const data = await res.json();
         setProducts(data);
+        setOrderChanged(false);
       }
     } catch (err) {
       console.error(err);
@@ -947,6 +1032,60 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
               {lang === 'ar' ? 'قائمة المنتجات الحالية' : 'Current Products List'}
             </h4>
 
+            <span style={{
+              fontSize: '0.78rem',
+              color: 'var(--text-light)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              backgroundColor: 'var(--bg-tertiary)',
+              padding: '4px 10px',
+              borderRadius: '20px'
+            }}>
+              <ArrowUpDown size={12} />
+              {lang === 'ar' ? 'اسحب الصفوف لتغيير الترتيب' : 'Drag rows to reorder'}
+            </span>
+
+            {/* Save order button */}
+            {orderChanged && (
+              <button
+                onClick={handleSaveOrder}
+                disabled={savingOrder}
+                style={{
+                  backgroundColor: '#10b981',
+                  color: 'white',
+                  border: 'none',
+                  padding: '7px 16px',
+                  borderRadius: '8px',
+                  fontWeight: '700',
+                  fontSize: '0.85rem',
+                  cursor: savingOrder ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  opacity: savingOrder ? 0.7 : 1,
+                  boxShadow: '0 2px 8px rgba(16,185,129,0.35)',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <Save size={14} />
+                <span>{savingOrder ? 'جاري الحفظ...' : (lang === 'ar' ? 'حفظ الترتيب' : 'Save Order')}</span>
+              </button>
+            )}
+            {saveOrderMsg && (
+              <span style={{
+                fontSize: '0.85rem',
+                fontWeight: '600',
+                color: saveOrderMsg.startsWith('✓') ? '#10b981' : '#ef4444',
+                padding: '6px 12px',
+                backgroundColor: saveOrderMsg.startsWith('✓') ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                borderRadius: '6px',
+                border: `1px solid ${saveOrderMsg.startsWith('✓') ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`
+              }}>
+                {saveOrderMsg}
+              </span>
+            )}
+
             {/* CSV Import/Export Buttons */}
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
               <button
@@ -1215,6 +1354,7 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'start' }}>
           <thead>
             <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-light)', fontSize: '0.85rem' }}>
+              <th style={{ padding: '10px', width: '36px', textAlign: 'center' }}></th>
               <th style={{ padding: '10px', width: '40px', textAlign: 'start' }}>
                 <input 
                   type="checkbox"
@@ -1242,13 +1382,38 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
             </tr>
           </thead>
           <tbody>
-            {displayedProducts.map((p) => {
+            {displayedProducts.map((p, index) => {
               const imageUrl = p.image_url 
                 ? (p.image_url.startsWith('http') || p.image_url.startsWith('data:') ? p.image_url : `${apiHost}${p.image_url}`)
                 : 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=50&q=80';
               
+              const isDragOver = dragOverIndex === index;
+              const isDragging = dragIndexRef.current === index;
+
               return (
-                <tr key={p.id} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '0.9rem' }}>
+                <tr 
+                  key={p.id} 
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDrop={(e) => handleDrop(e, index)}
+                  onDragEnd={handleDragEnd}
+                  style={{ 
+                    borderBottom: isDragOver
+                      ? '2px solid var(--accent-blue)'
+                      : '1px solid var(--border-color)', 
+                    fontSize: '0.9rem',
+                    opacity: isDragging ? 0.4 : 1,
+                    backgroundColor: isDragOver
+                      ? 'rgba(59,130,246,0.06)'
+                      : 'transparent',
+                    transition: 'background-color 0.15s, opacity 0.15s, border-color 0.15s',
+                    cursor: 'grab'
+                  }}
+                >
+                  <td style={{ padding: '10px', textAlign: 'center', color: 'var(--text-light)' }}>
+                    <GripVertical size={16} style={{ cursor: 'grab', opacity: 0.6 }} />
+                  </td>
                   <td style={{ padding: '10px' }}>
                     <input 
                       type="checkbox"

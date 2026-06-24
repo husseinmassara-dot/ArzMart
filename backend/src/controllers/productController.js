@@ -44,6 +44,8 @@ exports.getProducts = async (req, res) => {
     params.push(parseFloat(max_price));
   }
 
+  query += ' ORDER BY p.sort_order ASC, p.id ASC';
+
   try {
     const products = await db.allAsync(query, params);
     
@@ -581,6 +583,24 @@ exports.importCSV = async (req, res) => {
       error_ar: 'خطأ أثناء استيراد ملف CSV، تم إلغاء التغييرات لسلامة البيانات',
       error_en: 'Error importing CSV, changes rolled back for safety'
     });
+  }
+};
+
+exports.reorderProducts = async (req, res) => {
+  const { order } = req.body; // array of { id, sort_order }
+
+  if (!order || !Array.isArray(order)) {
+    return res.status(400).json({ error_ar: 'الترتيب غير صالح', error_en: 'Invalid order data' });
+  }
+
+  try {
+    await Promise.all(order.map(({ id, sort_order }) =>
+      db.runAsync('UPDATE products SET sort_order = ? WHERE id = ?', [sort_order, id])
+    ));
+    res.json({ message_ar: 'تم حفظ ترتيب المنتجات بنجاح', message_en: 'Products reordered successfully' });
+  } catch (err) {
+    console.error('Reorder products error:', err);
+    res.status(500).json({ error_ar: 'فشل حفظ ترتيب المنتجات', error_en: 'Failed to reorder products' });
   }
 };
 
