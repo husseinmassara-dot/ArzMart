@@ -21,7 +21,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   </React.StrictMode>
 );
 
-const SW_VERSION = 'v3';
+const SW_VERSION = 'v4';
 if ('serviceWorker' in navigator) {
   const currentSwVersion = localStorage.getItem('sw_version');
   if (currentSwVersion !== SW_VERSION) {
