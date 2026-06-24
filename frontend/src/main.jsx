@@ -30,11 +30,8 @@ if ('serviceWorker' in navigator) {
         for (let registration of registrations) {
           registration.unregister();
         }
-        localStorage.setItem('sw_version', SW_VERSION);
-        window.location.reload();
-      } else {
-        localStorage.setItem('sw_version', SW_VERSION);
       }
+      localStorage.setItem('sw_version', SW_VERSION);
     });
   } else if (import.meta.env.PROD) {
     window.addEventListener('load', () => {
