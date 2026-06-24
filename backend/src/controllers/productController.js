@@ -2,7 +2,7 @@ const db = require('../config/db');
 const { fileToBase64 } = require('../utils/fileHelper');
 
 exports.getProducts = async (req, res) => {
-  const { category_id, search, min_price, max_price, min_rating } = req.query;
+  const { category_id, category_ids, search, min_price, max_price, min_rating } = req.query;
   
   let query = `
     SELECT p.*, c.name_ar as category_name_ar, c.name_en as category_name_en, m.name as merchant_name 
@@ -13,7 +13,15 @@ exports.getProducts = async (req, res) => {
   `;
   const params = [];
 
-  if (category_id) {
+  // Support multiple category IDs (for parent + children queries)
+  if (category_ids) {
+    const ids = category_ids.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+    if (ids.length > 0) {
+      const placeholders = ids.map(() => '?').join(',');
+      query += ` AND p.category_id IN (${placeholders})`;
+      params.push(...ids);
+    }
+  } else if (category_id) {
     query += ' AND p.category_id = ?';
     params.push(Number(category_id));
   }

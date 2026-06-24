@@ -127,18 +127,24 @@ export default function App() {
   };
 
   const fetchProducts = async () => {
-    // Do NOT fetch products when on the main categories view (no filters active)
-    if (!selectedCategory && !debouncedSearchVal && !minPrice && !maxPrice && !minRating) {
-      setProducts([]);
-      return;
-    }
-    // Do NOT fetch products if selected category has subcategories (it's a parent)
-    if (selectedCategory) {
-      // We'll handle this check in render; still fetch so filter dropdown works
-    }
     try {
       let url = `${apiBase}/products?`;
-      if (selectedCategory) url += `category_id=${selectedCategory}&`;
+
+      if (selectedCategory) {
+        // If a parent category is selected, also include products from subcategories
+        const selId = Number(selectedCategory);
+        const childIds = categories
+          .filter(c => c.parent_id && Number(c.parent_id) === selId)
+          .map(c => c.id);
+        if (childIds.length > 0) {
+          // Include parent + all children IDs
+          const allIds = [selId, ...childIds].join(',');
+          url += `category_ids=${allIds}&`;
+        } else {
+          url += `category_id=${selectedCategory}&`;
+        }
+      }
+
       if (debouncedSearchVal) url += `search=${encodeURIComponent(debouncedSearchVal)}&`;
       const visitorId = localStorage.getItem('arz_mart_visitor_id') || '';
       if (visitorId) url += `visitor_id=${visitorId}&`;
@@ -2279,6 +2285,75 @@ export default function App() {
                     >
                       {lang === 'ar' ? 'تسوق الآن' : 'Shop Now'}
                     </button>
+                  </div>
+
+                  {/* --- 5. LATEST PRODUCTS SECTION --- */}
+                  <div id="products-catalog-section" style={{ marginTop: '8px' }}>
+                    <h2 style={{ fontSize: '1.35rem', fontWeight: '900', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ color: 'var(--accent-brand)' }}>★</span>
+                      {lang === 'ar' ? 'أحدث المنتجات' : 'Latest Products'}
+                    </h2>
+                    {products.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-light)', fontSize: '0.95rem' }}>
+                        {lang === 'ar' ? 'جاري تحميل المنتجات...' : 'Loading products...'}
+                      </div>
+                    ) : (
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))',
+                        gap: '16px'
+                      }}>
+                        {products.map(product => {
+                          const pName = lang === 'ar' ? product.name_ar : product.name_en;
+                          const pImg = product.image_url
+                            ? (product.image_url.startsWith('http') || product.image_url.startsWith('data:') ? product.image_url : `${apiHost}${product.image_url}`)
+                            : 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=300&q=80';
+                          return (
+                            <div
+                              key={product.id}
+                              className="dashboard-card"
+                              onClick={() => setSelectedProduct(product)}
+                              style={{
+                                padding: '0',
+                                overflow: 'hidden',
+                                cursor: 'pointer',
+                                transition: 'transform 0.2s, box-shadow 0.2s',
+                                border: '1px solid var(--border-color)',
+                                borderRadius: '16px'
+                              }}
+                              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = 'var(--shadow-lg)'; }}
+                              onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = ''; }}
+                            >
+                              <div style={{ width: '100%', aspectRatio: '1', overflow: 'hidden', backgroundColor: 'var(--bg-tertiary)' }}>
+                                <img src={pImg} alt={pName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              </div>
+                              <div style={{ padding: '10px 12px' }}>
+                                <p style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-primary)', margin: '0 0 6px 0', lineHeight: '1.3', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{pName}</p>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                  <span style={{ fontSize: '1rem', fontWeight: '900', color: 'var(--accent-red-gold)' }}>{formatPrice(product.price_usd)}</span>
+                                  <button
+                                    onClick={e => { e.stopPropagation(); addToCart(product); }}
+                                    style={{
+                                      backgroundColor: 'var(--accent-brand)',
+                                      color: 'white',
+                                      border: 'none',
+                                      borderRadius: '20px',
+                                      padding: '5px 12px',
+                                      fontSize: '0.75rem',
+                                      fontWeight: '800',
+                                      cursor: 'pointer',
+                                      whiteSpace: 'nowrap'
+                                    }}
+                                  >
+                                    {lang === 'ar' ? '+ سلة' : '+ Cart'}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
 
                 </div>
