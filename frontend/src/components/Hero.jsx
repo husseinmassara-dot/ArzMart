@@ -8,18 +8,18 @@ export default function Hero() {
 
   const defaultBanners = [
     {
-      image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=1200&q=80',
-      title_ar: 'عروض الصيف الكبرى في أرز مارت',
-      title_en: 'Summer Mega Sales at Arz-Mart',
-      desc_ar: 'خصومات حصرية تصل إلى ٥٠٪ على كافة السلع الغذائية والمحلية اللبنانية',
-      desc_en: 'Exclusive discounts up to 50% on all grocery and local Lebanese goods'
+      image: '/toy_jeep_hero_banner.png',
+      title_ar: 'عالم المرح للأطفال',
+      title_en: 'Kids Fun World',
+      desc_ar: 'سيارات تحكم عن بعد، مكعبات بناء، ألعاب تعليمية، منتجات آمنة وممتعة لعائلة سعيدة',
+      desc_en: 'Remote control cars, building blocks, educational toys, safe and fun products for a happy family'
     },
     {
-      image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&q=80',
-      title_ar: 'توصيل سريع وبأسعار مناسبة',
-      title_en: 'Fast & Affordable Delivery',
-      desc_ar: 'خدمة توصيل ممتازة إلى كافة المناطق اللبنانية مع إمكانية التوصيل المجاني',
-      desc_en: 'Excellent delivery service to all Lebanese regions with free delivery option'
+      image: '/promo_banner_bg.png',
+      title_ar: 'خصومات حصرية تصل إلى ٥٠٪',
+      title_en: 'Exclusive 50% Off Discounts',
+      desc_ar: 'عروض كبرى على كافة السلع المنزلية والغذائية والمنتجات المحلية اللبنانية',
+      desc_en: 'Mega offers on all grocery, household, and local Lebanese products'
     }
   ];
 
@@ -46,64 +46,109 @@ export default function Hero() {
   if (slides.length === 0) return null;
 
   const activeSlide = slides[currentSlide];
-  const imageSource = activeSlide.image.startsWith('http') || activeSlide.image.startsWith('data:')
+  const imageSource = activeSlide.image.startsWith('http') || activeSlide.image.startsWith('data:') || activeSlide.image.startsWith('/')
     ? activeSlide.image 
     : `${apiHost}${activeSlide.image}`;
 
+  const isRtl = lang === 'ar';
+
   return (
-    <div className="no-print" style={{
+    <div className="no-print animate-scale" style={{
       position: 'relative',
       height: '420px',
       width: '100%',
-      backgroundColor: '#0f172a',
+      backgroundColor: '#070a13',
       overflow: 'hidden',
-      borderRadius: '16px',
+      borderRadius: '24px',
       margin: '20px 0',
-      boxShadow: 'var(--shadow-md)'
+      boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
+      border: '1px solid rgba(255,255,255,0.05)'
     }}>
-      {/* Slide Image Background */}
+      {/* Slide Image Background with overlay gradient */}
       <div style={{
         width: '100%',
         height: '100%',
-        backgroundImage: `linear-gradient(to top, rgba(10, 14, 23, 0.85), rgba(10, 14, 23, 0.4)), url(${imageSource})`,
+        backgroundImage: `linear-gradient(to ${isRtl ? 'left' : 'right'}, rgba(7, 10, 19, 0.95) 30%, rgba(7, 10, 19, 0.4) 60%, rgba(7, 10, 19, 0.1) 100%), url(${imageSource})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        transition: 'background-image 0.5s ease-in-out'
+        transition: 'background-image 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
       }} />
 
-      {/* Slide Text Content Overlay */}
+      {/* Slide Text Content Overlay - positioned on the right for Arabic, left for English */}
       <div style={{
         position: 'absolute',
+        top: '0',
         bottom: '0',
-        left: '0',
-        right: '0',
-        padding: '40px',
+        left: isRtl ? 'auto' : '50px',
+        right: isRtl ? '50px' : 'auto',
+        width: '45%',
+        minWidth: '280px',
         color: 'white',
         display: 'flex',
         flexDirection: 'column',
-        gap: '8px',
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        textAlign: isRtl ? 'right' : 'left',
+        gap: '16px',
         zIndex: 5
       }} className="animate-fade">
         <h1 style={{
-          fontSize: '2.4rem',
-          fontWeight: '800',
-          textShadow: '0 2px 4px rgba(0,0,0,0.6)',
-          lineHeight: '1.2'
+          fontSize: '2.6rem',
+          fontWeight: '900',
+          lineHeight: '1.25',
+          textShadow: '0 2px 8px rgba(0,0,0,0.5)',
+          fontFamily: 'system-ui, -apple-system, sans-serif'
         }}>
-          {lang === 'ar' ? activeSlide.title_ar : activeSlide.title_en}
+          {isRtl ? activeSlide.title_ar : activeSlide.title_en}
         </h1>
+        
         <p style={{
-          fontSize: '1.1rem',
+          fontSize: '1.05rem',
           fontWeight: '500',
-          color: 'rgba(255, 255, 255, 0.9)',
-          maxWidth: '650px',
-          textShadow: '0 1px 3px rgba(0,0,0,0.6)'
+          color: 'rgba(255, 255, 255, 0.8)',
+          textShadow: '0 1px 4px rgba(0,0,0,0.5)',
+          lineHeight: '1.6',
+          margin: 0
         }}>
-          {lang === 'ar' ? activeSlide.desc_ar : activeSlide.desc_en}
+          {isRtl ? activeSlide.desc_ar : activeSlide.desc_en}
         </p>
+
+        {/* Green "Shop Now" Button with shopping bag icon */}
+        <button 
+          style={{
+            backgroundColor: '#10b981',
+            color: 'white',
+            border: 'none',
+            padding: '12px 28px',
+            borderRadius: '12px',
+            fontWeight: '800',
+            fontSize: '0.95rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            boxShadow: '0 4px 14px rgba(16,185,129,0.4)',
+            transition: 'transform 0.2s, background-color 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#059669';
+            e.currentTarget.style.transform = 'scale(1.05)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#10b981';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <path d="M16 10a4 4 0 0 1-8 0" />
+          </svg>
+          <span>{isRtl ? 'تسوق الآن' : 'Shop Now'}</span>
+        </button>
       </div>
 
-      {/* Navigation Arrows */}
+      {/* Navigation Arrows - Circular White Buttons */}
       {slides.length > 1 && (
         <>
           <button
@@ -114,22 +159,23 @@ export default function Hero() {
               left: '20px',
               transform: 'translateY(-50%)',
               zIndex: 10,
-              backgroundColor: 'rgba(0,0,0,0.5)',
+              backgroundColor: 'white',
               border: 'none',
               borderRadius: '50%',
-              width: '40px',
-              height: '40px',
+              width: '44px',
+              height: '44px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'white',
+              color: '#0f172a',
               cursor: 'pointer',
-              transition: 'background-color 0.2s'
+              boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
+              transition: 'transform 0.2s, background-color 0.2s'
             }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(0,0,0,0.8)'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(0,0,0,0.5)'}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(-50%) scale(1)'}
           >
-            <ChevronLeft size={24} />
+            <ChevronLeft size={20} strokeWidth={2.5} />
           </button>
           <button
             onClick={handleNext}
@@ -139,31 +185,32 @@ export default function Hero() {
               right: '20px',
               transform: 'translateY(-50%)',
               zIndex: 10,
-              backgroundColor: 'rgba(0,0,0,0.5)',
+              backgroundColor: 'white',
               border: 'none',
               borderRadius: '50%',
-              width: '40px',
-              height: '40px',
+              width: '44px',
+              height: '44px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'white',
+              color: '#0f172a',
               cursor: 'pointer',
-              transition: 'background-color 0.2s'
+              boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
+              transition: 'transform 0.2s, background-color 0.2s'
             }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(0,0,0,0.8)'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(0,0,0,0.5)'}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(-50%) scale(1)'}
           >
-            <ChevronRight size={24} />
+            <ChevronRight size={20} strokeWidth={2.5} />
           </button>
         </>
       )}
 
-      {/* Slide Indicators */}
+      {/* Slide Indicators - bottom dots (active green, inactive white) */}
       {slides.length > 1 && (
         <div style={{
           position: 'absolute',
-          bottom: '20px',
+          bottom: '24px',
           left: '50%',
           transform: 'translateX(-50%)',
           display: 'flex',
@@ -175,12 +222,12 @@ export default function Hero() {
               key={i}
               onClick={() => setCurrentSlide(i)}
               style={{
-                width: '10px',
-                height: '10px',
-                borderRadius: '50%',
-                backgroundColor: currentSlide === i ? 'var(--accent-blue)' : 'rgba(255,255,255,0.4)',
+                width: currentSlide === i ? '24px' : '8px',
+                height: '8px',
+                borderRadius: '4px',
+                backgroundColor: currentSlide === i ? '#10b981' : 'rgba(255,255,255,0.4)',
                 cursor: 'pointer',
-                transition: 'background-color 0.3s'
+                transition: 'all 0.3s ease'
               }}
             />
           ))}

@@ -662,6 +662,9 @@ export default function App() {
         setCurrentView={setCurrentView} 
         searchVal={searchVal} 
         setSearchVal={setSearchVal} 
+        categories={categories}
+        selectedCategory={selectedCategory}
+        setSelectedCategory={setSelectedCategory}
         onLogoClick={() => {
           setCurrentView('store');
           setSelectedProduct(null);
@@ -1512,98 +1515,888 @@ export default function App() {
             )}
 
             {/* Conditional Storefront Renderer */}
-            {selectedCategory === '' && !searchVal ? (
-              /* --- 1. GRAND CATEGORY CARDS ONLY VIEW (DEFAULT ENTRY POINT) --- */
-              <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                <h2 style={{ fontSize: '1.6rem', fontWeight: '800', borderBottom: '2px solid var(--border-color)', paddingBottom: '10px', marginBottom: '16px' }}>
-                  {lang === 'ar' ? 'تصفح أقسام المتجر' : 'Browse Store Categories'}
-                </h2>
-                
-                <div className="categories-grid">
-                  {categories.filter(c => !c.parent_id).map((cat) => {
-                    const catName = lang === 'ar' ? cat.name_ar : cat.name_en;
-                    
-                    // Assign realistic category background image
-                    let bgImg = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=500&q=80'; // Groceries default
-                    if (cat.name_en.toLowerCase().includes('soap') || cat.name_en.toLowerCase().includes('care')) {
-                      bgImg = 'https://images.unsplash.com/photo-1607006342466-4aa8d8d32be5?auto=format&fit=crop&w=500&q=80'; // Personal Care
-                    } else if (cat.name_en.toLowerCase().includes('oil')) {
-                      bgImg = 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=500&q=80';
-                    }
+            {selectedCategory === '' && !searchVal ? (() => {
+              const findCategoryIdByName = (nameEn, nameAr) => {
+                const found = categories.find(c => {
+                  const cNameEn = (c.name_en || '').toLowerCase();
+                  const cNameAr = (c.name_ar || '').toLowerCase();
+                  return cNameEn.includes(nameEn.toLowerCase()) || cNameAr.includes(nameAr.toLowerCase());
+                });
+                return found ? found.id : '';
+              };
 
-                    const imageUrl = cat.image_url 
-                      ? (cat.image_url.startsWith('http') || cat.image_url.startsWith('data:') ? cat.image_url : `${apiHost}${cat.image_url}`)
-                      : bgImg;
+              const handleCategoryClick = (catNameEn, catNameAr) => {
+                const id = findCategoryIdByName(catNameEn, catNameAr);
+                if (id) {
+                  setSelectedCategory(id);
+                  setSearchVal('');
+                } else {
+                  // Fallback: search for it
+                  setSelectedCategory('');
+                  setSearchVal(lang === 'ar' ? catNameAr : catNameEn);
+                }
+              };
 
-                    return (
-                      <div
-                        key={cat.id}
-                        onClick={() => setSelectedCategory(cat.id)}
-                        className="dashboard-card animate-fade"
-                        style={{
-                          height: 'var(--category-card-height, 280px)', // Grander height
-                          position: 'relative',
-                          overflow: 'hidden',
-                          borderRadius: '20px', // Extra rounded corners
-                          cursor: 'pointer',
-                          padding: '0',
-                          border: '1px solid var(--border-color)',
-                          boxShadow: 'var(--shadow-md)',
-                          transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-8px)';
-                          e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                        }}
-                      >
-                        {/* Background Cover image */}
-                        <div style={{
-                          width: '100%',
-                          height: '100%',
-                          backgroundImage: `linear-gradient(to top, rgba(10, 14, 23, 0.95) 0%, rgba(10, 14, 23, 0.3) 60%, rgba(10, 14, 23, 0) 100%), url(${imageUrl})`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center',
-                          transition: 'transform 0.5s ease'
-                        }} 
-                        />
-
-                        {/* Title text overlay */}
-                        <div style={{
-                          position: 'absolute',
-                          bottom: '0',
-                          left: '0',
-                          right: '0',
-                          padding: 'var(--category-card-padding, 24px)', // Taller padding for luxury look
-                          color: 'white',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 'var(--card-btn-gap, 8px)',
-                          zIndex: 5
-                        }}>
-                          <h3 style={{ fontSize: 'var(--category-card-title-size, 1.45rem)', fontWeight: '800', textShadow: '0 2px 4px rgba(0,0,0,0.9)' }}>
-                            {catName}
-                          </h3>
-                          <span style={{ 
-                            fontSize: '0.85rem', 
-                            color: 'var(--accent-red-gold)', 
-                            fontWeight: '700',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px',
-                            display: 'var(--category-card-sub-display, block)'
-                          }}>
-                            {lang === 'ar' ? 'تصفح المنتجات ←' : 'Browse products →'}
-                          </span>
+              return (
+                <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                  
+                  {/* --- 1. FEATURE BADGES --- */}
+                  <div style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '16px',
+                    margin: '10px 0 20px 0'
+                  }}>
+                    {/* Easy Return */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      flex: '1',
+                      minWidth: '220px',
+                      padding: '16px',
+                      backgroundColor: 'var(--bg-secondary)',
+                      borderRadius: '16px',
+                      border: '1px solid var(--border-color)',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      <div style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '50%',
+                        backgroundColor: 'rgba(16,185,129,0.08)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#10b981',
+                        flexShrink: 0
+                      }}>
+                        <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="23 4 23 10 17 10" />
+                          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                          {lang === 'ar' ? 'إرجاع سهل' : 'Easy Return'}
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-light)', fontWeight: '600', marginTop: '2px' }}>
+                          {lang === 'ar' ? 'ضمن 7 أيام' : 'Within 7 days'}
                         </div>
                       </div>
-                    );
-                  })}
+                    </div>
+
+                    {/* 24/7 Support */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      flex: '1',
+                      minWidth: '220px',
+                      padding: '16px',
+                      backgroundColor: 'var(--bg-secondary)',
+                      borderRadius: '16px',
+                      border: '1px solid var(--border-color)',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      <div style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '50%',
+                        backgroundColor: 'rgba(16,185,129,0.08)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#10b981',
+                        flexShrink: 0
+                      }}>
+                        <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                          {lang === 'ar' ? 'دعم 24/7' : '24/7 Support'}
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-light)', fontWeight: '600', marginTop: '2px' }}>
+                          {lang === 'ar' ? 'خدمة عملاء مميزة' : 'Exceptional support'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Fast Delivery */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      flex: '1',
+                      minWidth: '220px',
+                      padding: '16px',
+                      backgroundColor: 'var(--bg-secondary)',
+                      borderRadius: '16px',
+                      border: '1px solid var(--border-color)',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      <div style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '50%',
+                        backgroundColor: 'rgba(16,185,129,0.08)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#10b981',
+                        flexShrink: 0
+                      }}>
+                        <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="1" y="3" width="15" height="13" rx="2" ry="2" />
+                          <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                          <circle cx="5.5" cy="18.5" r="2.5" />
+                          <circle cx="18.5" cy="18.5" r="2.5" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                          {lang === 'ar' ? 'توصيل سريع' : 'Fast Delivery'}
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-light)', fontWeight: '600', marginTop: '2px' }}>
+                          {lang === 'ar' ? 'خلال 24-48 ساعة' : 'Within 24-48 hours'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Original Products */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      flex: '1',
+                      minWidth: '220px',
+                      padding: '16px',
+                      backgroundColor: 'var(--bg-secondary)',
+                      borderRadius: '16px',
+                      border: '1px solid var(--border-color)',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      <div style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '50%',
+                        backgroundColor: 'rgba(16,185,129,0.08)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#10b981',
+                        flexShrink: 0
+                      }}>
+                        <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                          <path d="m9 11 2 2 4-4" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                          {lang === 'ar' ? 'منتجات أصلية' : 'Original Products'}
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-light)', fontWeight: '600', marginTop: '2px' }}>
+                          {lang === 'ar' ? 'جودة مضمونة 100%' : '100% Guaranteed Quality'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* --- 2. 4 FEATURED CATEGORY CARDS --- */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                    gap: '20px',
+                    margin: '10px 0'
+                  }}>
+                    {/* Glasses Card */}
+                    <div
+                      onClick={() => handleCategoryClick('glasses', 'نظارات')}
+                      style={{
+                        height: '300px',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        borderRadius: '20px',
+                        cursor: 'pointer',
+                        border: '1px solid var(--border-color)',
+                        boxShadow: 'var(--shadow-md)',
+                        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                        backgroundColor: 'var(--bg-secondary)'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-6px)';
+                        e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                      }}
+                    >
+                      <div style={{
+                        width: '100%',
+                        height: '100%',
+                        backgroundImage: `url(/glasses_category.png)`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                      }} />
+                      
+                      {/* Gradient & Text Overlay */}
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '0',
+                        left: '0',
+                        right: '0',
+                        padding: '20px',
+                        background: 'linear-gradient(to top, var(--bg-secondary) 25%, transparent 100%)',
+                        display: 'flex',
+                        flexDirection: isRtl ? 'row-reverse' : 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-end',
+                        gap: '12px'
+                      }}>
+                        <div style={{ textAlign: isRtl ? 'right' : 'left' }}>
+                          <h3 style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-primary)', margin: '0 0 2px 0' }}>
+                            {lang === 'ar' ? 'نظارات' : 'Glasses'}
+                          </h3>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '700' }}>
+                            {lang === 'ar' ? 'تسوق الآن' : 'Shop Now'}
+                          </span>
+                        </div>
+                        <div style={{
+                          width: '28px',
+                          height: '28px',
+                          borderRadius: '50%',
+                          backgroundColor: '#10b981',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'white',
+                          flexShrink: 0
+                        }}>
+                          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isRtl ? 'rotate(180deg)' : 'none' }}>
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                            <polyline points="12 5 19 12 12 19" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Beauty Card */}
+                    <div
+                      onClick={() => handleCategoryClick('beauty', 'تجميل')}
+                      style={{
+                        height: '300px',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        borderRadius: '20px',
+                        cursor: 'pointer',
+                        border: '1px solid var(--border-color)',
+                        boxShadow: 'var(--shadow-md)',
+                        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                        backgroundColor: 'var(--bg-secondary)'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-6px)';
+                        e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                      }}
+                    >
+                      <div style={{
+                        width: '100%',
+                        height: '100%',
+                        backgroundImage: `url(/beauty_category.png)`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                      }} />
+                      
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '0',
+                        left: '0',
+                        right: '0',
+                        padding: '20px',
+                        background: 'linear-gradient(to top, var(--bg-secondary) 25%, transparent 100%)',
+                        display: 'flex',
+                        flexDirection: isRtl ? 'row-reverse' : 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-end',
+                        gap: '12px'
+                      }}>
+                        <div style={{ textAlign: isRtl ? 'right' : 'left' }}>
+                          <h3 style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-primary)', margin: '0 0 2px 0' }}>
+                            {lang === 'ar' ? 'أدوات تجميل' : 'Beauty Products'}
+                          </h3>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '700' }}>
+                            {lang === 'ar' ? 'تسوق الآن' : 'Shop Now'}
+                          </span>
+                        </div>
+                        <div style={{
+                          width: '28px',
+                          height: '28px',
+                          borderRadius: '50%',
+                          backgroundColor: '#10b981',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'white',
+                          flexShrink: 0
+                        }}>
+                          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isRtl ? 'rotate(180deg)' : 'none' }}>
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                            <polyline points="12 5 19 12 12 19" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Phones Card */}
+                    <div
+                      onClick={() => handleCategoryClick('phone', 'هواتف')}
+                      style={{
+                        height: '300px',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        borderRadius: '20px',
+                        cursor: 'pointer',
+                        border: '1px solid var(--border-color)',
+                        boxShadow: 'var(--shadow-md)',
+                        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                        backgroundColor: 'var(--bg-secondary)'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-6px)';
+                        e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                      }}
+                    >
+                      <div style={{
+                        width: '100%',
+                        height: '100%',
+                        backgroundImage: `url(/phones_category.png)`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                      }} />
+                      
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '0',
+                        left: '0',
+                        right: '0',
+                        padding: '20px',
+                        background: 'linear-gradient(to top, var(--bg-secondary) 25%, transparent 100%)',
+                        display: 'flex',
+                        flexDirection: isRtl ? 'row-reverse' : 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-end',
+                        gap: '12px'
+                      }}>
+                        <div style={{ textAlign: isRtl ? 'right' : 'left' }}>
+                          <h3 style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-primary)', margin: '0 0 2px 0' }}>
+                            {lang === 'ar' ? 'هواتف' : 'Phones'}
+                          </h3>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '700' }}>
+                            {lang === 'ar' ? 'تسوق الآن' : 'Shop Now'}
+                          </span>
+                        </div>
+                        <div style={{
+                          width: '28px',
+                          height: '28px',
+                          borderRadius: '50%',
+                          backgroundColor: '#10b981',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'white',
+                          flexShrink: 0
+                        }}>
+                          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isRtl ? 'rotate(180deg)' : 'none' }}>
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                            <polyline points="12 5 19 12 12 19" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Accessories Card */}
+                    <div
+                      onClick={() => handleCategoryClick('accessories', 'إكسسوار')}
+                      style={{
+                        height: '300px',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        borderRadius: '20px',
+                        cursor: 'pointer',
+                        border: '1px solid var(--border-color)',
+                        boxShadow: 'var(--shadow-md)',
+                        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                        backgroundColor: 'var(--bg-secondary)'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-6px)';
+                        e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                      }}
+                    >
+                      <div style={{
+                        width: '100%',
+                        height: '100%',
+                        backgroundImage: `url(/accessories_cat.png)`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                      }} />
+                      
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '0',
+                        left: '0',
+                        right: '0',
+                        padding: '20px',
+                        background: 'linear-gradient(to top, var(--bg-secondary) 25%, transparent 100%)',
+                        display: 'flex',
+                        flexDirection: isRtl ? 'row-reverse' : 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-end',
+                        gap: '12px'
+                      }}>
+                        <div style={{ textAlign: isRtl ? 'right' : 'left' }}>
+                          <h3 style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-primary)', margin: '0 0 2px 0' }}>
+                            {lang === 'ar' ? 'إكسسوارات' : 'Accessories'}
+                          </h3>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '700' }}>
+                            {lang === 'ar' ? 'تسوق الآن' : 'Shop Now'}
+                          </span>
+                        </div>
+                        <div style={{
+                          width: '28px',
+                          height: '28px',
+                          borderRadius: '50%',
+                          backgroundColor: '#10b981',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'white',
+                          flexShrink: 0
+                        }}>
+                          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isRtl ? 'rotate(180deg)' : 'none' }}>
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                            <polyline points="12 5 19 12 12 19" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* --- 3. 6 ICON-GRID NAVIGATION --- */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                    gap: '16px',
+                    margin: '20px 0'
+                  }}>
+                    {/* All Sections */}
+                    <button
+                      onClick={() => {
+                        setSelectedCategory('');
+                        setSearchVal('');
+                      }}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        padding: '16px',
+                        backgroundColor: 'var(--bg-secondary)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '16px',
+                        cursor: 'pointer',
+                        boxShadow: 'var(--shadow-sm)',
+                        transition: 'transform 0.2s, background-color 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-4px)';
+                        e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+                      }}
+                    >
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        backgroundColor: 'rgba(16,185,129,0.08)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#10b981'
+                      }}>
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.5" fill="none">
+                          <rect x="3" y="3" width="7" height="7" rx="1" />
+                          <rect x="14" y="3" width="7" height="7" rx="1" />
+                          <rect x="14" y="14" width="7" height="7" rx="1" />
+                          <rect x="3" y="14" width="7" height="7" rx="1" />
+                        </svg>
+                      </div>
+                      <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                        {lang === 'ar' ? 'كل الأقسام' : 'All Sections'}
+                      </span>
+                    </button>
+
+                    {/* Electronics */}
+                    <button
+                      onClick={() => handleCategoryClick('electronic', 'إلكترونيات')}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        padding: '16px',
+                        backgroundColor: 'var(--bg-secondary)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '16px',
+                        cursor: 'pointer',
+                        boxShadow: 'var(--shadow-sm)',
+                        transition: 'transform 0.2s, background-color 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-4px)';
+                        e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+                      }}
+                    >
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        backgroundColor: 'rgba(16,185,129,0.08)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#10b981'
+                      }}>
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                          <line x1="8" y1="21" x2="16" y2="21" />
+                          <line x1="12" y1="17" x2="12" y2="21" />
+                        </svg>
+                      </div>
+                      <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                        {lang === 'ar' ? 'إلكترونيات' : 'Electronics'}
+                      </span>
+                    </button>
+
+                    {/* Office */}
+                    <button
+                      onClick={() => handleCategoryClick('office', 'مكتب')}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        padding: '16px',
+                        backgroundColor: 'var(--bg-secondary)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '16px',
+                        cursor: 'pointer',
+                        boxShadow: 'var(--shadow-sm)',
+                        transition: 'transform 0.2s, background-color 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-4px)';
+                        e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+                      }}
+                    >
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        backgroundColor: 'rgba(16,185,129,0.08)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#10b981'
+                      }}>
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                          <polyline points="14 2 14 8 20 8" />
+                        </svg>
+                      </div>
+                      <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                        {lang === 'ar' ? 'لوازم المكتب' : 'Office'}
+                      </span>
+                    </button>
+
+                    {/* Pets */}
+                    <button
+                      onClick={() => handleCategoryClick('pet', 'حيوان')}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        padding: '16px',
+                        backgroundColor: 'var(--bg-secondary)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '16px',
+                        cursor: 'pointer',
+                        boxShadow: 'var(--shadow-sm)',
+                        transition: 'transform 0.2s, background-color 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-4px)';
+                        e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+                      }}
+                    >
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        backgroundColor: 'rgba(16,185,129,0.08)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#10b981'
+                      }}>
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.5" fill="none">
+                          <path d="M12 14c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm-6-2c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm16 0c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-4-7.5c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2.5zm-8 0c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2.5z" />
+                        </svg>
+                      </div>
+                      <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                        {lang === 'ar' ? 'طعام حيوانات' : 'Pets'}
+                      </span>
+                    </button>
+
+                    {/* Toys */}
+                    <button
+                      onClick={() => handleCategoryClick('toy', 'ألعاب')}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        padding: '16px',
+                        backgroundColor: 'var(--bg-secondary)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '16px',
+                        cursor: 'pointer',
+                        boxShadow: 'var(--shadow-sm)',
+                        transition: 'transform 0.2s, background-color 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-4px)';
+                        e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+                      }}
+                    >
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        backgroundColor: 'rgba(16,185,129,0.08)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#10b981'
+                      }}>
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="2" y="6" width="20" height="12" rx="3" ry="3" />
+                          <line x1="6" y1="12" x2="10" y2="12" />
+                          <line x1="8" y1="10" x2="8" y2="14" />
+                          <circle cx="15.5" cy="12" r="1" />
+                          <circle cx="18.5" cy="12" r="1" />
+                        </svg>
+                      </div>
+                      <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                        {lang === 'ar' ? 'ألعاب أطفال' : 'Toys'}
+                      </span>
+                    </button>
+
+                    {/* Home */}
+                    <button
+                      onClick={() => handleCategoryClick('home', 'منزل')}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        padding: '16px',
+                        backgroundColor: 'var(--bg-secondary)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '16px',
+                        cursor: 'pointer',
+                        boxShadow: 'var(--shadow-sm)',
+                        transition: 'transform 0.2s, background-color 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-4px)';
+                        e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+                      }}
+                    >
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        backgroundColor: 'rgba(16,185,129,0.08)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#10b981'
+                      }}>
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                          <polyline points="9 22 9 12 15 12 15 22" />
+                        </svg>
+                      </div>
+                      <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                        {lang === 'ar' ? 'أدوات منزلية' : 'Home'}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* --- 4. BOTTOM PROMO BANNER --- */}
+                  <div style={{
+                    height: '160px',
+                    borderRadius: '24px',
+                    overflow: 'hidden',
+                    position: 'relative',
+                    backgroundImage: 'url(/promo_banner_bg.png)',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    display: 'flex',
+                    flexDirection: isRtl ? 'row-reverse' : 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0 40px',
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
+                    border: '1px solid rgba(255,255,255,0.05)',
+                    margin: '10px 0 20px 0'
+                  }}>
+                    {/* Content Left (RTL flips layout) */}
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px',
+                      alignItems: isRtl ? 'flex-end' : 'flex-start',
+                      textAlign: isRtl ? 'right' : 'left'
+                    }}>
+                      <div style={{
+                        display: 'inline-flex',
+                        backgroundColor: 'rgba(251,191,36,0.15)',
+                        border: '1px solid #fbbf24',
+                        color: '#fbbf24',
+                        padding: '4px 12px',
+                        borderRadius: '20px',
+                        fontSize: '0.78rem',
+                        fontWeight: '800'
+                      }}>
+                        {lang === 'ar' ? 'لفترة محدودة!' : 'For a limited time!'}
+                      </div>
+                      <h2 style={{
+                        fontSize: '1.9rem',
+                        fontWeight: '900',
+                        color: '#fbbf24',
+                        textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                        margin: 0,
+                        lineHeight: '1.2'
+                      }}>
+                        {lang === 'ar' ? 'خصومات كبيرة' : 'Big Discounts'}
+                      </h2>
+                      <p style={{
+                        fontSize: '1.05rem',
+                        fontWeight: '700',
+                        color: 'white',
+                        textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                        margin: 0
+                      }}>
+                        {lang === 'ar' ? 'على مجموعة مختارة من المنتجات' : 'On a selected group of products'}
+                      </p>
+                    </div>
+
+                    {/* Shop Button Right (RTL flips layout) */}
+                    <button
+                      onClick={() => {
+                        const el = document.getElementById('products-catalog-section');
+                        if (el) {
+                          el.scrollIntoView({ behavior: 'smooth' });
+                        } else {
+                          setSelectedCategory('');
+                          setSearchVal('');
+                          setTimeout(() => {
+                            const el2 = document.getElementById('products-catalog-section');
+                            if (el2) el2.scrollIntoView({ behavior: 'smooth' });
+                          }, 100);
+                        }
+                      }}
+                      style={{
+                        backgroundColor: 'transparent',
+                        border: '2px solid white',
+                        color: 'white',
+                        padding: '10px 26px',
+                        borderRadius: '30px',
+                        fontWeight: '800',
+                        fontSize: '0.92rem',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                        transition: 'all 0.2s',
+                        flexShrink: 0
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'white';
+                        e.currentTarget.style.color = '#0f172a';
+                        e.currentTarget.style.transform = 'scale(1.05)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = 'white';
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }}
+                    >
+                      {lang === 'ar' ? 'تسوق الآن' : 'Shop Now'}
+                    </button>
+                  </div>
+
                 </div>
-              </div>
-            ) : (
+              );
+            })() : (
               /* --- 2. PRODUCT GRID & NAVIGATION VIEW --- */
               (() => {
                 // Determine if selected category has children (is a parent/intermediate category)
@@ -1611,7 +2404,7 @@ export default function App() {
                 const hasSubcategories = selectedCategory !== '' && !isNaN(selectedCatIdNum) && categories.some(c => c.parent_id !== null && c.parent_id !== undefined && Number(c.parent_id) === selectedCatIdNum);
 
                 return (
-                  <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div id="products-catalog-section" className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     
                     {/* Back button and Category Details Header */}
                     <div style={{
