@@ -21,7 +21,7 @@ exports.createReturn = async (req, res) => {
 
     // 1. Insert return log
     const result = await db.runAsync(`
-      INSERT INTO returns (order_id, product_id, quantity, refund_amount, stock_action, reason)
+      INSERT INTO sales_returns (order_id, product_id, quantity, refund_amount, stock_action, reason)
       VALUES (?, ?, ?, ?, ?, ?)
     `, [oid, pid, qty, refund, stock_action, reason || '']);
 
@@ -62,7 +62,7 @@ exports.getReturns = async (req, res) => {
              p.image_url as product_image_url,
              o.tracking_number as order_tracking_number,
              o.phone as order_phone
-      FROM returns r
+      FROM sales_returns r
       LEFT JOIN products p ON r.product_id = p.id
       LEFT JOIN orders o ON r.order_id = o.id
       ORDER BY r.created_at DESC
@@ -100,7 +100,7 @@ exports.getReturns = async (req, res) => {
 exports.deleteReturn = async (req, res) => {
   const { id } = req.params;
   try {
-    const check = await db.getAsync('SELECT id FROM returns WHERE id = ?', [id]);
+    const check = await db.getAsync('SELECT id FROM sales_returns WHERE id = ?', [id]);
     if (!check) {
       return res.status(404).json({
         error_ar: 'السجل غير موجود',
@@ -108,7 +108,7 @@ exports.deleteReturn = async (req, res) => {
       });
     }
 
-    await db.runAsync('DELETE FROM returns WHERE id = ?', [id]);
+    await db.runAsync('DELETE FROM sales_returns WHERE id = ?', [id]);
     res.json({
       message_ar: 'تم حذف سجل المرتجع بنجاح',
       message_en: 'Return record deleted successfully'

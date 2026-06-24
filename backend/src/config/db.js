@@ -438,7 +438,7 @@ async function initializeDatabasePostgres() {
 
     // 13. Returns Table
     await pgPool.query(`
-      CREATE TABLE IF NOT EXISTS returns (
+      CREATE TABLE IF NOT EXISTS sales_returns (
         id SERIAL PRIMARY KEY,
         order_id INTEGER,
         product_id INTEGER NOT NULL,
@@ -796,7 +796,7 @@ function initializeDatabase() {
 
     // 13. Returns Table
     runInit(`
-      CREATE TABLE IF NOT EXISTS returns (
+      CREATE TABLE IF NOT EXISTS sales_returns (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         order_id INTEGER,
         product_id INTEGER NOT NULL,
