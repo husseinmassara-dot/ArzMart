@@ -15,7 +15,7 @@ export default function AdminInvoices() {
   const [merchantId, setMerchantId] = useState('');
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().slice(0, 10));
-  const [items, setItems] = useState([{ product_id: '', quantity: '10', cost_price_usd: '0.00' }]);
+  const [items, setItems] = useState([{ product_id: '', quantity: '10', cost_price_usd: '0.00', searchQuery: '', showDropdown: false }]);
 
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
@@ -70,12 +70,12 @@ export default function AdminInvoices() {
   }, []);
 
   const handleAddItemRow = () => {
-    setItems([...items, { product_id: '', quantity: '10', cost_price_usd: '0.00' }]);
+    setItems([...items, { product_id: '', quantity: '10', cost_price_usd: '0.00', searchQuery: '', showDropdown: false }]);
   };
 
   const handleRemoveItemRow = (index) => {
     const newList = items.filter((_, i) => i !== index);
-    setItems(newList.length > 0 ? newList : [{ product_id: '', quantity: '10', cost_price_usd: '0.00' }]);
+    setItems(newList.length > 0 ? newList : [{ product_id: '', quantity: '10', cost_price_usd: '0.00', searchQuery: '', showDropdown: false }]);
   };
 
   const handleItemChange = (index, field, value) => {
@@ -171,7 +171,7 @@ export default function AdminInvoices() {
     setMerchantId('');
     setInvoiceNumber('');
     setInvoiceDate(new Date().toISOString().slice(0, 10));
-    setItems([{ product_id: '', quantity: '10', cost_price_usd: '0.00' }]);
+    setItems([{ product_id: '', quantity: '10', cost_price_usd: '0.00', searchQuery: '', showDropdown: false }]);
     setShowAddForm(false);
   };
 
@@ -270,22 +270,124 @@ export default function AdminInvoices() {
                 {items.map((item, index) => (
                   <div key={index} style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
                     
-                    {/* Select Product */}
-                    <div style={{ flex: '2', minWidth: '180px' }}>
-                      <select 
-                        required 
-                        className="input-field" 
+                    {/* Searchable Product Selection */}
+                    <div style={{ flex: '2', minWidth: '180px', position: 'relative' }}>
+                      <input
+                        type="text"
+                        required
+                        className="input-field"
                         style={{ margin: 0 }}
-                        value={item.product_id}
-                        onChange={(e) => handleItemChange(index, 'product_id', e.target.value)}
-                      >
-                        <option value="">-- {lang === 'ar' ? 'اختر صنف' : 'Select Product'} --</option>
-                        {products.map(p => (
-                          <option key={p.id} value={p.id}>
-                            {lang === 'ar' ? p.name_ar : p.name_en} ({lang === 'ar' ? `التكلفة الحالية: $${p.cost_price_usd}` : `Current Cost: $${p.cost_price_usd}`})
-                          </option>
-                        ))}
-                      </select>
+                        placeholder={lang === 'ar' ? 'ابحث باسم الصنف أو الموديل...' : 'Search item or model...'}
+                        value={item.searchQuery || ''}
+                        onFocus={() => {
+                          const newList = [...items];
+                          newList[index].showDropdown = true;
+                          setItems(newList);
+                        }}
+                        onChange={(e) => {
+                          const newList = [...items];
+                          newList[index].searchQuery = e.target.value;
+                          newList[index].product_id = ''; // reset selection
+                          newList[index].showDropdown = true;
+                          setItems(newList);
+                        }}
+                      />
+                      
+                      {item.showDropdown && (
+                        <>
+                          <div 
+                            onClick={() => {
+                              const newList = [...items];
+                              newList[index].showDropdown = false;
+                              if (!newList[index].product_id) {
+                                newList[index].searchQuery = '';
+                              } else {
+                                const selectedProd = products.find(p => String(p.id) === String(newList[index].product_id));
+                                if (selectedProd) {
+                                  newList[index].searchQuery = `${lang === 'ar' ? selectedProd.name_ar : selectedProd.name_en}${selectedProd.model_number ? ` (${selectedProd.model_number})` : ''}`;
+                                }
+                              }
+                              setItems(newList);
+                            }} 
+                            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9 }} 
+                          />
+                          
+                          <div style={{
+                            position: 'absolute',
+                            top: '100%',
+                            left: 0,
+                            right: 0,
+                            backgroundColor: 'var(--bg-secondary)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '8px',
+                            maxHeight: '200px',
+                            overflowY: 'auto',
+                            zIndex: 10,
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                            marginTop: '4px'
+                          }}>
+                            {products.filter(p => {
+                              const q = (item.searchQuery || '').toLowerCase().trim();
+                              if (!q) return true;
+                              const nameAr = (p.name_ar || '').toLowerCase();
+                              const nameEn = (p.name_en || '').toLowerCase();
+                              const model = (p.model_number || '').toLowerCase();
+                              return nameAr.includes(q) || nameEn.includes(q) || model.includes(q);
+                            }).length === 0 ? (
+                              <div style={{ padding: '8px', color: 'var(--text-light)', fontSize: '0.82rem', textAlign: 'center' }}>
+                                {lang === 'ar' ? 'لا توجد نتائج' : 'No results'}
+                              </div>
+                            ) : (
+                              products.filter(p => {
+                                const q = (item.searchQuery || '').toLowerCase().trim();
+                                if (!q) return true;
+                                const nameAr = (p.name_ar || '').toLowerCase();
+                                const nameEn = (p.name_en || '').toLowerCase();
+                                const model = (p.model_number || '').toLowerCase();
+                                return nameAr.includes(q) || nameEn.includes(q) || model.includes(q);
+                              }).map(p => (
+                                <div
+                                  key={p.id}
+                                  onClick={() => {
+                                    const newList = [...items];
+                                    newList[index].product_id = p.id;
+                                    newList[index].searchQuery = `${lang === 'ar' ? p.name_ar : p.name_en}${p.model_number ? ` (${p.model_number})` : ''}`;
+                                    newList[index].cost_price_usd = String(p.cost_price_usd || '0.00');
+                                    newList[index].showDropdown = false;
+                                    setItems(newList);
+                                  }}
+                                  style={{
+                                    padding: '8px 10px',
+                                    cursor: 'pointer',
+                                    borderBottom: '1px solid var(--border-color)',
+                                    fontSize: '0.82rem',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    transition: 'background-color 0.2s',
+                                  }}
+                                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
+                                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                >
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                    <span style={{ fontWeight: '600' }}>
+                                      {lang === 'ar' ? p.name_ar : p.name_en}
+                                    </span>
+                                    {p.model_number && (
+                                      <span style={{ fontSize: '0.72rem', color: 'var(--text-light)' }}>
+                                        {lang === 'ar' ? `الموديل: ${p.model_number}` : `Model: ${p.model_number}`}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>
+                                    {lang === 'ar' ? `تكلفة: $${p.cost_price_usd}` : `Cost: ${p.cost_price_usd}`}
+                                  </span>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     {/* Quantity */}

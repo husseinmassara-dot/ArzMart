@@ -12,6 +12,8 @@ export default function AdminReturns() {
   
   // Form states
   const [productId, setProductId] = useState('');
+  const [productSearch, setProductSearch] = useState('');
+  const [showProductDropdown, setShowProductDropdown] = useState(false);
   const [orderId, setOrderId] = useState('');
   const [quantity, setQuantity] = useState('');
   const [refundAmount, setRefundAmount] = useState('');
@@ -22,6 +24,15 @@ export default function AdminReturns() {
   const [formSuccess, setFormSuccess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
+
+  const filteredProducts = products.filter(p => {
+    const q = productSearch.toLowerCase().trim();
+    if (!q) return true;
+    const nameAr = (p.name_ar || '').toLowerCase();
+    const nameEn = (p.name_en || '').toLowerCase();
+    const model = (p.model_number || '').toLowerCase();
+    return nameAr.includes(q) || nameEn.includes(q) || model.includes(q);
+  });
 
   const fetchReturns = async () => {
     try {
@@ -113,6 +124,8 @@ export default function AdminReturns() {
 
   const resetForm = () => {
     setProductId('');
+    setProductSearch('');
+    setShowProductDropdown(false);
     setOrderId('');
     setQuantity('');
     setRefundAmount('');
@@ -160,22 +173,99 @@ export default function AdminReturns() {
           </h4>
 
           <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
-            {/* Product selection */}
-            <div>
-              <label className="input-label">{lang === 'ar' ? 'اختر المنتج *' : 'Select Product *'}</label>
-              <select 
-                required 
-                className="input-field" 
-                value={productId} 
-                onChange={(e) => setProductId(e.target.value)}
-              >
-                <option value="">-- {lang === 'ar' ? 'اختر المنتج من القائمة' : 'Select Product'} --</option>
-                {products.map(p => (
-                  <option key={p.id} value={p.id}>
-                    {lang === 'ar' ? p.name_ar : p.name_en} ({lang === 'ar' ? `المخزون الحالي: ${p.stock}` : `Current Stock: ${p.stock}`})
-                  </option>
-                ))}
-              </select>
+            {/* Searchable Product selection */}
+            <div style={{ position: 'relative' }}>
+              <label className="input-label">{lang === 'ar' ? 'اختر المنتج (ابحث بالاسم أو الموديل) *' : 'Select Product (Search by name/model) *'}</label>
+              <input
+                type="text"
+                required
+                className="input-field"
+                placeholder={lang === 'ar' ? 'اكتب اسم المنتج أو رقم الموديل...' : 'Type name or model number...'}
+                value={productSearch}
+                onFocus={() => setShowProductDropdown(true)}
+                onChange={(e) => {
+                  setProductSearch(e.target.value);
+                  setProductId(''); // Reset ID until selected from list
+                  setShowProductDropdown(true);
+                }}
+              />
+              
+              {showProductDropdown && (
+                <>
+                  <div 
+                    onClick={() => {
+                      setShowProductDropdown(false);
+                      if (!productId) {
+                        setProductSearch('');
+                      } else {
+                        const selectedProd = products.find(p => String(p.id) === String(productId));
+                        if (selectedProd) {
+                          setProductSearch(`${lang === 'ar' ? selectedProd.name_ar : selectedProd.name_en}${selectedProd.model_number ? ` (${selectedProd.model_number})` : ''}`);
+                        }
+                      }
+                    }} 
+                    style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9 }} 
+                  />
+                  
+                  <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    backgroundColor: 'var(--bg-secondary)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    maxHeight: '220px',
+                    overflowY: 'auto',
+                    zIndex: 10,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                    marginTop: '4px'
+                  }}>
+                    {filteredProducts.length === 0 ? (
+                      <div style={{ padding: '10px', color: 'var(--text-light)', fontSize: '0.88rem', textAlign: 'center' }}>
+                        {lang === 'ar' ? 'لم يتم العثور على نتائج' : 'No products found'}
+                      </div>
+                    ) : (
+                      filteredProducts.map(p => (
+                        <div
+                          key={p.id}
+                          onClick={() => {
+                            setProductId(p.id);
+                            setProductSearch(`${lang === 'ar' ? p.name_ar : p.name_en}${p.model_number ? ` (${p.model_number})` : ''}`);
+                            setShowProductDropdown(false);
+                          }}
+                          style={{
+                            padding: '10px 12px',
+                            cursor: 'pointer',
+                            borderBottom: '1px solid var(--border-color)',
+                            fontSize: '0.88rem',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            transition: 'background-color 0.2s',
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            <span style={{ fontWeight: '600' }}>
+                              {lang === 'ar' ? p.name_ar : p.name_en}
+                            </span>
+                            {p.model_number && (
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>
+                                {lang === 'ar' ? `الموديل: ${p.model_number}` : `Model: ${p.model_number}`}
+                              </span>
+                            )}
+                          </div>
+                          <span style={{ fontSize: '0.78rem', color: 'var(--accent-blue)', fontWeight: '700' }}>
+                            {lang === 'ar' ? `المخزون: ${p.stock}` : `Stock: ${p.stock}`}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Optional Order ID */}
