@@ -217,7 +217,7 @@ export default function ProductCard({ product, onDetailsClick, setCurrentView })
               }
             }}
             disabled={product.stock <= 0}
-            className="input-field animate-fade"
+            className="input-field animate-fade product-card-add-btn"
             style={{
               padding: 'var(--card-btn-padding, 8px 12px)',
               flex: '1',
@@ -227,7 +227,7 @@ export default function ProductCard({ product, onDetailsClick, setCurrentView })
               gap: 'var(--card-btn-gap, 6px)',
               cursor: product.stock > 0 ? 'pointer' : 'not-allowed',
               border: 'none',
-              backgroundColor: product.stock > 0 ? 'var(--accent-blue)' : 'var(--border-color)',
+              backgroundColor: product.stock > 0 ? 'var(--accent-brand)' : 'var(--border-color)',
               color: product.stock > 0 ? 'white' : 'var(--text-light)',
               borderRadius: '8px',
               fontWeight: '600',

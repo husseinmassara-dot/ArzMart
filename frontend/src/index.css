@@ -684,3 +684,21 @@ button.input-field {
   }
 }
 
+/* Premium Green Add to Cart Button Hover Effects */
+.product-card-add-btn {
+  transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.product-card-add-btn:hover:not(:disabled),
+.product-details-add-btn:hover:not(:disabled) {
+  background-color: var(--accent-brand-hover) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--accent-brand-shadow-md);
+}
+
+.product-card-add-btn:active:not(:disabled),
+.product-details-add-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+

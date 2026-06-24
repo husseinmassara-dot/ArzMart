@@ -922,7 +922,11 @@ const additionalCategories = [
   { name_ar: 'إكسسوارات', name_en: 'Accessories', image_url: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'ملابس', name_en: 'Clothing', image_url: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=300&q=80' },
   { name_ar: 'زجاج', name_en: 'Glassware', image_url: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=300&q=80' },
-  { name_ar: 'أحذية', name_en: 'Shoes', image_url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=300&q=80' }
+  { name_ar: 'أحذية', name_en: 'Shoes', image_url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'ساعات', name_en: 'Watches', image_url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'هواتف', name_en: 'Phones', image_url: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'أدوات منزلية', name_en: 'Home & Kitchen', image_url: 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?auto=format&fit=crop&w=300&q=80' },
+  { name_ar: 'طعام حيوانات', name_en: 'Pets', image_url: 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?auto=format&fit=crop&w=300&q=80' }
 ];
 
 const additionalProducts = {

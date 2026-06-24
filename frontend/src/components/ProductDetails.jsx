@@ -487,9 +487,9 @@ export default function ProductDetails({ product, onClose, onRefresh, setCurrent
                     }
                   }}
                   disabled={currentStock <= 0}
-                  className="input-field"
+                  className="input-field product-details-add-btn"
                   style={{
-                    backgroundColor: currentStock > 0 ? 'var(--accent-blue)' : 'var(--border-color)',
+                    backgroundColor: currentStock > 0 ? 'var(--accent-brand)' : 'var(--border-color)',
                     color: currentStock > 0 ? 'white' : 'var(--text-light)',
                     border: 'none',
                     fontWeight: '700',

@@ -1966,7 +1966,7 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* --- 3. 6 ICON-GRID NAVIGATION --- */}
+                  {/* --- 3. DYNAMIC ICON-GRID NAVIGATION --- */}
                   <div className="icon-navigation-grid" style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
@@ -1987,32 +1987,34 @@ export default function App() {
                         gap: '8px',
                         padding: '16px',
                         backgroundColor: 'var(--bg-secondary)',
-                        border: '1px solid var(--border-color)',
+                        border: selectedCategory === '' ? '2px solid var(--accent-brand)' : '1px solid var(--border-color)',
                         borderRadius: '16px',
                         cursor: 'pointer',
-                        boxShadow: 'var(--shadow-sm)',
-                        transition: 'transform 0.2s, background-color 0.2s'
+                        boxShadow: selectedCategory === '' ? '0 0 12px var(--accent-brand-shadow)' : 'var(--shadow-sm)',
+                        transition: 'transform 0.2s, background-color 0.2s, border-color 0.2s',
+                        transform: selectedCategory === '' ? 'scale(1.03)' : 'none'
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-4px)';
+                        e.currentTarget.style.transform = 'translateY(-4px) scale(1.03)';
                         e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.transform = selectedCategory === '' ? 'translateY(0) scale(1.03)' : 'translateY(0)';
                         e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
                       }}
                     >
                       <div style={{
-                        width: '40px',
-                        height: '40px',
+                        width: '48px',
+                        height: '48px',
                         borderRadius: '50%',
                         backgroundColor: 'var(--accent-brand-rgba)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: 'var(--accent-brand)'
+                        color: 'var(--accent-brand)',
+                        flexShrink: 0
                       }}>
-                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.5" fill="none">
+                        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2.5" fill="none">
                           <rect x="3" y="3" width="7" height="7" rx="1" />
                           <rect x="14" y="3" width="7" height="7" rx="1" />
                           <rect x="14" y="14" width="7" height="7" rx="1" />
@@ -2024,238 +2026,83 @@ export default function App() {
                       </span>
                     </button>
 
-                    {/* Electronics */}
-                    <button
-                      onClick={() => handleCategoryClick('electronic', 'إلكترونيات')}
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        padding: '16px',
-                        backgroundColor: 'var(--bg-secondary)',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '16px',
-                        cursor: 'pointer',
-                        boxShadow: 'var(--shadow-sm)',
-                        transition: 'transform 0.2s, background-color 0.2s'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-4px)';
-                        e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
-                      }}
-                    >
-                      <div style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '50%',
-                        backgroundColor: 'var(--accent-brand-rgba)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'var(--accent-brand)'
-                      }}>
-                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-                          <line x1="8" y1="21" x2="16" y2="21" />
-                          <line x1="12" y1="17" x2="12" y2="21" />
-                        </svg>
-                      </div>
-                      <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-primary)' }}>
-                        {lang === 'ar' ? 'إلكترونيات' : 'Electronics'}
-                      </span>
-                    </button>
+                    {/* Dynamic Database Categories */}
+                    {categories
+                      .filter(cat => {
+                        const nameEn = (cat.name_en || '').toLowerCase();
+                        const nameAr = (cat.name_ar || '');
+                        if (nameEn.includes('test') || nameAr.includes('تجريبي')) return false;
+                        if (nameEn === 'apple' && !cat.image_url) return false;
+                        return true;
+                      })
+                      .map(cat => {
+                        const isSelected = selectedCategory === cat.id;
+                        const catImg = cat.image_url 
+                          ? (cat.image_url.startsWith('http') || cat.image_url.startsWith('data:') ? cat.image_url : `${apiHost}${cat.image_url}`)
+                          : 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=300&q=80';
+                        const catName = lang === 'ar' ? cat.name_ar : cat.name_en;
 
-                    {/* Office */}
-                    <button
-                      onClick={() => handleCategoryClick('office', 'مكتب')}
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        padding: '16px',
-                        backgroundColor: 'var(--bg-secondary)',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '16px',
-                        cursor: 'pointer',
-                        boxShadow: 'var(--shadow-sm)',
-                        transition: 'transform 0.2s, background-color 0.2s'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-4px)';
-                        e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
-                      }}
-                    >
-                      <div style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '50%',
-                        backgroundColor: 'var(--accent-brand-rgba)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'var(--accent-brand)'
-                      }}>
-                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                          <polyline points="14 2 14 8 20 8" />
-                        </svg>
-                      </div>
-                      <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-primary)' }}>
-                        {lang === 'ar' ? 'لوازم المكتب' : 'Office'}
-                      </span>
-                    </button>
-
-                    {/* Pets */}
-                    <button
-                      onClick={() => handleCategoryClick('pet', 'حيوان')}
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        padding: '16px',
-                        backgroundColor: 'var(--bg-secondary)',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '16px',
-                        cursor: 'pointer',
-                        boxShadow: 'var(--shadow-sm)',
-                        transition: 'transform 0.2s, background-color 0.2s'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-4px)';
-                        e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
-                      }}
-                    >
-                      <div style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '50%',
-                        backgroundColor: 'var(--accent-brand-rgba)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'var(--accent-brand)'
-                      }}>
-                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.5" fill="none">
-                          <path d="M12 14c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm-6-2c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm16 0c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-4-7.5c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2.5zm-8 0c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2.5z" />
-                        </svg>
-                      </div>
-                      <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-primary)' }}>
-                        {lang === 'ar' ? 'طعام حيوانات' : 'Pets'}
-                      </span>
-                    </button>
-
-                    {/* Toys */}
-                    <button
-                      onClick={() => handleCategoryClick('toy', 'ألعاب')}
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        padding: '16px',
-                        backgroundColor: 'var(--bg-secondary)',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '16px',
-                        cursor: 'pointer',
-                        boxShadow: 'var(--shadow-sm)',
-                        transition: 'transform 0.2s, background-color 0.2s'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-4px)';
-                        e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
-                      }}
-                    >
-                      <div style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '50%',
-                        backgroundColor: 'var(--accent-brand-rgba)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'var(--accent-brand)'
-                      }}>
-                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="2" y="6" width="20" height="12" rx="3" ry="3" />
-                          <line x1="6" y1="12" x2="10" y2="12" />
-                          <line x1="8" y1="10" x2="8" y2="14" />
-                          <circle cx="15.5" cy="12" r="1" />
-                          <circle cx="18.5" cy="12" r="1" />
-                        </svg>
-                      </div>
-                      <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-primary)' }}>
-                        {lang === 'ar' ? 'ألعاب أطفال' : 'Toys'}
-                      </span>
-                    </button>
-
-                    {/* Home */}
-                    <button
-                      onClick={() => handleCategoryClick('home', 'منزل')}
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        padding: '16px',
-                        backgroundColor: 'var(--bg-secondary)',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '16px',
-                        cursor: 'pointer',
-                        boxShadow: 'var(--shadow-sm)',
-                        transition: 'transform 0.2s, background-color 0.2s'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-4px)';
-                        e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
-                      }}
-                    >
-                      <div style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '50%',
-                        backgroundColor: 'var(--accent-brand-rgba)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'var(--accent-brand)'
-                      }}>
-                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                          <polyline points="9 22 9 12 15 12 15 22" />
-                        </svg>
-                      </div>
-                      <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-primary)' }}>
-                        {lang === 'ar' ? 'أدوات منزلية' : 'Home'}
-                      </span>
-                    </button>
+                        return (
+                          <button
+                            key={cat.id}
+                            onClick={() => {
+                              setSelectedCategory(cat.id);
+                              setSearchVal('');
+                            }}
+                            style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '8px',
+                              padding: '16px',
+                              backgroundColor: 'var(--bg-secondary)',
+                              border: isSelected ? '2px solid var(--accent-brand)' : '1px solid var(--border-color)',
+                              borderRadius: '16px',
+                              cursor: 'pointer',
+                              boxShadow: isSelected ? '0 0 12px var(--accent-brand-shadow)' : 'var(--shadow-sm)',
+                              transition: 'transform 0.2s, background-color 0.2s, border-color 0.2s',
+                              transform: isSelected ? 'scale(1.03)' : 'none'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'translateY(-4px) scale(1.03)';
+                              e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = isSelected ? 'translateY(0) scale(1.03)' : 'translateY(0)';
+                              e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+                            }}
+                          >
+                            <div style={{
+                              width: '48px',
+                              height: '48px',
+                              borderRadius: '50%',
+                              overflow: 'hidden',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              backgroundColor: 'var(--bg-tertiary)',
+                              border: isSelected ? '2px solid var(--accent-brand)' : '2px solid var(--border-color)',
+                              flexShrink: 0,
+                              boxSizing: 'border-box'
+                            }}>
+                              <img 
+                                src={catImg} 
+                                alt={catName} 
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover'
+                                }} 
+                              />
+                            </div>
+                            <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-primary)', textAlign: 'center' }}>
+                              {catName}
+                            </span>
+                          </button>
+                        );
+                      })
+                    }
                   </div>
 
                   {/* --- 4. BOTTOM PROMO BANNER --- */}
