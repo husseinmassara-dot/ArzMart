@@ -771,7 +771,7 @@ export default function App() {
             backgroundColor: 'var(--bg-secondary)',
             padding: '30px',
             borderRadius: '16px',
-            border: '2px solid #10b981',
+            border: '2px solid var(--accent-brand)',
             textAlign: 'center',
             maxWidth: '400px',
             boxShadow: 'var(--shadow-lg)',
@@ -784,8 +784,8 @@ export default function App() {
               width: '64px',
               height: '64px',
               borderRadius: '50%',
-              backgroundColor: 'rgba(16, 185, 129, 0.1)',
-              color: '#10b981',
+              backgroundColor: 'var(--accent-brand-rgba)',
+              color: 'var(--accent-brand)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -813,7 +813,7 @@ export default function App() {
                 }}
                 className="input-field"
                 style={{
-                  backgroundColor: '#10b981',
+                  backgroundColor: 'var(--accent-brand)',
                   color: 'white',
                   border: 'none',
                   fontWeight: '700',
@@ -1168,9 +1168,9 @@ export default function App() {
                   }}
                   className="input-field animate-pulse"
                   style={{
-                    backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                    color: '#10b981',
-                    border: '1px solid #10b981',
+                    backgroundColor: 'var(--accent-brand-rgba)',
+                    color: 'var(--accent-brand)',
+                    border: '1px solid var(--accent-brand)',
                     fontWeight: '700',
                     cursor: 'pointer',
                     marginTop: '4px',
@@ -1341,8 +1341,8 @@ export default function App() {
                         fontWeight: 'bold',
                         padding: '4px 12px',
                         borderRadius: '12px',
-                        backgroundColor: o.status === 'pending' ? 'rgba(239,68,68,0.1)' : o.status === 'processing' ? 'rgba(59,130,246,0.1)' : o.status === 'shipped' ? 'rgba(217,119,6,0.1)' : 'rgba(16,185,129,0.1)',
-                        color: o.status === 'pending' ? '#ef4444' : o.status === 'processing' ? 'var(--accent-blue)' : o.status === 'shipped' ? '#d97706' : '#10b981'
+                        backgroundColor: o.status === 'pending' ? 'rgba(239,68,68,0.1)' : o.status === 'processing' ? 'rgba(59,130,246,0.1)' : o.status === 'shipped' ? 'rgba(217,119,6,0.1)' : 'var(--accent-brand-rgba)',
+                        color: o.status === 'pending' ? '#ef4444' : o.status === 'processing' ? 'var(--accent-blue)' : o.status === 'shipped' ? '#d97706' : 'var(--accent-brand)'
                       }}>
                         {t(o.status)}
                       </span>
@@ -1567,11 +1567,11 @@ export default function App() {
                         width: '44px',
                         height: '44px',
                         borderRadius: '50%',
-                        backgroundColor: 'rgba(16,185,129,0.08)',
+                        backgroundColor: 'var(--accent-brand-rgba)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: '#10b981',
+                        color: 'var(--accent-brand)',
                         flexShrink: 0
                       }}>
                         <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
@@ -1605,11 +1605,11 @@ export default function App() {
                         width: '44px',
                         height: '44px',
                         borderRadius: '50%',
-                        backgroundColor: 'rgba(16,185,129,0.08)',
+                        backgroundColor: 'var(--accent-brand-rgba)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: '#10b981',
+                        color: 'var(--accent-brand)',
                         flexShrink: 0
                       }}>
                         <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
@@ -1646,11 +1646,11 @@ export default function App() {
                         width: '44px',
                         height: '44px',
                         borderRadius: '50%',
-                        backgroundColor: 'rgba(16,185,129,0.08)',
+                        backgroundColor: 'var(--accent-brand-rgba)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: '#10b981',
+                        color: 'var(--accent-brand)',
                         flexShrink: 0
                       }}>
                         <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
@@ -1734,7 +1734,7 @@ export default function App() {
                           width: '28px',
                           height: '28px',
                           borderRadius: '50%',
-                          backgroundColor: '#10b981',
+                          backgroundColor: 'var(--accent-brand)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -1806,7 +1806,7 @@ export default function App() {
                           width: '28px',
                           height: '28px',
                           borderRadius: '50%',
-                          backgroundColor: '#10b981',
+                          backgroundColor: 'var(--accent-brand)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -1878,7 +1878,7 @@ export default function App() {
                           width: '28px',
                           height: '28px',
                           borderRadius: '50%',
-                          backgroundColor: '#10b981',
+                          backgroundColor: 'var(--accent-brand)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -1950,7 +1950,7 @@ export default function App() {
                           width: '28px',
                           height: '28px',
                           borderRadius: '50%',
-                          backgroundColor: '#10b981',
+                          backgroundColor: 'var(--accent-brand)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -2006,11 +2006,11 @@ export default function App() {
                         width: '40px',
                         height: '40px',
                         borderRadius: '50%',
-                        backgroundColor: 'rgba(16,185,129,0.08)',
+                        backgroundColor: 'var(--accent-brand-rgba)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: '#10b981'
+                        color: 'var(--accent-brand)'
                       }}>
                         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.5" fill="none">
                           <rect x="3" y="3" width="7" height="7" rx="1" />
@@ -2054,11 +2054,11 @@ export default function App() {
                         width: '40px',
                         height: '40px',
                         borderRadius: '50%',
-                        backgroundColor: 'rgba(16,185,129,0.08)',
+                        backgroundColor: 'var(--accent-brand-rgba)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: '#10b981'
+                        color: 'var(--accent-brand)'
                       }}>
                         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
                           <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
@@ -2101,11 +2101,11 @@ export default function App() {
                         width: '40px',
                         height: '40px',
                         borderRadius: '50%',
-                        backgroundColor: 'rgba(16,185,129,0.08)',
+                        backgroundColor: 'var(--accent-brand-rgba)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: '#10b981'
+                        color: 'var(--accent-brand)'
                       }}>
                         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
@@ -2147,11 +2147,11 @@ export default function App() {
                         width: '40px',
                         height: '40px',
                         borderRadius: '50%',
-                        backgroundColor: 'rgba(16,185,129,0.08)',
+                        backgroundColor: 'var(--accent-brand-rgba)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: '#10b981'
+                        color: 'var(--accent-brand)'
                       }}>
                         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.5" fill="none">
                           <path d="M12 14c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm-6-2c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm16 0c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-4-7.5c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2.5zm-8 0c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2.5z" />
@@ -2192,11 +2192,11 @@ export default function App() {
                         width: '40px',
                         height: '40px',
                         borderRadius: '50%',
-                        backgroundColor: 'rgba(16,185,129,0.08)',
+                        backgroundColor: 'var(--accent-brand-rgba)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: '#10b981'
+                        color: 'var(--accent-brand)'
                       }}>
                         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
                           <rect x="2" y="6" width="20" height="12" rx="3" ry="3" />
@@ -2241,11 +2241,11 @@ export default function App() {
                         width: '40px',
                         height: '40px',
                         borderRadius: '50%',
-                        backgroundColor: 'rgba(16,185,129,0.08)',
+                        backgroundColor: 'var(--accent-brand-rgba)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: '#10b981'
+                        color: 'var(--accent-brand)'
                       }}>
                         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
                           <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />

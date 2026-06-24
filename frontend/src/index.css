@@ -45,6 +45,12 @@ body, .dashboard-card, nav, header, footer, aside,
   --accent-blue-hover: #004085;
   --accent-red-gold: #d9383a; /* Red in Light mode */
   --accent-red-gold-hover: #b52a2b;
+  --accent-brand: #059669; /* Forest green */
+  --accent-brand-hover: #047857;
+  --accent-brand-rgba: rgba(5, 150, 105, 0.08);
+  --accent-brand-shadow: rgba(5, 150, 105, 0.2);
+  --accent-brand-shadow-md: rgba(5, 150, 105, 0.3);
+  --accent-brand-shadow-lg: rgba(5, 150, 105, 0.4);
   
   --border-color: #e2e8f0;
   --input-bg: #ffffff;
@@ -95,6 +101,12 @@ body, .dashboard-card, nav, header, footer, aside,
   --accent-blue-hover: #2563eb;
   --accent-red-gold: #d97706; /* Gold/Amber in Dark mode */
   --accent-red-gold-hover: #b45309;
+  --accent-brand: #10b981; /* Neon green */
+  --accent-brand-hover: #059669;
+  --accent-brand-rgba: rgba(16, 185, 129, 0.08);
+  --accent-brand-shadow: rgba(16, 185, 129, 0.2);
+  --accent-brand-shadow-md: rgba(16, 185, 129, 0.3);
+  --accent-brand-shadow-lg: rgba(16, 185, 129, 0.4);
   
   --border-color: #1e293b;
   --input-bg: #1e293b;
@@ -603,6 +615,44 @@ button.input-field {
     font-size: 0.85rem !important;
     width: 100% !important;
     max-width: 200px !important;
+  }
+}
+
+/* Dashboard Responsiveness */
+@media (max-width: 768px) {
+  /* Allow tables to scroll horizontally to avoid layout breakage */
+  .table-responsive,
+  table,
+  .table-container,
+  .dashboard-table-wrapper {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Stack grid layouts to single column on mobile */
+  .dashboard-grid,
+  .stats-grid,
+  .grid-2,
+  .grid-3 {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  
+  /* Flex containers stack vertically on mobile */
+  .dashboard-actions-bar,
+  .filter-bar,
+  .panel-header-actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+  
+  .dashboard-actions-bar > *,
+  .filter-bar > *,
+  .panel-header-actions > * {
+    width: 100% !important;
   }
 }
 

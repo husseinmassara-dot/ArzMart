@@ -250,13 +250,13 @@ export default function AdminDashboard({ setCurrentView }) {
     flexDirection: 'column',
     gap: '24px',
     position: 'fixed',
-    top: '70px',
+    top: '0',
     bottom: '0',
     left: lang === 'ar' ? 'auto' : '0',
     right: lang === 'ar' ? '0' : 'auto',
-    height: 'calc(100vh - 70px)',
+    height: '100vh',
     overflowY: 'auto',
-    zIndex: 1100,
+    zIndex: 10000,
     transform: isSidebarOpen ? 'translateX(0)' : (lang === 'ar' ? 'translateX(100%)' : 'translateX(-100%)'),
     transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     boxShadow: isSidebarOpen ? '0 10px 25px -5px rgba(0,0,0,0.3), 0 8px 10px -6px rgba(0,0,0,0.3)' : 'none'
@@ -269,20 +269,39 @@ export default function AdminDashboard({ setCurrentView }) {
     flexDirection: 'column',
     gap: '24px',
     position: 'sticky',
-    top: '70px',
-    height: 'calc(100vh - 70px)',
+    top: '110px',
+    height: 'calc(100vh - 110px)',
     overflowY: 'auto'
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: 'calc(100vh - 70px)', direction: lang === 'ar' ? 'rtl' : 'ltr' }}>
+    <div style={{ display: 'flex', minHeight: 'calc(100vh - 110px)', direction: lang === 'ar' ? 'rtl' : 'ltr' }}>
       
       {/* Sidebar Panel */}
       <aside className="no-print" style={sidebarStyle}>
         <div style={{ padding: '0 10px' }}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-primary)' }}>
-            {t('admin_title')}
-          </h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+              {t('admin_title')}
+            </h3>
+            {isMobile && (
+              <button
+                onClick={() => setIsSidebarOpen(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-light)',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  padding: '4px 8px',
+                  lineHeight: 1
+                }}
+              >
+                ×
+              </button>
+            )}
+          </div>
           <a 
             href="/"
             onClick={(e) => {
@@ -489,54 +508,58 @@ export default function AdminDashboard({ setCurrentView }) {
           onClick={() => setIsSidebarOpen(false)}
           style={{
             position: 'fixed',
-            top: '70px',
+            top: '0',
             left: 0,
             right: 0,
             bottom: 0,
             backgroundColor: 'rgba(0, 0, 0, 0.4)',
             backdropFilter: 'blur(3px)',
-            zIndex: 1050,
+            zIndex: 9999,
             animation: 'fadeIn 0.2s ease-out'
           }}
         />
       )}
 
-      {/* Floating Sidebar Trigger Button for Mobile */}
-      {isMobile && (
-        <button
-          type="button"
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          style={{
-            position: 'fixed',
-            top: '120px',
-            [lang === 'ar' ? 'right' : 'left']: isSidebarOpen ? '240px' : '0',
-            transform: 'translateY(-50%)',
-            zIndex: 1200,
-            backgroundColor: 'var(--accent-blue)',
-            color: 'white',
-            border: 'none',
-            outline: 'none',
-            width: '42px',
-            height: '46px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
-            cursor: 'pointer',
-            transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1), right 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease',
-            borderTopRightRadius: lang === 'ar' ? '0' : '8px',
-            borderBottomRightRadius: lang === 'ar' ? '0' : '8px',
-            borderTopLeftRadius: lang === 'ar' ? '8px' : '0',
-            borderBottomLeftRadius: lang === 'ar' ? '8px' : '0',
-            padding: 0
-          }}
-        >
-          {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
-      )}
-
       {/* Main Content Area */}
       <main style={{ flex: '1', padding: '24px', backgroundColor: 'var(--bg-primary)', overflowY: 'auto' }}>
+        {/* Sticky Mobile Sub-header Bar */}
+        {isMobile && (
+          <div className="no-print" style={{
+            position: 'sticky',
+            top: '0',
+            zIndex: 99,
+            backgroundColor: 'var(--bg-secondary)',
+            borderBottom: '1px solid var(--border-color)',
+            margin: '-24px -24px 20px -24px',
+            padding: '12px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: 'var(--shadow-sm)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <button
+                type="button"
+                onClick={() => setIsSidebarOpen(true)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <Menu size={24} />
+              </button>
+              <h2 style={{ fontSize: '1rem', fontWeight: '800', margin: 0, color: 'var(--text-primary)' }}>
+                {menuItems.find(item => item.id === activeTab)?.name || t('admin_title')}
+              </h2>
+            </div>
+          </div>
+        )}
         
         {/* Stats Summary Cards */}
         {activeTab !== 'settings' && activeTab !== 'reports' && (
@@ -546,7 +569,7 @@ export default function AdminDashboard({ setCurrentView }) {
               <span style={{ fontSize: '0.75rem', color: 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{
                   width: '8px', height: '8px', borderRadius: '50%',
-                  backgroundColor: statsLoading ? '#f59e0b' : '#10b981',
+                  backgroundColor: statsLoading ? '#f59e0b' : 'var(--accent-brand)',
                   display: 'inline-block',
                   animation: statsLoading ? 'pulse 1s infinite' : 'none'
                 }} />
@@ -569,7 +592,7 @@ export default function AdminDashboard({ setCurrentView }) {
             <div 
               className="dashboard-card" 
               style={{ 
-                borderLeft: '4px solid #10b981',
+                borderLeft: '4px solid var(--accent-brand)',
                 cursor: hasPermission('reports') ? 'pointer' : 'default',
                 transition: 'transform 0.2s ease, box-shadow 0.2s ease'
               }}
@@ -600,8 +623,8 @@ export default function AdminDashboard({ setCurrentView }) {
                     {formatPrice(stats.delivered_revenue_usd || 0)}
                   </h3>
                 </div>
-                <div style={{ backgroundColor: 'rgba(16,185,129,0.1)', padding: '10px', borderRadius: '50%' }}>
-                  <TrendingUp size={22} color="#10b981" />
+                <div style={{ backgroundColor: 'var(--accent-brand-rgba)', padding: '10px', borderRadius: '50%' }}>
+                  <TrendingUp size={22} color="var(--accent-brand)" />
                 </div>
               </div>
             </div>
@@ -1162,9 +1185,9 @@ export default function AdminDashboard({ setCurrentView }) {
               <div style={{
                 marginTop: '16px',
                 padding: '10px 14px',
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
-                color: '#10b981',
+                backgroundColor: 'var(--accent-brand-rgba)',
+                border: '1px solid var(--accent-brand-shadow-md)',
+                color: 'var(--accent-brand)',
                 fontSize: '0.8rem',
                 fontWeight: '600',
                 borderRadius: '8px'

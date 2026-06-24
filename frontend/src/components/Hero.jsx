@@ -117,7 +117,7 @@ export default function Hero() {
         <button 
           className="hero-slider-button"
           style={{
-            backgroundColor: '#10b981',
+            backgroundColor: 'var(--accent-brand)',
             color: 'white',
             border: 'none',
             padding: '12px 28px',
@@ -128,15 +128,15 @@ export default function Hero() {
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            boxShadow: '0 4px 14px rgba(16,185,129,0.4)',
+            boxShadow: '0 4px 14px var(--accent-brand-shadow-lg)',
             transition: 'transform 0.2s, background-color 0.2s'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#059669';
+            e.currentTarget.style.backgroundColor = 'var(--accent-brand-hover)';
             e.currentTarget.style.transform = 'scale(1.05)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#10b981';
+            e.currentTarget.style.backgroundColor = 'var(--accent-brand)';
             e.currentTarget.style.transform = 'scale(1)';
           }}
         >
@@ -228,7 +228,7 @@ export default function Hero() {
                 width: currentSlide === i ? '24px' : '8px',
                 height: '8px',
                 borderRadius: '4px',
-                backgroundColor: currentSlide === i ? '#10b981' : 'rgba(255,255,255,0.4)',
+                backgroundColor: currentSlide === i ? 'var(--accent-brand)' : 'rgba(255,255,255,0.4)',
                 cursor: 'pointer',
                 transition: 'all 0.3s ease'
               }}

@@ -46,6 +46,9 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
   };
 
   const isRtl = lang === 'ar';
+  const logoSrc = settings?.logo_url 
+    ? (settings.logo_url.startsWith('http') ? settings.logo_url : `${apiHost}${settings.logo_url}`)
+    : '/logo.png';
   const parentCategories = categories.filter(c => !c.parent_id);
 
   // Helper to map category names to emojis
@@ -98,7 +101,7 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
                 fontSize: '0.8rem'
               }}
             >
-              <DollarSign size={13} style={{ color: '#10b981' }} />
+              <DollarSign size={13} style={{ color: 'var(--accent-brand)' }} />
               <span>{currency === 'USD' ? 'USD $' : 'ل.ل LBP'}</span>
             </button>
 
@@ -218,7 +221,7 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
                   position: 'absolute',
                   top: '-3px',
                   right: '-3px',
-                  backgroundColor: '#10b981', // green badge
+                  backgroundColor: 'var(--accent-brand)', // green badge
                   color: 'white',
                   borderRadius: '50%',
                   minWidth: '20px',
@@ -255,7 +258,7 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
                 width: '45px',
                 height: '45px',
                 cursor: 'pointer',
-                color: user ? '#10b981' : 'var(--text-primary)',
+                color: user ? 'var(--accent-brand)' : 'var(--text-primary)',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
                 transition: 'transform 0.2s'
               }}
@@ -443,14 +446,14 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
                     width: '36px',
                     height: '36px',
                     borderRadius: '50%',
-                    backgroundColor: '#10b981', // green search button
+                    backgroundColor: 'var(--accent-brand)', // green search button
                     border: 'none',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: 'white',
                     cursor: 'pointer',
-                    boxShadow: '0 2px 6px rgba(16,185,129,0.2)'
+                    boxShadow: '0 2px 6px var(--accent-brand-shadow)'
                   }}
                 >
                   <Search size={14} strokeWidth={2.5} />
@@ -574,38 +577,26 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
             className="brand-logo-link"
             style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', textDecoration: 'none' }}
           >
-            {/* Logo Badge matching the screenshot */}
+            {/* Restored image logo */}
             <div style={{
               width: '45px',
               height: '45px',
               borderRadius: '10px',
-              backgroundColor: '#c1272d', // Red color
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '2px',
-              boxShadow: '0 2px 8px rgba(193,39,45,0.25)',
-              position: 'relative'
+              overflow: 'hidden',
+              backgroundColor: 'transparent'
             }}>
-              {/* White circle containing green cedar tree */}
-              <div style={{
-                width: '28px',
-                height: '28px',
-                borderRadius: '50%',
-                backgroundColor: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden'
-              }}>
-                {/* Green cedar tree SVG */}
-                <svg viewBox="0 0 100 100" style={{ width: '22px', height: '22px', fill: '#15803d' }}>
-                  <path d="M50 10 L68 40 L60 40 L76 65 L64 65 L84 85 L16 85 L36 65 L24 65 L40 40 L32 40 Z" />
-                  <rect x="46" y="85" width="8" height="12" fill="#78350f" />
-                </svg>
-              </div>
-              <span style={{ fontSize: '7px', fontWeight: '800', color: 'white', marginTop: '1px', textTransform: 'uppercase', letterSpacing: '0.2px' }}>Arz Mart</span>
+              <img 
+                src={logoSrc} 
+                alt="Arz Mart Logo" 
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = '/logo.png';
+                }}
+              />
             </div>
 
             <div className="brand-text" style={{ display: 'flex', flexDirection: 'column' }}>
@@ -681,7 +672,7 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
                   gap: '6px',
                   padding: '8px 16px',
                   borderRadius: '20px',
-                  backgroundColor: selectedCategory === '' ? '#10b981' : 'var(--bg-primary)',
+                  backgroundColor: selectedCategory === '' ? 'var(--accent-brand)' : 'var(--bg-primary)',
                   color: selectedCategory === '' ? 'white' : 'var(--text-primary)',
                   fontWeight: '700',
                   fontSize: '0.82rem',
@@ -718,7 +709,7 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
                       gap: '6px',
                       padding: '8px 16px',
                       borderRadius: '20px',
-                      backgroundColor: isActive ? '#10b981' : 'var(--bg-primary)',
+                      backgroundColor: isActive ? 'var(--accent-brand)' : 'var(--bg-primary)',
                       color: isActive ? 'white' : 'var(--text-primary)',
                       fontWeight: '700',
                       fontSize: '0.82rem',
@@ -824,14 +815,14 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
                   width: '40px',
                   height: '40px',
                   borderRadius: '50%',
-                  backgroundColor: '#10b981',
+                  backgroundColor: 'var(--accent-brand)',
                   color: 'white',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontWeight: '900',
                   fontSize: '1.05rem',
-                  boxShadow: '0 2px 8px rgba(16,185,129,0.3)'
+                  boxShadow: '0 2px 8px var(--accent-brand-shadow-md)'
                 }}>
                   {user.username.charAt(0).toUpperCase()}
                 </div>
@@ -850,11 +841,11 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
                   width: '40px',
                   height: '40px',
                   borderRadius: '50%',
-                  backgroundColor: 'rgba(16,185,129,0.08)',
+                  backgroundColor: 'var(--accent-brand-rgba)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#10b981',
+                  color: 'var(--accent-brand)',
                   flexShrink: 0
                 }}>
                   <User size={18} />
@@ -876,7 +867,7 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
               {/* Language Selector Capsule Card */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '14px', backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '16px', boxShadow: 'var(--shadow-sm)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <Globe size={15} style={{ color: '#10b981' }} />
+                  <Globe size={15} style={{ color: 'var(--accent-brand)' }} />
                   <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-primary)' }}>
                     {isRtl ? 'لغة التطبيق' : 'Language'}
                   </span>
@@ -889,12 +880,12 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
                       padding: '8px',
                       borderRadius: '8px',
                       border: 'none',
-                      backgroundColor: lang === 'ar' ? '#10b981' : 'transparent',
+                      backgroundColor: lang === 'ar' ? 'var(--accent-brand)' : 'transparent',
                       color: lang === 'ar' ? 'white' : 'var(--text-secondary)',
                       fontWeight: '800',
                       fontSize: '0.78rem',
                       cursor: 'pointer',
-                      boxShadow: lang === 'ar' ? '0 2px 6px rgba(16,185,129,0.2)' : 'none',
+                      boxShadow: lang === 'ar' ? '0 2px 6px var(--accent-brand-shadow)' : 'none',
                       transition: 'all 0.2s'
                     }}
                   >
@@ -907,12 +898,12 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
                       padding: '8px',
                       borderRadius: '8px',
                       border: 'none',
-                      backgroundColor: lang === 'en' ? '#10b981' : 'transparent',
+                      backgroundColor: lang === 'en' ? 'var(--accent-brand)' : 'transparent',
                       color: lang === 'en' ? 'white' : 'var(--text-secondary)',
                       fontWeight: '800',
                       fontSize: '0.78rem',
                       cursor: 'pointer',
-                      boxShadow: lang === 'en' ? '0 2px 6px rgba(16,185,129,0.2)' : 'none',
+                      boxShadow: lang === 'en' ? '0 2px 6px var(--accent-brand-shadow)' : 'none',
                       transition: 'all 0.2s'
                     }}
                   >
@@ -924,7 +915,7 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
               {/* Currency Selector Capsule Card */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '14px', backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '16px', boxShadow: 'var(--shadow-sm)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <DollarSign size={15} style={{ color: '#10b981' }} />
+                  <DollarSign size={15} style={{ color: 'var(--accent-brand)' }} />
                   <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-primary)' }}>
                     {isRtl ? 'العملة المعروضة' : 'Display Currency'}
                   </span>
@@ -937,12 +928,12 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
                       padding: '8px',
                       borderRadius: '8px',
                       border: 'none',
-                      backgroundColor: currency === 'USD' ? '#10b981' : 'transparent',
+                      backgroundColor: currency === 'USD' ? 'var(--accent-brand)' : 'transparent',
                       color: currency === 'USD' ? 'white' : 'var(--text-secondary)',
                       fontWeight: '800',
                       fontSize: '0.78rem',
                       cursor: 'pointer',
-                      boxShadow: currency === 'USD' ? '0 2px 6px rgba(16,185,129,0.2)' : 'none',
+                      boxShadow: currency === 'USD' ? '0 2px 6px var(--accent-brand-shadow)' : 'none',
                       transition: 'all 0.2s'
                     }}
                   >
@@ -955,12 +946,12 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
                       padding: '8px',
                       borderRadius: '8px',
                       border: 'none',
-                      backgroundColor: currency === 'LBP' ? '#10b981' : 'transparent',
+                      backgroundColor: currency === 'LBP' ? 'var(--accent-brand)' : 'transparent',
                       color: currency === 'LBP' ? 'white' : 'var(--text-secondary)',
                       fontWeight: '800',
                       fontSize: '0.78rem',
                       cursor: 'pointer',
-                      boxShadow: currency === 'LBP' ? '0 2px 6px rgba(16,185,129,0.2)' : 'none',
+                      boxShadow: currency === 'LBP' ? '0 2px 6px var(--accent-brand-shadow)' : 'none',
                       transition: 'all 0.2s'
                     }}
                   >
@@ -972,7 +963,7 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
               {/* Theme Selector Capsule Card */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '14px', backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '16px', boxShadow: 'var(--shadow-sm)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  {theme === 'light' ? <Moon size={15} style={{ color: '#10b981' }} /> : <Sun size={15} style={{ color: '#10b981' }} />}
+                  {theme === 'light' ? <Moon size={15} style={{ color: 'var(--accent-brand)' }} /> : <Sun size={15} style={{ color: 'var(--accent-brand)' }} />}
                   <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-primary)' }}>
                     {isRtl ? 'مظهر التطبيق' : 'App Theme'}
                   </span>
@@ -985,12 +976,12 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
                       padding: '8px',
                       borderRadius: '8px',
                       border: 'none',
-                      backgroundColor: theme === 'light' ? '#10b981' : 'transparent',
+                      backgroundColor: theme === 'light' ? 'var(--accent-brand)' : 'transparent',
                       color: theme === 'light' ? 'white' : 'var(--text-secondary)',
                       fontWeight: '800',
                       fontSize: '0.78rem',
                       cursor: 'pointer',
-                      boxShadow: theme === 'light' ? '0 2px 6px rgba(16,185,129,0.2)' : 'none',
+                      boxShadow: theme === 'light' ? '0 2px 6px var(--accent-brand-shadow)' : 'none',
                       transition: 'all 0.2s',
                       display: 'flex',
                       alignItems: 'center',
@@ -1008,12 +999,12 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
                       padding: '8px',
                       borderRadius: '8px',
                       border: 'none',
-                      backgroundColor: theme === 'dark' ? '#10b981' : 'transparent',
+                      backgroundColor: theme === 'dark' ? 'var(--accent-brand)' : 'transparent',
                       color: theme === 'dark' ? 'white' : 'var(--text-secondary)',
                       fontWeight: '800',
                       fontSize: '0.78rem',
                       cursor: 'pointer',
-                      boxShadow: theme === 'dark' ? '0 2px 6px rgba(16,185,129,0.2)' : 'none',
+                      boxShadow: theme === 'dark' ? '0 2px 6px var(--accent-brand-shadow)' : 'none',
                       transition: 'all 0.2s',
                       display: 'flex',
                       alignItems: 'center',
@@ -1037,21 +1028,21 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
                   alignItems: 'center',
                   gap: '12px',
                   padding: '14px 16px',
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  background: 'linear-gradient(135deg, var(--accent-brand) 0%, var(--accent-brand-hover) 100%)',
                   borderRadius: '16px',
                   color: 'white',
                   textDecoration: 'none',
-                  boxShadow: '0 4px 15px rgba(16,185,129,0.3)',
+                  boxShadow: '0 4px 15px var(--accent-brand-shadow-md)',
                   transition: 'transform 0.2s, boxShadow 0.2s',
                   marginTop: '4px'
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'scale(1.02)';
-                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(16,185,129,0.4)';
+                  e.currentTarget.style.boxShadow = '0 6px 20px var(--accent-brand-shadow-lg)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(16,185,129,0.3)';
+                  e.currentTarget.style.boxShadow = '0 4px 15px var(--accent-brand-shadow-md)';
                 }}
               >
                 <div style={{
