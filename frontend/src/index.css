@@ -440,3 +440,169 @@ button.input-field {
   }
 }
 
+/* Responsive adjustments for header, hero, features, categories, and banners */
+
+/* Header Mobile Responsiveness */
+@media (max-width: 640px) {
+  .brand-text {
+    display: none !important;
+  }
+  
+  .header-main-container {
+    display: grid !important;
+    grid-template-columns: auto auto !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+  
+  .header-actions-wrapper {
+    grid-column: 1 !important;
+  }
+  
+  .brand-logo-link {
+    grid-column: 2 !important;
+    justify-self: end !important;
+  }
+  
+  .header-search-wrapper {
+    grid-column: 1 / span 2 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-top: 4px !important;
+  }
+}
+
+/* Hero Slider Responsiveness */
+@media (max-width: 768px) {
+  .hero-slider-container {
+    height: 320px !important;
+    border-radius: 16px !important;
+    margin: 12px 0 !important;
+  }
+  .hero-slider-content {
+    left: 20px !important;
+    right: 20px !important;
+    width: calc(100% - 40px) !important;
+    min-width: unset !important;
+  }
+  .hero-slider-title {
+    font-size: 1.8rem !important;
+  }
+  .hero-slider-desc {
+    font-size: 0.9rem !important;
+  }
+  .hero-slider-arrow {
+    width: 36px !important;
+    height: 36px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-slider-container {
+    height: 240px !important;
+  }
+  .hero-slider-title {
+    font-size: 1.4rem !important;
+  }
+  .hero-slider-desc {
+    font-size: 0.78rem !important;
+    line-height: 1.4 !important;
+  }
+  .hero-slider-button {
+    padding: 8px 18px !important;
+    font-size: 0.8rem !important;
+  }
+  .hero-slider-arrow {
+    display: none !important;
+  }
+}
+
+/* Feature Badges Mobile Responsiveness */
+@media (max-width: 600px) {
+  .feature-badges-container {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  .feature-badge-card {
+    min-width: 100% !important;
+  }
+}
+
+/* Featured Category Cards Mobile Responsiveness */
+@media (max-width: 600px) {
+  .featured-categories-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+  .category-promo-card {
+    height: 160px !important;
+  }
+  .category-card-overlay {
+    padding: 10px !important;
+  }
+  .category-card-title {
+    font-size: 0.95rem !important;
+  }
+  .category-card-arrow {
+    width: 22px !important;
+    height: 22px !important;
+  }
+  .category-card-shop-text {
+    font-size: 0.7rem !important;
+  }
+}
+
+/* 6-Icon Navigation Grid Mobile Responsiveness */
+@media (max-width: 600px) {
+  .icon-navigation-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 10px !important;
+  }
+  .icon-navigation-grid button {
+    padding: 10px 6px !important;
+    border-radius: 12px !important;
+  }
+  .icon-navigation-grid button span {
+    font-size: 0.72rem !important;
+  }
+  .icon-navigation-grid button div {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  .icon-navigation-grid button svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+}
+
+/* Gold Bottom Promo Banner Mobile Responsiveness */
+@media (max-width: 600px) {
+  .bottom-promo-banner {
+    flex-direction: column !important;
+    height: auto !important;
+    padding: 24px 20px !important;
+    gap: 16px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+  .bottom-promo-banner > div {
+    align-items: center !important;
+    text-align: center !important;
+  }
+  .bottom-promo-banner h2 {
+    font-size: 1.5rem !important;
+  }
+  .bottom-promo-banner p {
+    font-size: 0.9rem !important;
+  }
+  .bottom-promo-banner button {
+    padding: 8px 20px !important;
+    font-size: 0.85rem !important;
+    width: 100% !important;
+    max-width: 200px !important;
+  }
+}
+

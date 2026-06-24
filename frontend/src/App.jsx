@@ -1542,7 +1542,7 @@ export default function App() {
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
                   
                   {/* --- 1. FEATURE BADGES --- */}
-                  <div style={{
+                  <div className="feature-badges-container" style={{
                     display: 'flex',
                     flexWrap: 'wrap',
                     justifyContent: 'space-between',
@@ -1550,47 +1550,8 @@ export default function App() {
                     gap: '16px',
                     margin: '10px 0 20px 0'
                   }}>
-                    {/* Easy Return */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      flex: '1',
-                      minWidth: '220px',
-                      padding: '16px',
-                      backgroundColor: 'var(--bg-secondary)',
-                      borderRadius: '16px',
-                      border: '1px solid var(--border-color)',
-                      boxShadow: 'var(--shadow-sm)'
-                    }}>
-                      <div style={{
-                        width: '44px',
-                        height: '44px',
-                        borderRadius: '50%',
-                        backgroundColor: 'rgba(16,185,129,0.08)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#10b981',
-                        flexShrink: 0
-                      }}>
-                        <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="23 4 23 10 17 10" />
-                          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-                        </svg>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-primary)' }}>
-                          {lang === 'ar' ? 'إرجاع سهل' : 'Easy Return'}
-                        </div>
-                        <div style={{ fontSize: '0.78rem', color: 'var(--text-light)', fontWeight: '600', marginTop: '2px' }}>
-                          {lang === 'ar' ? 'ضمن 7 أيام' : 'Within 7 days'}
-                        </div>
-                      </div>
-                    </div>
-
                     {/* 24/7 Support */}
-                    <div style={{
+                    <div className="feature-badge-card" style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: '12px',
@@ -1628,7 +1589,7 @@ export default function App() {
                     </div>
 
                     {/* Fast Delivery */}
-                    <div style={{
+                    <div className="feature-badge-card" style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: '12px',
@@ -1669,7 +1630,7 @@ export default function App() {
                     </div>
 
                     {/* Original Products */}
-                    <div style={{
+                    <div className="feature-badge-card" style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: '12px',
@@ -1709,7 +1670,7 @@ export default function App() {
                   </div>
 
                   {/* --- 2. 4 FEATURED CATEGORY CARDS --- */}
-                  <div style={{
+                  <div className="featured-categories-grid" style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
                     gap: '20px',
@@ -1718,6 +1679,7 @@ export default function App() {
                     {/* Glasses Card */}
                     <div
                       onClick={() => handleCategoryClick('glasses', 'نظارات')}
+                      className="category-promo-card"
                       style={{
                         height: '300px',
                         position: 'relative',
@@ -1747,7 +1709,7 @@ export default function App() {
                       }} />
                       
                       {/* Gradient & Text Overlay */}
-                      <div style={{
+                      <div className="category-card-overlay" style={{
                         position: 'absolute',
                         bottom: '0',
                         left: '0',
@@ -1761,14 +1723,14 @@ export default function App() {
                         gap: '12px'
                       }}>
                         <div style={{ textAlign: isRtl ? 'right' : 'left' }}>
-                          <h3 style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-primary)', margin: '0 0 2px 0' }}>
+                          <h3 className="category-card-title" style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-primary)', margin: '0 0 2px 0' }}>
                             {lang === 'ar' ? 'نظارات' : 'Glasses'}
                           </h3>
-                          <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '700' }}>
+                          <span className="category-card-shop-text" style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '700' }}>
                             {lang === 'ar' ? 'تسوق الآن' : 'Shop Now'}
                           </span>
                         </div>
-                        <div style={{
+                        <div className="category-card-arrow" style={{
                           width: '28px',
                           height: '28px',
                           borderRadius: '50%',
@@ -1790,6 +1752,7 @@ export default function App() {
                     {/* Beauty Card */}
                     <div
                       onClick={() => handleCategoryClick('beauty', 'تجميل')}
+                      className="category-promo-card"
                       style={{
                         height: '300px',
                         position: 'relative',
@@ -1818,7 +1781,7 @@ export default function App() {
                         backgroundPosition: 'center',
                       }} />
                       
-                      <div style={{
+                      <div className="category-card-overlay" style={{
                         position: 'absolute',
                         bottom: '0',
                         left: '0',
@@ -1832,14 +1795,14 @@ export default function App() {
                         gap: '12px'
                       }}>
                         <div style={{ textAlign: isRtl ? 'right' : 'left' }}>
-                          <h3 style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-primary)', margin: '0 0 2px 0' }}>
+                          <h3 className="category-card-title" style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-primary)', margin: '0 0 2px 0' }}>
                             {lang === 'ar' ? 'أدوات تجميل' : 'Beauty Products'}
                           </h3>
-                          <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '700' }}>
+                          <span className="category-card-shop-text" style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '700' }}>
                             {lang === 'ar' ? 'تسوق الآن' : 'Shop Now'}
                           </span>
                         </div>
-                        <div style={{
+                        <div className="category-card-arrow" style={{
                           width: '28px',
                           height: '28px',
                           borderRadius: '50%',
@@ -1861,6 +1824,7 @@ export default function App() {
                     {/* Phones Card */}
                     <div
                       onClick={() => handleCategoryClick('phone', 'هواتف')}
+                      className="category-promo-card"
                       style={{
                         height: '300px',
                         position: 'relative',
@@ -1889,7 +1853,7 @@ export default function App() {
                         backgroundPosition: 'center',
                       }} />
                       
-                      <div style={{
+                      <div className="category-card-overlay" style={{
                         position: 'absolute',
                         bottom: '0',
                         left: '0',
@@ -1903,14 +1867,14 @@ export default function App() {
                         gap: '12px'
                       }}>
                         <div style={{ textAlign: isRtl ? 'right' : 'left' }}>
-                          <h3 style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-primary)', margin: '0 0 2px 0' }}>
+                          <h3 className="category-card-title" style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-primary)', margin: '0 0 2px 0' }}>
                             {lang === 'ar' ? 'هواتف' : 'Phones'}
                           </h3>
-                          <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '700' }}>
+                          <span className="category-card-shop-text" style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '700' }}>
                             {lang === 'ar' ? 'تسوق الآن' : 'Shop Now'}
                           </span>
                         </div>
-                        <div style={{
+                        <div className="category-card-arrow" style={{
                           width: '28px',
                           height: '28px',
                           borderRadius: '50%',
@@ -1932,6 +1896,7 @@ export default function App() {
                     {/* Accessories Card */}
                     <div
                       onClick={() => handleCategoryClick('accessories', 'إكسسوار')}
+                      className="category-promo-card"
                       style={{
                         height: '300px',
                         position: 'relative',
@@ -1960,7 +1925,7 @@ export default function App() {
                         backgroundPosition: 'center',
                       }} />
                       
-                      <div style={{
+                      <div className="category-card-overlay" style={{
                         position: 'absolute',
                         bottom: '0',
                         left: '0',
@@ -1974,14 +1939,14 @@ export default function App() {
                         gap: '12px'
                       }}>
                         <div style={{ textAlign: isRtl ? 'right' : 'left' }}>
-                          <h3 style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-primary)', margin: '0 0 2px 0' }}>
+                          <h3 className="category-card-title" style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-primary)', margin: '0 0 2px 0' }}>
                             {lang === 'ar' ? 'إكسسوارات' : 'Accessories'}
                           </h3>
-                          <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '700' }}>
+                          <span className="category-card-shop-text" style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '700' }}>
                             {lang === 'ar' ? 'تسوق الآن' : 'Shop Now'}
                           </span>
                         </div>
-                        <div style={{
+                        <div className="category-card-arrow" style={{
                           width: '28px',
                           height: '28px',
                           borderRadius: '50%',
@@ -2002,7 +1967,7 @@ export default function App() {
                   </div>
 
                   {/* --- 3. 6 ICON-GRID NAVIGATION --- */}
-                  <div style={{
+                  <div className="icon-navigation-grid" style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
                     gap: '16px',
@@ -2294,7 +2259,7 @@ export default function App() {
                   </div>
 
                   {/* --- 4. BOTTOM PROMO BANNER --- */}
-                  <div style={{
+                  <div className="bottom-promo-banner" style={{
                     height: '160px',
                     borderRadius: '24px',
                     overflow: 'hidden',

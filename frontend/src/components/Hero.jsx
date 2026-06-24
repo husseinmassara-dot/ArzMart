@@ -53,7 +53,7 @@ export default function Hero() {
   const isRtl = lang === 'ar';
 
   return (
-    <div className="no-print animate-scale" style={{
+    <div className="no-print animate-scale hero-slider-container" style={{
       position: 'relative',
       height: '420px',
       width: '100%',
@@ -91,8 +91,8 @@ export default function Hero() {
         textAlign: isRtl ? 'right' : 'left',
         gap: '16px',
         zIndex: 5
-      }} className="animate-fade">
-        <h1 style={{
+      }} className="animate-fade hero-slider-content">
+        <h1 className="hero-slider-title" style={{
           fontSize: '2.6rem',
           fontWeight: '900',
           lineHeight: '1.25',
@@ -102,7 +102,7 @@ export default function Hero() {
           {isRtl ? activeSlide.title_ar : activeSlide.title_en}
         </h1>
         
-        <p style={{
+        <p className="hero-slider-desc" style={{
           fontSize: '1.05rem',
           fontWeight: '500',
           color: 'rgba(255, 255, 255, 0.8)',
@@ -115,6 +115,7 @@ export default function Hero() {
 
         {/* Green "Shop Now" Button with shopping bag icon */}
         <button 
+          className="hero-slider-button"
           style={{
             backgroundColor: '#10b981',
             color: 'white',
@@ -153,6 +154,7 @@ export default function Hero() {
         <>
           <button
             onClick={handlePrev}
+            className="hero-slider-arrow hero-slider-arrow-prev"
             style={{
               position: 'absolute',
               top: '50%',
@@ -179,6 +181,7 @@ export default function Hero() {
           </button>
           <button
             onClick={handleNext}
+            className="hero-slider-arrow hero-slider-arrow-next"
             style={{
               position: 'absolute',
               top: '50%',

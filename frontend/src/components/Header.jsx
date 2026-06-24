@@ -181,7 +181,7 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
         boxShadow: 'var(--shadow-sm)',
         zIndex: 50
       }}>
-        <div className="container" style={{
+        <div className="container header-main-container" style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -190,7 +190,7 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
         }}>
           
           {/* Left Side: Circular White Buttons for Cart and User Account */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
+          <div className="header-actions-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
             {/* Cart Icon with green badge */}
             {currentView === 'store' && (
               <button
@@ -409,7 +409,7 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
 
           {/* Middle: Search Input (Fully rounded with circular green button) */}
           {currentView === 'store' && (
-            <div style={{ flex: '1', maxWidth: '460px', minWidth: '220px', position: 'relative' }}>
+            <div className="header-search-wrapper" style={{ flex: '1', maxWidth: '460px', minWidth: '220px', position: 'relative' }}>
               <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
                 <input
                   type="text"
@@ -571,6 +571,7 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
                 setCurrentView('store');
               }
             }}
+            className="brand-logo-link"
             style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', textDecoration: 'none' }}
           >
             {/* Logo Badge matching the screenshot */}
@@ -607,7 +608,7 @@ export default function Header({ currentView, setCurrentView, searchVal, setSear
               <span style={{ fontSize: '7px', fontWeight: '800', color: 'white', marginTop: '1px', textTransform: 'uppercase', letterSpacing: '0.2px' }}>Arz Mart</span>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div className="brand-text" style={{ display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-primary)', lineHeight: '1.1' }}>
                 Arz-Mart
               </span>
