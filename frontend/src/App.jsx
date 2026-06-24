@@ -2026,17 +2026,24 @@ export default function App() {
                       </span>
                     </button>
 
-                    {/* Dynamic Database Categories */}
+                    {/* Dynamic Database Categories — top-level parents only */}
                     {categories
                       .filter(cat => {
                         const nameEn = (cat.name_en || '').toLowerCase();
                         const nameAr = (cat.name_ar || '');
                         if (nameEn.includes('test') || nameAr.includes('تجريبي')) return false;
                         if (nameEn === 'apple' && !cat.image_url) return false;
+                        // Show only TOP-LEVEL (parent) categories in the main grid
+                        if (cat.parent_id) return false;
                         return true;
                       })
                       .map(cat => {
                         const isSelected = selectedCategory === cat.id;
+                        // Check if any subcategory of this parent is selected
+                        const hasSelectedChild = categories.some(
+                          c => c.parent_id === cat.id && selectedCategory === c.id
+                        );
+                        const isActiveParent = isSelected || hasSelectedChild;
                         const catImg = cat.image_url 
                           ? (cat.image_url.startsWith('http') || cat.image_url.startsWith('data:') ? cat.image_url : `${apiHost}${cat.image_url}`)
                           : 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=300&q=80';
@@ -2057,19 +2064,19 @@ export default function App() {
                               gap: '8px',
                               padding: '16px',
                               backgroundColor: 'var(--bg-secondary)',
-                              border: isSelected ? '2px solid var(--accent-brand)' : '1px solid var(--border-color)',
+                              border: isActiveParent ? '2px solid var(--accent-brand)' : '1px solid var(--border-color)',
                               borderRadius: '16px',
                               cursor: 'pointer',
-                              boxShadow: isSelected ? '0 0 12px var(--accent-brand-shadow)' : 'var(--shadow-sm)',
+                              boxShadow: isActiveParent ? '0 0 12px var(--accent-brand-shadow)' : 'var(--shadow-sm)',
                               transition: 'transform 0.2s, background-color 0.2s, border-color 0.2s',
-                              transform: isSelected ? 'scale(1.03)' : 'none'
+                              transform: isActiveParent ? 'scale(1.03)' : 'none'
                             }}
                             onMouseEnter={(e) => {
                               e.currentTarget.style.transform = 'translateY(-4px) scale(1.03)';
                               e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
                             }}
                             onMouseLeave={(e) => {
-                              e.currentTarget.style.transform = isSelected ? 'translateY(0) scale(1.03)' : 'translateY(0)';
+                              e.currentTarget.style.transform = isActiveParent ? 'translateY(0) scale(1.03)' : 'translateY(0)';
                               e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
                             }}
                           >
@@ -2082,18 +2089,14 @@ export default function App() {
                               alignItems: 'center',
                               justifyContent: 'center',
                               backgroundColor: 'var(--bg-tertiary)',
-                              border: isSelected ? '2px solid var(--accent-brand)' : '2px solid var(--border-color)',
+                              border: isActiveParent ? '2px solid var(--accent-brand)' : '2px solid var(--border-color)',
                               flexShrink: 0,
                               boxSizing: 'border-box'
                             }}>
                               <img 
                                 src={catImg} 
                                 alt={catName} 
-                                style={{
-                                  width: '100%',
-                                  height: '100%',
-                                  objectFit: 'cover'
-                                }} 
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                               />
                             </div>
                             <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-primary)', textAlign: 'center' }}>
@@ -2105,7 +2108,78 @@ export default function App() {
                     }
                   </div>
 
-                  {/* --- 4. BOTTOM PROMO BANNER --- */}
+                  {/* --- 3b. SUBCATEGORIES ROW (shown when a parent with children is selected) --- */}
+                  {(() => {
+                    // Find subcategories of the currently selected category
+                    const selectedCatId = typeof selectedCategory === 'string' ? parseInt(selectedCategory) : selectedCategory;
+                    const subcats = categories.filter(c =>
+                      c.parent_id && !isNaN(selectedCatId) && Number(c.parent_id) === selectedCatId
+                    );
+                    if (!subcats.length) return null;
+                    const parentCat = categories.find(c => c.id === selectedCatId);
+                    return (
+                      <div className="animate-fade" style={{ marginTop: '-8px' }}>
+                        <p style={{
+                          fontSize: '0.78rem',
+                          fontWeight: '700',
+                          color: 'var(--text-light)',
+                          marginBottom: '10px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}>
+                          <span style={{ color: 'var(--accent-brand)', fontSize: '1rem' }}>↳</span>
+                          {lang === 'ar'
+                            ? `أقسام ${parentCat ? parentCat.name_ar : ''}`
+                            : `${parentCat ? parentCat.name_en : ''} Subcategories`}
+                        </p>
+                        <div style={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: '10px'
+                        }}>
+                          {subcats.map(sub => {
+                            const isSubSelected = selectedCategory === sub.id;
+                            const subImg = sub.image_url
+                              ? (sub.image_url.startsWith('http') || sub.image_url.startsWith('data:') ? sub.image_url : `${apiHost}${sub.image_url}`)
+                              : 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=300&q=80';
+                            const subName = lang === 'ar' ? sub.name_ar : sub.name_en;
+                            return (
+                              <button
+                                key={sub.id}
+                                onClick={() => { setSelectedCategory(sub.id); setSearchVal(''); }}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '8px',
+                                  padding: '8px 14px',
+                                  backgroundColor: isSubSelected ? 'var(--accent-brand-rgba)' : 'var(--bg-secondary)',
+                                  border: isSubSelected ? '2px solid var(--accent-brand)' : '1px solid var(--border-color)',
+                                  borderRadius: '24px',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s',
+                                  fontWeight: '700',
+                                  fontSize: '0.82rem',
+                                  color: isSubSelected ? 'var(--accent-brand)' : 'var(--text-primary)'
+                                }}
+                                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.transform = 'none'; }}
+                              >
+                                <img
+                                  src={subImg}
+                                  alt={subName}
+                                  style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border-color)' }}
+                                />
+                                {subName}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+
                   <div className="bottom-promo-banner" style={{
                     height: '160px',
                     borderRadius: '24px',
