@@ -53,17 +53,26 @@ export default function Hero() {
   const isRtl = lang === 'ar';
 
   return (
-    <div className="no-print animate-scale hero-slider-container" style={{
-      position: 'relative',
-      height: '420px',
-      width: '100%',
-      backgroundColor: '#070a13',
-      overflow: 'hidden',
-      borderRadius: '24px',
-      margin: '20px 0',
-      boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
-      border: '1px solid rgba(255,255,255,0.05)'
-    }}>
+    <div 
+      className="no-print animate-scale hero-slider-container" 
+      onClick={() => {
+        if (activeSlide?.link) {
+          window.location.href = activeSlide.link;
+        }
+      }}
+      style={{
+        position: 'relative',
+        height: '420px',
+        width: '100%',
+        backgroundColor: '#070a13',
+        overflow: 'hidden',
+        borderRadius: '24px',
+        margin: '20px 0',
+        boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
+        border: '1px solid rgba(255,255,255,0.05)',
+        cursor: activeSlide?.link ? 'pointer' : 'default'
+      }}
+    >
       {/* Slide Image Background with overlay gradient */}
       <div style={{
         width: '100%',
@@ -153,7 +162,7 @@ export default function Hero() {
       {slides.length > 1 && (
         <>
           <button
-            onClick={handlePrev}
+            onClick={(e) => { e.stopPropagation(); handlePrev(); }}
             className="hero-slider-arrow hero-slider-arrow-prev"
             style={{
               position: 'absolute',
@@ -180,7 +189,7 @@ export default function Hero() {
             <ChevronLeft size={20} strokeWidth={2.5} />
           </button>
           <button
-            onClick={handleNext}
+            onClick={(e) => { e.stopPropagation(); handleNext(); }}
             className="hero-slider-arrow hero-slider-arrow-next"
             style={{
               position: 'absolute',
@@ -223,7 +232,7 @@ export default function Hero() {
           {slides.map((_, i) => (
             <div
               key={i}
-              onClick={() => setCurrentSlide(i)}
+              onClick={(e) => { e.stopPropagation(); setCurrentSlide(i); }}
               style={{
                 width: currentSlide === i ? '24px' : '8px',
                 height: '8px',
