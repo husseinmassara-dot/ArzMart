@@ -244,7 +244,8 @@ export default function AdminSettings() {
         title_ar: '',
         title_en: '',
         desc_ar: '',
-        desc_en: ''
+        desc_en: '',
+        link: ''
       }
     ]);
   };
@@ -573,15 +574,27 @@ export default function AdminSettings() {
                       </div>
                     </div>
 
-                    <div>
-                      <label className="input-label">{lang === 'ar' ? 'رفع صورة الخلفية للبنر' : 'Upload Banner Image'}</label>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleBannerFileChange(b.id, e.target.files[0])}
-                        className="input-field"
-                        style={{ padding: '6px' }}
-                      />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                      <div>
+                        <label className="input-label">{lang === 'ar' ? 'رابط التوجيه (مثال: ?category_id=3 أو رابط كامل)' : 'Redirect Link (e.g., ?category_id=3 or full URL)'}</label>
+                        <input
+                          type="text"
+                          className="input-field"
+                          placeholder={lang === 'ar' ? 'رابط الصفحة / المنتج...' : 'Redirect URL / path...'}
+                          value={b.link || ''}
+                          onChange={(e) => handleBannerChange(b.id, 'link', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label className="input-label">{lang === 'ar' ? 'رفع صورة الخلفية للبنر' : 'Upload Banner Image'}</label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleBannerFileChange(b.id, e.target.files[0])}
+                          className="input-field"
+                          style={{ padding: '6px' }}
+                        />
+                      </div>
                     </div>
                   </div>
 
