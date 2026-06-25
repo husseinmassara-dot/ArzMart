@@ -75,7 +75,15 @@ export default function AdminSettings() {
   // Banners states
   const [banners, setBanners] = useState([]);
   const [bannerFiles, setBannerFiles] = useState({}); // key: banner ID, value: file
+  const [previewLangs, setPreviewLangs] = useState({}); // key: banner ID, value: 'ar' | 'en'
   const [restoreFile, setRestoreFile] = useState(null);
+
+  const togglePreviewLang = (id) => {
+    setPreviewLangs(prev => ({
+      ...prev,
+      [id]: prev[id] === 'en' ? 'ar' : 'en'
+    }));
+  };
   const [isRestoring, setIsRestoring] = useState(false);
   const [restoreError, setRestoreError] = useState('');
   const [restoreSuccess, setRestoreSuccess] = useState('');
@@ -249,6 +257,28 @@ export default function AdminSettings() {
     setBannerFiles(updatedFiles);
   };
 
+  const handleMoveBannerUp = (index) => {
+    if (index === 0) return;
+    setBanners(prev => {
+      const newList = [...prev];
+      const temp = newList[index];
+      newList[index] = newList[index - 1];
+      newList[index - 1] = temp;
+      return newList;
+    });
+  };
+
+  const handleMoveBannerDown = (index) => {
+    if (index === banners.length - 1) return;
+    setBanners(prev => {
+      const newList = [...prev];
+      const temp = newList[index];
+      newList[index] = newList[index + 1];
+      newList[index + 1] = temp;
+      return newList;
+    });
+  };
+
   const handleBannerChange = (id, field, value) => {
     setBanners(prev => prev.map(b => 
       b.id === id ? { ...b, [field]: value } : b
@@ -406,6 +436,10 @@ export default function AdminSettings() {
         <form onSubmit={handleBannersSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {banners.map((b, idx) => {
             const previewUrl = getBannerPreview(b);
+            const isPreviewRtl = previewLangs[b.id] !== 'en'; // default to true (ar)
+            const titleText = isPreviewRtl ? (b.title_ar || 'العنوان الرئيسي للبنر') : (b.title_en || 'Main Slide Title');
+            const descText = isPreviewRtl ? (b.desc_ar || 'تفاصيل العرض الترويجي والخصومات تظهر هنا') : (b.desc_en || 'Promo details and discounts appear here');
+            
             return (
               <div key={b.id} style={{
                 padding: '20px',
@@ -420,9 +454,51 @@ export default function AdminSettings() {
               }}>
                 {/* Header of Banner Card */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
-                  <span style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--accent-blue)' }}>
-                    {lang === 'ar' ? `البانر الإعلاني #${idx + 1}` : `Hero Banner #${idx + 1}`}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--accent-blue)' }}>
+                      {lang === 'ar' ? `البانر الإعلاني #${idx + 1}` : `Hero Banner #${idx + 1}`}
+                    </span>
+                    
+                    {/* Reorder Buttons */}
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <button
+                        type="button"
+                        disabled={idx === 0}
+                        onClick={() => handleMoveBannerUp(idx)}
+                        style={{
+                          padding: '2px 8px',
+                          borderRadius: '6px',
+                          border: '1px solid var(--border-color)',
+                          backgroundColor: idx === 0 ? 'var(--bg-tertiary)' : 'var(--bg-primary)',
+                          color: idx === 0 ? 'var(--text-light)' : 'var(--text-primary)',
+                          cursor: idx === 0 ? 'not-allowed' : 'pointer',
+                          fontSize: '0.7rem',
+                          fontWeight: '800',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        ▲
+                      </button>
+                      <button
+                        type="button"
+                        disabled={idx === banners.length - 1}
+                        onClick={() => handleMoveBannerDown(idx)}
+                        style={{
+                          padding: '2px 8px',
+                          borderRadius: '6px',
+                          border: '1px solid var(--border-color)',
+                          backgroundColor: idx === banners.length - 1 ? 'var(--bg-tertiary)' : 'var(--bg-primary)',
+                          color: idx === banners.length - 1 ? 'var(--text-light)' : 'var(--text-primary)',
+                          cursor: idx === banners.length - 1 ? 'not-allowed' : 'pointer',
+                          fontSize: '0.7rem',
+                          fontWeight: '800',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        ▼
+                      </button>
+                    </div>
+                  </div>
                   
                   <button
                     type="button"
@@ -509,59 +585,186 @@ export default function AdminSettings() {
                     </div>
                   </div>
 
-                  {/* Preview Section */}
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    border: '2px dashed var(--border-color)',
-                    borderRadius: '12px',
-                    padding: '12px',
-                    height: '100%',
-                    minHeight: '180px',
-                    backgroundColor: 'rgba(0,0,0,0.02)',
-                    position: 'relative',
-                    overflow: 'hidden'
-                  }}>
-                    {previewUrl ? (
-                      <>
-                        <img
-                          src={previewUrl}
-                          alt="Banner Preview"
+                  {/* Dynamic Mockup Live Preview Section */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--text-light)' }}>
+                        {lang === 'ar' ? 'معاينة حية تفاعلية (Live Preview)' : 'Live Interactive Preview'}
+                      </span>
+                      {/* Language switcher tab */}
+                      <div style={{ display: 'inline-flex', backgroundColor: 'var(--bg-tertiary)', padding: '2px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                        <button
+                          type="button"
+                          onClick={() => togglePreviewLang(b.id)}
                           style={{
-                            width: '100%',
-                            height: '120px',
-                            objectFit: 'cover',
-                            borderRadius: '8px',
-                            boxShadow: 'var(--shadow-sm)'
+                            padding: '3px 8px',
+                            border: 'none',
+                            borderRadius: '4px',
+                            backgroundColor: isPreviewRtl ? 'var(--accent-blue)' : 'transparent',
+                            color: isPreviewRtl ? 'white' : 'var(--text-light)',
+                            fontSize: '0.7rem',
+                            fontWeight: '700',
+                            cursor: 'pointer'
                           }}
-                        />
-                        <span style={{
-                          fontSize: '0.75rem',
-                          color: 'var(--text-light)',
-                          marginTop: '8px',
-                          textAlign: 'center',
-                          wordBreak: 'break-all',
-                          padding: '0 8px'
-                        }}>
-                          {bannerFiles[b.id] ? (
-                            <span style={{ color: 'var(--accent-blue)', fontWeight: '700' }}>
-                              {lang === 'ar' ? 'صورة جديدة محددة: ' : 'New image selected: '} {bannerFiles[b.id].name}
-                            </span>
-                          ) : (
-                            `${lang === 'ar' ? 'مسار الصورة الحالي: ' : 'Current image path: '} ${b.image}`
-                          )}
-                        </span>
-                      </>
-                    ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', color: 'var(--text-light)' }}>
-                        <Image size={32} style={{ opacity: 0.5 }} />
-                        <span style={{ fontSize: '0.8rem', fontWeight: '700' }}>
-                          {lang === 'ar' ? 'لا توجد صورة محددة بعد' : 'No image selected yet'}
-                        </span>
+                        >
+                          AR
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => togglePreviewLang(b.id)}
+                          style={{
+                            padding: '3px 8px',
+                            border: 'none',
+                            borderRadius: '4px',
+                            backgroundColor: !isPreviewRtl ? 'var(--accent-blue)' : 'transparent',
+                            color: !isPreviewRtl ? 'white' : 'var(--text-light)',
+                            fontSize: '0.7rem',
+                            fontWeight: '700',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          EN
+                        </button>
                       </div>
-                    )}
+                    </div>
+
+                    {/* Scale Mockup of Storefront Banner */}
+                    <div style={{
+                      position: 'relative',
+                      height: '180px',
+                      width: '100%',
+                      backgroundColor: '#070a13',
+                      overflow: 'hidden',
+                      borderRadius: '16px',
+                      boxShadow: '0 6px 16px rgba(0,0,0,0.3)',
+                      border: '1px solid rgba(255,255,255,0.05)',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}>
+                      {/* Slide Image Background with overlay gradient */}
+                      {previewUrl ? (
+                        <div style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          backgroundImage: `linear-gradient(to ${isPreviewRtl ? 'left' : 'right'}, rgba(7, 10, 19, 0.95) 30%, rgba(7, 10, 19, 0.5) 65%, rgba(7, 10, 19, 0.1) 100%), url(${previewUrl})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                          zIndex: 1
+                        }} />
+                      ) : (
+                        <div style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          backgroundColor: '#0c1222',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'rgba(255,255,255,0.25)',
+                          fontSize: '0.8rem',
+                          fontWeight: '700',
+                          zIndex: 1
+                        }}>
+                          {lang === 'ar' ? 'الرجاء رفع صورة للبنر' : 'Please upload a banner image'}
+                        </div>
+                      )}
+
+                      {/* Content Overlay inside Mockup */}
+                      <div style={{
+                        position: 'absolute',
+                        top: '0',
+                        bottom: '0',
+                        left: isPreviewRtl ? 'auto' : '20px',
+                        right: isPreviewRtl ? '20px' : 'auto',
+                        width: '55%',
+                        color: 'white',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        alignItems: 'flex-start',
+                        textAlign: isPreviewRtl ? 'right' : 'left',
+                        gap: '6px',
+                        zIndex: 2,
+                        direction: isPreviewRtl ? 'rtl' : 'ltr'
+                      }}>
+                        <h5 style={{
+                          fontSize: '1rem',
+                          fontWeight: '900',
+                          lineHeight: '1.2',
+                          textShadow: '0 2px 4px rgba(0,0,0,0.6)',
+                          margin: 0,
+                          width: '100%',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          color: '#ffffff'
+                        }}>
+                          {titleText}
+                        </h5>
+                        
+                        <p style={{
+                          fontSize: '0.7rem',
+                          fontWeight: '500',
+                          color: 'rgba(255, 255, 255, 0.8)',
+                          textShadow: '0 1px 3px rgba(0,0,0,0.6)',
+                          lineHeight: '1.4',
+                          margin: 0,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden'
+                        }}>
+                          {descText}
+                        </p>
+
+                        <button 
+                          type="button"
+                          style={{
+                            backgroundColor: 'var(--accent-brand)',
+                            color: 'white',
+                            border: 'none',
+                            padding: '4px 12px',
+                            borderRadius: '6px',
+                            fontWeight: '800',
+                            fontSize: '0.65rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            marginTop: '4px',
+                            cursor: 'default',
+                            boxShadow: '0 2px 6px rgba(16,185,129,0.3)'
+                          }}
+                        >
+                          <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" strokeWidth="2.5" fill="none">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                            <line x1="3" y1="6" x2="21" y2="6" />
+                            <path d="M16 10a4 4 0 0 1-8 0" />
+                          </svg>
+                          <span>{isPreviewRtl ? 'تسوق الآن' : 'Shop Now'}</span>
+                        </button>
+                      </div>
+
+                      {/* Info Tag at bottom */}
+                      <span style={{
+                        position: 'absolute',
+                        bottom: '6px',
+                        left: isPreviewRtl ? '6px' : 'auto',
+                        right: isPreviewRtl ? 'auto' : '6px',
+                        backgroundColor: 'rgba(0,0,0,0.6)',
+                        color: 'white',
+                        fontSize: '8px',
+                        padding: '1px 4px',
+                        borderRadius: '3px',
+                        zIndex: 3
+                      }}>
+                        {bannerFiles[b.id] ? (lang === 'ar' ? 'صورة جديدة محملة' : 'New Image Loaded') : (lang === 'ar' ? 'صورة محفوظة' : 'Saved Image')}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

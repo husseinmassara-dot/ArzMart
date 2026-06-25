@@ -2,7 +2,7 @@ const db = require('../config/db');
 const { fileToBase64 } = require('../utils/fileHelper');
 
 exports.getProducts = async (req, res) => {
-  const { category_id, category_ids, search, min_price, max_price, min_rating } = req.query;
+  const { category_id, category_ids, search, min_price, max_price, min_rating, featured } = req.query;
   
   let query = `
     SELECT p.*, c.name_ar as category_name_ar, c.name_en as category_name_en, m.name as merchant_name 
@@ -12,6 +12,10 @@ exports.getProducts = async (req, res) => {
     WHERE 1=1
   `;
   const params = [];
+
+  if (featured === 'true' || featured === '1' || featured === true) {
+    query += ' AND p.is_featured = 1';
+  }
 
   // Support multiple category IDs (for parent + children queries)
   if (category_ids) {
@@ -609,6 +613,141 @@ exports.reorderProducts = async (req, res) => {
   } catch (err) {
     console.error('Reorder products error:', err);
     res.status(500).json({ error_ar: 'فشل حفظ ترتيب المنتجات', error_en: 'Failed to reorder products' });
+  }
+};
+
+exports.toggleFeatured = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const product = await db.getAsync('SELECT is_featured FROM products WHERE id = ?', [id]);
+    if (!product) {
+      return res.status(404).json({ error_ar: 'المنتج غير موجود', error_en: 'Product not found' });
+    }
+    
+    const newVal = product.is_featured ? 0 : 1;
+    if (newVal === 1) {
+      const featuredCount = await db.getAsync('SELECT COUNT(*) as count FROM products WHERE is_featured = 1');
+      if (featuredCount && featuredCount.count >= 20) {
+        return res.status(400).json({
+          error_ar: 'لا يمكن تحديد أكثر من ٢٠ منتجاً في قسم أحدث المنتجات',
+          error_en: 'Cannot select more than 20 featured products'
+        });
+      }
+    }
+    
+    await db.runAsync('UPDATE products SET is_featured = ? WHERE id = ?', [newVal, id]);
+    res.json({
+      message_ar: newVal ? 'تمت إضافة المنتج لأحدث المنتجات' : 'تم إزالة المنتج من أحدث المنتجات',
+      message_en: newVal ? 'Product added to featured' : 'Product removed from featured',
+      is_featured: newVal
+    });
+  } catch (err) {
+    console.error('Toggle featured error:', err);
+    res.status(500).json({ error_ar: 'خطأ في تعديل تمييز المنتج', error_en: 'Error toggling product featured status' });
+  }
+};
+
+exports.bulkUpdateProducts = async (req, res) => {
+  const { 
+    productIds, 
+    priceChangeType, 
+    priceValue, 
+    costPriceChangeType, 
+    costPriceValue, 
+    stockChangeType, 
+    stockValue, 
+    categoryId, 
+    merchantId 
+  } = req.body;
+
+  if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+    return res.status(400).json({
+      error_ar: 'الرجاء تحديد منتج واحد على الأقل',
+      error_en: 'Please select at least one product'
+    });
+  }
+
+  try {
+    await db.runAsync('BEGIN TRANSACTION');
+
+    for (const id of productIds) {
+      const product = await db.getAsync('SELECT price_usd, cost_price_usd, stock, category_id, merchant_id FROM products WHERE id = ?', [id]);
+      if (!product) continue;
+
+      let newPrice = product.price_usd;
+      if (priceValue !== undefined && priceValue !== null && priceValue !== '') {
+        const val = parseFloat(priceValue);
+        if (priceChangeType === 'fixed') {
+          newPrice = val;
+        } else if (priceChangeType === 'add') {
+          newPrice += val;
+        } else if (priceChangeType === 'subtract') {
+          newPrice = Math.max(0, newPrice - val);
+        } else if (priceChangeType === 'percent_add') {
+          newPrice = newPrice * (1 + val / 100);
+        } else if (priceChangeType === 'percent_subtract') {
+          newPrice = Math.max(0, newPrice * (1 - val / 100));
+        }
+      }
+
+      let newCostPrice = product.cost_price_usd;
+      if (costPriceValue !== undefined && costPriceValue !== null && costPriceValue !== '') {
+        const val = parseFloat(costPriceValue);
+        if (costPriceChangeType === 'fixed') {
+          newCostPrice = val;
+        } else if (costPriceChangeType === 'add') {
+          newCostPrice += val;
+        } else if (costPriceChangeType === 'subtract') {
+          newCostPrice = Math.max(0, newCostPrice - val);
+        } else if (costPriceChangeType === 'percent_add') {
+          newCostPrice = newCostPrice * (1 + val / 100);
+        } else if (costPriceChangeType === 'percent_subtract') {
+          newCostPrice = Math.max(0, newCostPrice * (1 - val / 100));
+        }
+      }
+
+      let newStock = product.stock;
+      if (stockValue !== undefined && stockValue !== null && stockValue !== '') {
+        const val = parseInt(stockValue, 10);
+        if (stockChangeType === 'fixed') {
+          newStock = Math.max(0, val);
+        } else if (stockChangeType === 'add') {
+          newStock += val;
+        } else if (stockChangeType === 'subtract') {
+          newStock = Math.max(0, newStock - val);
+        }
+      }
+
+      let newCategoryId = product.category_id;
+      if (categoryId !== undefined && categoryId !== '') {
+        newCategoryId = categoryId === 'null' ? null : parseInt(categoryId, 10);
+      }
+
+      let newMerchantId = product.merchant_id;
+      if (merchantId !== undefined && merchantId !== '') {
+        newMerchantId = merchantId === 'null' ? null : parseInt(merchantId, 10);
+      }
+
+      await db.runAsync(`
+        UPDATE products 
+        SET price_usd = ?, cost_price_usd = ?, stock = ?, category_id = ?, merchant_id = ?
+        WHERE id = ?
+      `, [newPrice, newCostPrice, newStock, newCategoryId, newMerchantId, id]);
+    }
+
+    await db.runAsync('COMMIT');
+
+    res.json({
+      message_ar: 'تم تعديل المنتجات المحددة بنجاح',
+      message_en: 'Selected products updated successfully'
+    });
+  } catch (err) {
+    await db.runAsync('ROLLBACK').catch(() => {});
+    console.error('Bulk update products error:', err);
+    res.status(500).json({
+      error_ar: 'خطأ أثناء تعديل المنتجات جماعياً',
+      error_en: 'Error updating products in bulk'
+    });
   }
 };
 

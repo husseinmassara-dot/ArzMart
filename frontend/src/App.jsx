@@ -30,6 +30,7 @@ export default function App() {
 
   // Catalog states
   const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
   const [categories, setCategories] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null); // Detail modal
   const [showCheckout, setShowCheckout] = useState(() => {
@@ -127,6 +128,7 @@ export default function App() {
   };
 
   const fetchProducts = async () => {
+    setLoadingProducts(true);
     try {
       let url = `${apiBase}/products?`;
 
@@ -145,6 +147,9 @@ export default function App() {
         }
       }
 
+      if (!selectedCategory && !debouncedSearchVal) {
+        url += `featured=true&`;
+      }
       if (debouncedSearchVal) url += `search=${encodeURIComponent(debouncedSearchVal)}&`;
       const visitorId = localStorage.getItem('arz_mart_visitor_id') || '';
       if (visitorId) url += `visitor_id=${visitorId}&`;
@@ -159,6 +164,8 @@ export default function App() {
       }
     } catch (err) {
       console.error('Fetch products client error:', err);
+    } finally {
+      setLoadingProducts(false);
     }
   };
 
@@ -2293,9 +2300,19 @@ export default function App() {
                       <span style={{ color: 'var(--accent-brand)' }}>★</span>
                       {lang === 'ar' ? 'أحدث المنتجات' : 'Latest Products'}
                     </h2>
-                    {products.length === 0 ? (
+                    {loadingProducts ? (
                       <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-light)', fontSize: '0.95rem' }}>
                         {lang === 'ar' ? 'جاري تحميل المنتجات...' : 'Loading products...'}
+                      </div>
+                    ) : products.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-light)', fontSize: '0.95rem' }}>
+                        {selectedCategory !== '' ? (
+                          lang === 'ar' ? 'لا توجد منتجات في هذا القسم حالياً' : 'No products found in this category'
+                        ) : debouncedSearchVal ? (
+                          lang === 'ar' ? 'لا توجد نتائج بحث مطابقة' : 'No matching results found'
+                        ) : (
+                          lang === 'ar' ? 'خانة أحدث المنتجات فارغة حالياً' : 'Featured products section is currently empty'
+                        )}
                       </div>
                     ) : (
                       <div style={{

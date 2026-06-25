@@ -344,6 +344,9 @@ async function initializeDatabasePostgres() {
     try {
       await pgPool.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0");
     } catch (e) {}
+    try {
+      await pgPool.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS is_featured INTEGER DEFAULT 0");
+    } catch (e) {}
 
     // 6. Orders Table
     await pgPool.query(`
@@ -698,6 +701,12 @@ function initializeDatabase() {
         ? "ALTER TABLE products ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0" 
         : "ALTER TABLE products ADD COLUMN sort_order INTEGER DEFAULT 0";
       db.run(alterSortOrderProd, [], (err) => {
+        // Ignore error
+      });
+      const alterFeaturedProd = isPostgres 
+        ? "ALTER TABLE products ADD COLUMN IF NOT EXISTS is_featured INTEGER DEFAULT 0" 
+        : "ALTER TABLE products ADD COLUMN is_featured INTEGER DEFAULT 0";
+      db.run(alterFeaturedProd, [], (err) => {
         // Ignore error
       });
     });
