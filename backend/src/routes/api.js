@@ -34,6 +34,7 @@ router.post('/categories', authenticateToken, requirePermission('categories'), u
 router.put('/categories/:id', authenticateToken, requirePermission('categories'), upload.single('category_image'), categoryController.updateCategory);
 router.delete('/categories/:id', authenticateToken, requirePermission('categories'), categoryController.deleteCategory);
 router.put('/categories-reorder', authenticateToken, requirePermission('categories'), categoryController.reorderCategories);
+router.put('/categories/bulk-update-parent', authenticateToken, requirePermission('categories'), categoryController.bulkUpdateParent);
 
 
 // --- Product Routes ---
@@ -43,7 +44,9 @@ router.post('/admin/products/import-csv', authenticateToken, requirePermission('
 router.get('/products/:id', productController.getProductById);
 router.post('/products', authenticateToken, requirePermission('products'), upload.array('product_images', 10), productController.createProduct);
 router.put('/products/bulk-update-category', authenticateToken, requirePermission('products'), productController.bulkUpdateCategory);
+router.put('/products/bulk-update', authenticateToken, requirePermission('products'), productController.bulkUpdateProducts);
 router.put('/products-reorder', authenticateToken, requirePermission('products'), productController.reorderProducts);
+router.put('/products/:id/toggle-featured', authenticateToken, requirePermission('products'), productController.toggleFeatured);
 router.put('/products/:id', authenticateToken, requirePermission('products'), upload.array('product_images', 10), productController.updateProduct);
 router.delete('/products/:id', authenticateToken, requirePermission('products'), productController.deleteProduct);
 router.post('/products/:id/rate', productController.rateProduct);

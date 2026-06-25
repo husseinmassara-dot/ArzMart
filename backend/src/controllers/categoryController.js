@@ -158,3 +158,64 @@ exports.reorderCategories = async (req, res) => {
     res.status(500).json({ error_ar: 'خطأ في حفظ الترتيب', error_en: 'Error saving order' });
   }
 };
+
+exports.bulkUpdateParent = async (req, res) => {
+  const { categoryIds, parentId } = req.body;
+
+  if (!categoryIds || !Array.isArray(categoryIds) || categoryIds.length === 0) {
+    return res.status(400).json({
+      error_ar: 'الرجاء تحديد تصنيف واحد على الأقل',
+      error_en: 'Please select at least one category'
+    });
+  }
+
+  const pid = parentId && parentId !== 'null' ? parseInt(parentId, 10) : null;
+
+  try {
+    if (pid) {
+      const parentExists = await db.getAsync('SELECT id FROM categories WHERE id = ?', [pid]);
+      if (!parentExists) {
+        return res.status(400).json({
+          error_ar: 'التصنيف الأب المحدد غير موجود',
+          error_en: 'The selected parent category does not exist'
+        });
+      }
+
+      if (categoryIds.includes(pid)) {
+        return res.status(400).json({
+          error_ar: 'لا يمكن نقل التصنيف ليكون ابناً لنفسه',
+          error_en: 'Cannot move a category under itself'
+        });
+      }
+
+      // Check circular references for each category
+      for (const id of categoryIds) {
+        let currentParentId = pid;
+        while (currentParentId) {
+          if (currentParentId === parseInt(id, 10)) {
+            return res.status(400).json({
+              error_ar: 'لا يمكن نقل التصنيفات المحددة لأنها ستسبب حلقة دائرية مغلقة',
+              error_en: 'Cannot move these categories as it would create a circular dependency'
+            });
+          }
+          const parent = await db.getAsync('SELECT parent_id FROM categories WHERE id = ?', [currentParentId]);
+          currentParentId = parent ? parent.parent_id : null;
+        }
+      }
+    }
+
+    const placeholders = categoryIds.map(() => '?').join(',');
+    await db.runAsync(`UPDATE categories SET parent_id = ? WHERE id IN (${placeholders})`, [pid, ...categoryIds]);
+
+    res.json({
+      message_ar: 'تم نقل التصنيفات بنجاح',
+      message_en: 'Categories moved successfully'
+    });
+  } catch (err) {
+    console.error('Bulk update parent error:', err);
+    res.status(500).json({
+      error_ar: 'خطأ أثناء نقل التصنيفات',
+      error_en: 'Error moving categories'
+    });
+  }
+};

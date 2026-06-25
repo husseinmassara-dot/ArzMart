@@ -344,6 +344,9 @@ async function initializeDatabasePostgres() {
     try {
       await pgPool.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0");
     } catch (e) {}
+    try {
+      await pgPool.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS is_featured INTEGER DEFAULT 0");
+    } catch (e) {}
 
     // 6. Orders Table
     await pgPool.query(`
@@ -698,6 +701,12 @@ function initializeDatabase() {
         ? "ALTER TABLE products ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0" 
         : "ALTER TABLE products ADD COLUMN sort_order INTEGER DEFAULT 0";
       db.run(alterSortOrderProd, [], (err) => {
+        // Ignore error
+      });
+      const alterFeaturedProd = isPostgres 
+        ? "ALTER TABLE products ADD COLUMN IF NOT EXISTS is_featured INTEGER DEFAULT 0" 
+        : "ALTER TABLE products ADD COLUMN is_featured INTEGER DEFAULT 0";
+      db.run(alterFeaturedProd, [], (err) => {
         // Ignore error
       });
     });
@@ -1361,6 +1370,46 @@ async function seedDemoData() {
       }
     }
     console.log('[Database] Additional demo categories check/seeding finished.');
+
+    // ── Enforce correct parent-child hierarchy ────────────────────────────────
+    // This runs every startup to keep subcategory nesting intact.
+    const parentMap = {
+      // Groceries & Provisions  →  Lebanese Coffee & Spices, Traditional Oils & Fats, Local Honey & Jams
+      'Groceries & Provisions': ['Lebanese Coffee & Spices', 'Traditional Oils & Fats', 'Local Honey & Jams'],
+      // Personal Care & Traditional Soaps  →  Olive Oil & Laurel Soaps, Cosmetics & Beauty
+      'Personal Care & Traditional Soaps': ['Olive Oil & Laurel Soaps', 'Cosmetics & Beauty'],
+      // Electronics & Electricals  →  Phones, Phone Accessories, Watches
+      'Electronics & Electricals': ['Phones', 'Phone Accessories', 'Watches'],
+      // Clothing  →  Shoes, Accessories
+      'Clothing': ['Shoes', 'Accessories'],
+      // Home & Kitchen  →  Glassware, Tools & Hardware
+      'Home & Kitchen': ['Glassware', 'Tools & Hardware'],
+    };
+
+    for (const [parentName, childNames] of Object.entries(parentMap)) {
+      const parent = await db.getAsync('SELECT id FROM categories WHERE name_en = ?', [parentName]);
+      if (!parent) continue;
+      for (const childName of childNames) {
+        await db.runAsync(
+          'UPDATE categories SET parent_id = ? WHERE name_en = ? AND (parent_id IS NULL OR parent_id != ?)',
+          [parent.id, childName, parent.id]
+        );
+      }
+    }
+
+    // Ensure the top-level parents themselves have no parent_id
+    const topLevel = [
+      'Groceries & Provisions', 'Personal Care & Traditional Soaps',
+      'Electronics & Electricals', 'Clothing', 'Home & Kitchen',
+      'Toys & Games', 'Stationery & Office', 'Pets'
+    ];
+    for (const name of topLevel) {
+      await db.runAsync(
+        "UPDATE categories SET parent_id = NULL WHERE name_en = ? AND parent_id IS NOT NULL",
+        [name]
+      );
+    }
+    console.log('[Database] Category hierarchy enforced successfully.');
 
     // Update Settings Hero Banners to include tech/cosmetics/clothing banners
     const settings = await db.getAsync('SELECT id, hero_banners FROM settings LIMIT 1');

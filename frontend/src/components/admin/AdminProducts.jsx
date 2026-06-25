@@ -69,6 +69,18 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
   const [bulkTargetCategory, setBulkTargetCategory] = useState('');
   const [isBulkMoving, setIsBulkMoving] = useState(false);
 
+  // Bulk Edit modal states
+  const [showBulkEditModal, setShowBulkEditModal] = useState(false);
+  const [bulkPriceType, setBulkPriceType] = useState('fixed');
+  const [bulkPriceValue, setBulkPriceValue] = useState('');
+  const [bulkCostPriceType, setBulkCostPriceType] = useState('fixed');
+  const [bulkCostPriceValue, setBulkCostPriceValue] = useState('');
+  const [bulkStockType, setBulkStockType] = useState('fixed');
+  const [bulkStockValue, setBulkStockValue] = useState('');
+  const [bulkCategory, setBulkCategory] = useState('');
+  const [bulkMerchant, setBulkMerchant] = useState('');
+  const [bulkSubmitting, setBulkSubmitting] = useState(false);
+
   // Drag state (refs to avoid re-renders)
   const dragIndexRef = useRef(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
@@ -518,6 +530,61 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
       setTimeout(() => setFormError(''), 4000);
     } finally {
       setIsBulkMoving(false);
+    }
+  };
+
+  const handleBulkUpdateProducts = async (e) => {
+    e.preventDefault();
+    if (selectedIds.length === 0) return;
+    setBulkSubmitting(true);
+    setFormError('');
+    setFormSuccess('');
+
+    try {
+      const res = await fetch(`${apiBase}/products/bulk-update`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          productIds: selectedIds,
+          priceChangeType: bulkPriceType,
+          priceValue: bulkPriceValue,
+          costPriceChangeType: bulkCostPriceType,
+          costPriceValue: bulkCostPriceValue,
+          stockChangeType: bulkStockType,
+          stockValue: bulkStockValue,
+          categoryId: bulkCategory,
+          merchantId: bulkMerchant
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setFormSuccess(lang === 'ar' ? 'تم تحديث المنتجات بنجاح ✓' : 'Products updated successfully ✓');
+        setSelectedIds([]);
+        setShowBulkEditModal(false);
+        fetchProducts();
+        
+        // Reset bulk form fields
+        setBulkPriceValue('');
+        setBulkCostPriceValue('');
+        setBulkStockValue('');
+        setBulkCategory('');
+        setBulkMerchant('');
+        
+        setTimeout(() => setFormSuccess(''), 4000);
+      } else {
+        setFormError(data.error_ar || data.error || (lang === 'ar' ? 'فشل التحديث الجماعي' : 'Bulk update failed'));
+        setTimeout(() => setFormError(''), 4000);
+      }
+    } catch (err) {
+      console.error(err);
+      setFormError(lang === 'ar' ? 'خطأ في الاتصال بالخادم' : 'Server connection error');
+      setTimeout(() => setFormError(''), 4000);
+    } finally {
+      setBulkSubmitting(false);
     }
   };
 
@@ -1203,6 +1270,32 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
                 </button>
               </div>
 
+              {/* Bulk Edit Button */}
+              <button
+                type="button"
+                onClick={() => setShowBulkEditModal(true)}
+                style={{
+                  backgroundColor: 'var(--accent-brand)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '6px 14px',
+                  borderRadius: '6px',
+                  fontWeight: '700',
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'opacity 0.2s',
+                  height: '32px'
+                }}
+                onMouseEnter={(e) => e.target.style.opacity = '0.9'}
+                onMouseLeave={(e) => e.target.style.opacity = '1'}
+              >
+                <Edit3 size={14} />
+                <span>{lang === 'ar' ? `تعديل جماعي (${selectedIds.length})` : `Bulk Edit (${selectedIds.length})`}</span>
+              </button>
+
               {/* Bulk Delete */}
               <button
                 onClick={handleBulkDelete}
@@ -1370,6 +1463,7 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
                 />
               </th>
               <th style={{ padding: '10px', textAlign: 'start' }}>الصورة</th>
+              <th style={{ padding: '10px', textAlign: 'center', width: '70px' }}>{lang === 'ar' ? 'مميز' : 'Featured'}</th>
               <th style={{ padding: '10px', textAlign: 'start' }}>الاسم</th>
               <th style={{ padding: '10px', textAlign: 'start' }}>التصنيف</th>
               <th style={{ padding: '10px', textAlign: 'start' }}>المورد</th>
@@ -1437,6 +1531,47 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
                       title={lang === 'ar' ? 'تكبير الصورة' : 'Enlarge Image'}
                     />
                   </td>
+                  <td style={{ padding: '10px', textAlign: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        try {
+                          const res = await fetch(`${apiBase}/products/${p.id}/toggle-featured`, {
+                            method: 'PUT',
+                            headers: { 
+                              'Authorization': `Bearer ${token}`,
+                              'Content-Type': 'application/json'
+                            }
+                          });
+                          const data = await res.json();
+                          if (res.ok) {
+                            fetchProducts();
+                          } else {
+                            alert(lang === 'ar' ? data.message_ar || data.error_ar : data.message_en || data.error_en);
+                          }
+                        } catch (err) {
+                          console.error(err);
+                          alert(lang === 'ar' ? 'خطأ في الاتصال بالخادم' : 'Server connection error');
+                        }
+                      }}
+                      style={{
+                        border: 'none',
+                        backgroundColor: 'transparent',
+                        color: p.is_featured ? '#eab308' : 'var(--text-light)',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        transition: 'transform 0.15s ease',
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.2)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                      title={lang === 'ar' ? (p.is_featured ? 'إزالة من أحدث المنتجات' : 'إضافة لأحدث المنتجات') : (p.is_featured ? 'Remove from Featured' : 'Add to Featured')}
+                    >
+                      <svg viewBox="0 0 24 24" width="20" height="20" fill={p.is_featured ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                      </svg>
+                    </button>
+                  </td>
                   <td style={{ padding: '10px', fontWeight: '600' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                       <span>{lang === 'ar' ? p.name_ar : p.name_en}</span>
@@ -1492,6 +1627,222 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
           </tbody>
         </table>
       </div>
+
+      {/* Bulk Edit Modal */}
+      {showBulkEditModal && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9990,
+            animation: 'fadeIn 0.25s ease',
+            padding: '16px'
+          }}
+        >
+          <div 
+            style={{
+              backgroundColor: 'var(--bg-primary)',
+              borderRadius: '16px',
+              width: '100%',
+              maxWidth: '600px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+              border: '1px solid var(--border-color)',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h4 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                {lang === 'ar' ? `تعديل جماعي لـ ${selectedIds.length} منتجات` : `Bulk Edit ${selectedIds.length} Products`}
+              </h4>
+              <button 
+                type="button" 
+                onClick={() => setShowBulkEditModal(false)}
+                style={{ border: 'none', backgroundColor: 'transparent', color: 'var(--text-light)', cursor: 'pointer', fontSize: '1.25rem', fontWeight: 'bold' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body / Form */}
+            <form onSubmit={handleBulkUpdateProducts} style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              
+              {/* Category & Merchant */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div>
+                  <label className="input-label">{lang === 'ar' ? 'تعديل التصنيف إلى' : 'Change Category to'}</label>
+                  <select 
+                    className="input-field" 
+                    value={bulkCategory} 
+                    onChange={(e) => setBulkCategory(e.target.value)}
+                  >
+                    <option value="">{lang === 'ar' ? '-- بدون تغيير --' : '-- Keep Unchanged --'}</option>
+                    <option value="null">{lang === 'ar' ? 'إزالة التصنيف (بلا تصنيف)' : 'Remove Category (None)'}</option>
+                    {nestedCategoriesList.map(c => {
+                      const indent = '　'.repeat(c.depth) + (c.depth > 0 ? '↳ ' : '');
+                      return (
+                        <option key={c.id} value={c.id}>
+                          {indent}{lang === 'ar' ? c.name_ar : c.name_en}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+                <div>
+                  <label className="input-label">{lang === 'ar' ? 'تعديل المورد إلى' : 'Change Merchant/Supplier to'}</label>
+                  <select 
+                    className="input-field" 
+                    value={bulkMerchant} 
+                    onChange={(e) => setBulkMerchant(e.target.value)}
+                  >
+                    <option value="">{lang === 'ar' ? '-- بدون تغيير --' : '-- Keep Unchanged --'}</option>
+                    <option value="null">{lang === 'ar' ? 'إزالة المورد (بلا مورد)' : 'Remove Supplier (None)'}</option>
+                    {merchants.map(m => (
+                      <option key={m.id} value={m.id}>
+                        {m.name} {m.company ? `(${m.company})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Price Adjustments */}
+              <div style={{ border: '1px solid var(--border-color)', borderRadius: '10px', padding: '14px', backgroundColor: 'var(--bg-secondary)' }}>
+                <span style={{ display: 'block', fontWeight: '700', fontSize: '0.85rem', marginBottom: '10px', color: 'var(--text-primary)' }}>
+                  💵 {lang === 'ar' ? 'تعديل سعر البيع (USD)' : 'Price Adjustments (USD)'}
+                </span>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <select 
+                    className="input-field" 
+                    style={{ margin: 0, flex: 1 }}
+                    value={bulkPriceType} 
+                    onChange={(e) => setBulkPriceType(e.target.value)}
+                  >
+                    <option value="fixed">{lang === 'ar' ? 'تعيين سعر ثابت' : 'Set Fixed Price'}</option>
+                    <option value="add">{lang === 'ar' ? 'زيادة بمقدار ثابت (+)' : 'Increase by Fixed Amount (+)'}</option>
+                    <option value="subtract">{lang === 'ar' ? 'خصم بمقدار ثابت (-)' : 'Decrease by Fixed Amount (-)'}</option>
+                    <option value="percent_add">{lang === 'ar' ? 'زيادة بنسبة مئوية (+%)' : 'Increase by Percentage (+%)'}</option>
+                    <option value="percent_subtract">{lang === 'ar' ? 'خصم بنسبة مئوية (-%)' : 'Decrease by Percentage (-%)'}</option>
+                  </select>
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    placeholder={lang === 'ar' ? 'القيمة...' : 'Value...'} 
+                    className="input-field" 
+                    style={{ margin: 0, width: '130px' }}
+                    value={bulkPriceValue}
+                    onChange={(e) => setBulkPriceValue(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Cost Price Adjustments */}
+              <div style={{ border: '1px solid var(--border-color)', borderRadius: '10px', padding: '14px', backgroundColor: 'var(--bg-secondary)' }}>
+                <span style={{ display: 'block', fontWeight: '700', fontSize: '0.85rem', marginBottom: '10px', color: 'var(--text-primary)' }}>
+                  💰 {lang === 'ar' ? 'تعديل سعر التكلفة (USD)' : 'Cost Price Adjustments (USD)'}
+                </span>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <select 
+                    className="input-field" 
+                    style={{ margin: 0, flex: 1 }}
+                    value={bulkCostPriceType} 
+                    onChange={(e) => setBulkCostPriceType(e.target.value)}
+                  >
+                    <option value="fixed">{lang === 'ar' ? 'تعيين تكلفة ثابتة' : 'Set Fixed Cost'}</option>
+                    <option value="add">{lang === 'ar' ? 'زيادة بمقدار ثابت (+)' : 'Increase by Fixed Amount (+)'}</option>
+                    <option value="subtract">{lang === 'ar' ? 'خصم بمقدار ثابت (-)' : 'Decrease by Fixed Amount (-)'}</option>
+                    <option value="percent_add">{lang === 'ar' ? 'زيادة بنسبة مئوية (+%)' : 'Increase by Percentage (+%)'}</option>
+                    <option value="percent_subtract">{lang === 'ar' ? 'خصم بنسبة مئوية (-%)' : 'Decrease by Percentage (-%)'}</option>
+                  </select>
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    placeholder={lang === 'ar' ? 'القيمة...' : 'Value...'} 
+                    className="input-field" 
+                    style={{ margin: 0, width: '130px' }}
+                    value={bulkCostPriceValue}
+                    onChange={(e) => setBulkCostPriceValue(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Stock Adjustments */}
+              <div style={{ border: '1px solid var(--border-color)', borderRadius: '10px', padding: '14px', backgroundColor: 'var(--bg-secondary)' }}>
+                <span style={{ display: 'block', fontWeight: '700', fontSize: '0.85rem', marginBottom: '10px', color: 'var(--text-primary)' }}>
+                  📦 {lang === 'ar' ? 'تعديل المخزون (Stock)' : 'Stock Adjustments'}
+                </span>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <select 
+                    className="input-field" 
+                    style={{ margin: 0, flex: 1 }}
+                    value={bulkStockType} 
+                    onChange={(e) => setBulkStockType(e.target.value)}
+                  >
+                    <option value="fixed">{lang === 'ar' ? 'تعيين مخزون ثابت' : 'Set Fixed Stock'}</option>
+                    <option value="add">{lang === 'ar' ? 'إضافة للمخزون (+)' : 'Add Stock (+)'}</option>
+                    <option value="subtract">{lang === 'ar' ? 'خصم من المخزون (-)' : 'Subtract Stock (-)'}</option>
+                  </select>
+                  <input 
+                    type="number" 
+                    placeholder={lang === 'ar' ? 'الكمية...' : 'Quantity...'} 
+                    className="input-field" 
+                    style={{ margin: 0, width: '130px' }}
+                    value={bulkStockValue}
+                    onChange={(e) => setBulkStockValue(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Form Actions */}
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowBulkEditModal(false)}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: '8px',
+                    backgroundColor: 'var(--bg-tertiary)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--border-color)',
+                    fontWeight: '600',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                </button>
+                <button
+                  type="submit"
+                  disabled={bulkSubmitting}
+                  style={{
+                    padding: '10px 24px',
+                    borderRadius: '8px',
+                    backgroundColor: 'var(--accent-blue)',
+                    color: 'white',
+                    border: 'none',
+                    fontWeight: '700',
+                    cursor: bulkSubmitting ? 'not-allowed' : 'pointer',
+                    opacity: bulkSubmitting ? 0.7 : 1
+                  }}
+                >
+                  {bulkSubmitting ? (lang === 'ar' ? 'جاري الحفظ...' : 'Saving...') : (lang === 'ar' ? 'حفظ التعديلات' : 'Save Changes')}
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Lightbox Modal */}
       {lightboxSrc && (
