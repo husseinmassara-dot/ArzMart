@@ -49,7 +49,8 @@ if (isPostgres) {
   });
 } else {
   const fs = require('fs');
-  const persistentDir = '/home/hussein/.gemini/antigravity/worktrees/arz_mart_data';
+  const os = require('os');
+  const persistentDir = path.join(os.homedir(), '.gemini', 'antigravity', 'worktrees', 'arz_mart_data');
   if (!fs.existsSync(persistentDir)) {
     try {
       fs.mkdirSync(persistentDir, { recursive: true });
