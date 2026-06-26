@@ -129,6 +129,15 @@ exports.deleteCategory = async (req, res) => {
       return res.status(404).json({ error_ar: 'التصنيف غير موجود', error_en: 'Category not found' });
     }
 
+    // Check if there are any products in this category
+    const productsCount = await db.getAsync('SELECT COUNT(*) as count FROM products WHERE category_id = ?', [id]);
+    if (productsCount && productsCount.count > 0) {
+      return res.status(400).json({
+        error_ar: 'لا يمكن حذف هذا التصنيف لأنه يحتوي على منتجات مسجلة تحته. يرجى نقل المنتجات إلى تصنيف آخر أولاً أو حذفها.',
+        error_en: 'Cannot delete this category because it contains active products. Please move the products to another category first or delete them.'
+      });
+    }
+
     // Set parent_id to null for sub-categories first to prevent ON DELETE CASCADE from deleting them
     await db.runAsync('UPDATE categories SET parent_id = NULL WHERE parent_id = ?', [id]);
 

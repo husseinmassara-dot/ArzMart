@@ -153,11 +153,10 @@ exports.createProduct = async (req, res) => {
   }
   const imageUrl = JSON.stringify(imageUrls);
 
-  if (!name_ar || !name_en || !price_usd) {
-    return res.status(400).json({ error_ar: 'الرجاء إدخال الحقول المطلوبة (الاسم والسعر)', error_en: 'Please enter required fields (name and price)' });
-  }
-
   const cid = category_id && category_id !== 'null' ? parseInt(category_id) : null;
+  if (!name_ar || !name_en || !price_usd || !cid) {
+    return res.status(400).json({ error_ar: 'الرجاء إدخال الحقول المطلوبة واختيار تصنيف للمنتج', error_en: 'Please enter required fields and select a product category' });
+  }
   const mid = merchant_id && merchant_id !== 'null' ? parseInt(merchant_id) : null;
   const oldPrice = old_price_usd && old_price_usd !== 'null' ? parseFloat(old_price_usd) : null;
   const costPrice = cost_price_usd ? parseFloat(cost_price_usd) : 0.0;
@@ -261,6 +260,9 @@ exports.updateProduct = async (req, res) => {
     const imageUrl = JSON.stringify(imageUrls);
 
     const cid = category_id && category_id !== 'null' ? parseInt(category_id) : null;
+    if (!cid) {
+      return res.status(400).json({ error_ar: 'الرجاء اختيار تصنيف للمنتج', error_en: 'Please select a product category' });
+    }
     const mid = merchant_id && merchant_id !== 'null' ? parseInt(merchant_id) : null;
     const oldPrice = old_price_usd && old_price_usd !== 'null' ? parseFloat(old_price_usd) : null;
     const costPrice = cost_price_usd ? parseFloat(cost_price_usd) : product.cost_price_usd;
@@ -551,7 +553,7 @@ exports.importCSV = async (req, res) => {
         if (stockIdx !== -1) { updateFields.push('stock = ?'); params.push(stockVal); }
         if (nameArIdx !== -1 && nameArVal) { updateFields.push('name_ar = ?'); params.push(nameArVal); }
         if (nameEnIdx !== -1 && nameEnVal) { updateFields.push('name_en = ?'); params.push(nameEnVal); }
-        if (catIdIdx !== -1) { updateFields.push('category_id = ?'); params.push(catIdVal); }
+        if (catIdIdx !== -1 && catIdVal !== null) { updateFields.push('category_id = ?'); params.push(catIdVal); }
         if (skuIdx !== -1) { updateFields.push('sku = ?'); params.push(skuVal); }
 
         if (updateFields.length > 0) {
@@ -563,6 +565,9 @@ exports.importCSV = async (req, res) => {
       } else {
         // If product doesn't exist, we can insert it if we have at least Arabic and English names!
         if (nameArIdx !== -1 && nameArVal && nameEnIdx !== -1 && nameEnVal) {
+          if (catIdVal === null) {
+            throw new Error(`Product "${nameEnVal}" is missing a category ID in CSV.`);
+          }
           const sql = `
             INSERT INTO products (name_ar, name_en, category_id, price_usd, old_price_usd, cost_price_usd, stock, sku)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -591,9 +596,10 @@ exports.importCSV = async (req, res) => {
   } catch (err) {
     await db.runAsync('ROLLBACK').catch(() => {});
     console.error('Import CSV error:', err);
-    res.status(500).json({
-      error_ar: 'خطأ أثناء استيراد ملف CSV، تم إلغاء التغييرات لسلامة البيانات',
-      error_en: 'Error importing CSV, changes rolled back for safety'
+    const isCustomError = err.message && err.message.includes('missing a category ID');
+    res.status(isCustomError ? 400 : 500).json({
+      error_ar: isCustomError ? `المنتج يفتقد لمعرف التصنيف (category_id) في ملف CSV.` : 'خطأ أثناء استيراد ملف CSV، تم إلغاء التغييرات لسلامة البيانات',
+      error_en: isCustomError ? err.message : 'Error importing CSV, changes rolled back for safety'
     });
   }
 };

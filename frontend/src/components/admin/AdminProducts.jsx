@@ -333,6 +333,10 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!nameAr || !nameEn || !priceUsd) return;
+    if (!categoryId || categoryId === 'null') {
+      setFormError(lang === 'ar' ? 'الرجاء اختيار تصنيف للمنتج!' : 'Please select a product category!');
+      return;
+    }
     setFormError('');
     setFormSuccess('');
     setIsSubmitting(true);
