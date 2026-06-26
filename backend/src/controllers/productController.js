@@ -101,6 +101,7 @@ exports.getProducts = async (req, res) => {
 
 exports.getProductById = async (req, res) => {
   const { id } = req.params;
+  const prodId = parseInt(id, 10);
 
   try {
     const product = await db.getAsync(`
@@ -109,7 +110,7 @@ exports.getProductById = async (req, res) => {
       LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN merchants m ON p.merchant_id = m.id
       WHERE p.id = ?
-    `, [id]);
+    `, [prodId]);
 
     if (!product) {
       return res.status(404).json({ error_ar: 'المنتج غير موجود', error_en: 'Product not found' });
@@ -200,10 +201,11 @@ exports.createProduct = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
   const { id } = req.params;
+  const prodId = parseInt(id, 10);
   const { name_ar, name_en, description_ar, description_en, price_usd, cost_price_usd, old_price_usd, category_id, merchant_id, stock, colors, sizes, existing_images, keep_existing_images, model_number } = req.body;
 
   try {
-    const product = await db.getAsync('SELECT * FROM products WHERE id = ?', [id]);
+    const product = await db.getAsync('SELECT * FROM products WHERE id = ?', [prodId]);
     if (!product) {
       return res.status(404).json({ error_ar: 'المنتج غير موجود', error_en: 'Product not found' });
     }
@@ -274,7 +276,7 @@ exports.updateProduct = async (req, res) => {
       UPDATE products 
       SET name_ar = ?, name_en = ?, description_ar = ?, description_en = ?, price_usd = ?, cost_price_usd = ?, old_price_usd = ?, category_id = ?, merchant_id = ?, image_url = ?, stock = ?, colors = ?, sizes = ?, model_number = ?
       WHERE id = ?
-    `, [name_ar, name_en, description_ar, description_en, parseFloat(price_usd), costPrice, oldPrice, cid, mid, imageUrl, productStock, colorsStr, sizesStr, model_number || '', id]);
+    `, [name_ar, name_en, description_ar, description_en, parseFloat(price_usd), costPrice, oldPrice, cid, mid, imageUrl, productStock, colorsStr, sizesStr, model_number || '', prodId]);
 
     res.json({
       message_ar: 'تم تحديث المنتج بنجاح',
@@ -307,14 +309,15 @@ exports.updateProduct = async (req, res) => {
 
 exports.deleteProduct = async (req, res) => {
   const { id } = req.params;
+  const prodId = parseInt(id, 10);
 
   try {
-    const product = await db.getAsync('SELECT * FROM products WHERE id = ?', [id]);
+    const product = await db.getAsync('SELECT * FROM products WHERE id = ?', [prodId]);
     if (!product) {
       return res.status(404).json({ error_ar: 'المنتج غير موجود', error_en: 'Product not found' });
     }
 
-    await db.runAsync('DELETE FROM products WHERE id = ?', [id]);
+    await db.runAsync('DELETE FROM products WHERE id = ?', [prodId]);
     res.json({ message_ar: 'تم حذف المنتج بنجاح', message_en: 'Product deleted successfully' });
   } catch (err) {
     console.error('Delete product error:', err);
@@ -324,6 +327,7 @@ exports.deleteProduct = async (req, res) => {
 
 exports.rateProduct = async (req, res) => {
   const { id } = req.params;
+  const prodId = parseInt(id, 10);
   const { rating } = req.body;
 
   if (!rating || rating < 1 || rating > 5) {
@@ -331,7 +335,7 @@ exports.rateProduct = async (req, res) => {
   }
 
   try {
-    const product = await db.getAsync('SELECT * FROM products WHERE id = ?', [id]);
+    const product = await db.getAsync('SELECT * FROM products WHERE id = ?', [prodId]);
     if (!product) {
       return res.status(404).json({ error_ar: 'المنتج غير موجود', error_en: 'Product not found' });
     }
@@ -340,7 +344,7 @@ exports.rateProduct = async (req, res) => {
       UPDATE products 
       SET rating_sum = rating_sum + ?, rating_count = rating_count + 1 
       WHERE id = ?
-    `, [parseFloat(rating), id]);
+    `, [parseFloat(rating), prodId]);
 
     res.json({ message_ar: 'شكراً لتقييمك!', message_en: 'Thank you for your rating!' });
   } catch (err) {
@@ -360,11 +364,12 @@ exports.bulkUpdateCategory = async (req, res) => {
   }
 
   const cid = categoryId && categoryId !== 'null' ? parseInt(categoryId) : null;
+  const parsedProductIds = productIds.map(id => parseInt(id, 10));
 
   try {
-    const placeholders = productIds.map(() => '?').join(',');
+    const placeholders = parsedProductIds.map(() => '?').join(',');
     const query = `UPDATE products SET category_id = ? WHERE id IN (${placeholders})`;
-    await db.runAsync(query, [cid, ...productIds]);
+    await db.runAsync(query, [cid, ...parsedProductIds]);
 
     res.json({
       message_ar: 'تم نقل المنتجات بنجاح',
@@ -624,8 +629,9 @@ exports.reorderProducts = async (req, res) => {
 
 exports.toggleFeatured = async (req, res) => {
   const { id } = req.params;
+  const prodId = parseInt(id, 10);
   try {
-    const product = await db.getAsync('SELECT is_featured FROM products WHERE id = ?', [id]);
+    const product = await db.getAsync('SELECT is_featured FROM products WHERE id = ?', [prodId]);
     if (!product) {
       return res.status(404).json({ error_ar: 'المنتج غير موجود', error_en: 'Product not found' });
     }
@@ -641,7 +647,7 @@ exports.toggleFeatured = async (req, res) => {
       }
     }
     
-    await db.runAsync('UPDATE products SET is_featured = ? WHERE id = ?', [newVal, id]);
+    await db.runAsync('UPDATE products SET is_featured = ? WHERE id = ?', [newVal, prodId]);
     res.json({
       message_ar: newVal ? 'تمت إضافة المنتج لأحدث المنتجات' : 'تم إزالة المنتج من أحدث المنتجات',
       message_en: newVal ? 'Product added to featured' : 'Product removed from featured',
@@ -673,10 +679,12 @@ exports.bulkUpdateProducts = async (req, res) => {
     });
   }
 
+  const parsedProductIds = productIds.map(id => parseInt(id, 10));
+
   try {
     await db.runAsync('BEGIN TRANSACTION');
 
-    for (const id of productIds) {
+    for (const id of parsedProductIds) {
       const product = await db.getAsync('SELECT price_usd, cost_price_usd, stock, category_id, merchant_id FROM products WHERE id = ?', [id]);
       if (!product) continue;
 

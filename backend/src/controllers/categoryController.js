@@ -60,16 +60,17 @@ exports.updateCategory = async (req, res) => {
   const { id } = req.params;
   const { name_ar, name_en, parent_id } = req.body;
   
-  const pid = parent_id && parent_id !== 'null' ? parseInt(parent_id) : null;
+  const catId = parseInt(id, 10);
+  const pid = parent_id && parent_id !== 'null' ? parseInt(parent_id, 10) : null;
 
   try {
-    const category = await db.getAsync('SELECT * FROM categories WHERE id = ?', [id]);
+    const category = await db.getAsync('SELECT * FROM categories WHERE id = ?', [catId]);
     if (!category) {
       return res.status(404).json({ error_ar: 'التصنيف غير موجود', error_en: 'Category not found' });
     }
 
     // Don't allow setting parent to itself
-    if (pid === parseInt(id)) {
+    if (pid === catId) {
       return res.status(400).json({ error_ar: 'لا يمكن تعيين التصنيف كأب لنفسه', error_en: 'Category cannot be its own parent' });
     }
 
@@ -81,8 +82,14 @@ exports.updateCategory = async (req, res) => {
       }
 
       let currentParentId = pid;
+      const visited = new Set();
       while (currentParentId) {
-        if (currentParentId === parseInt(id)) {
+        if (visited.has(currentParentId)) {
+          break;
+        }
+        visited.add(currentParentId);
+
+        if (currentParentId === catId) {
           return res.status(400).json({
             error_ar: 'لا يمكن تعيين هذا التصنيف كأب لأنه سيسبب حلقة دائرية مغلقة',
             error_en: 'Cannot set this parent category as it would create a circular dependency'
@@ -100,14 +107,14 @@ exports.updateCategory = async (req, res) => {
 
     await db.runAsync(
       'UPDATE categories SET name_ar = ?, name_en = ?, parent_id = ?, image_url = ? WHERE id = ?',
-      [name_ar, name_en, pid, imageUrl, id]
+      [name_ar, name_en, pid, imageUrl, catId]
     );
 
     res.json({
       message_ar: 'تم تحديث التصنيف بنجاح',
       message_en: 'Category updated successfully',
       category: {
-        id: parseInt(id),
+        id: catId,
         name_ar,
         name_en,
         parent_id: pid,
@@ -122,15 +129,16 @@ exports.updateCategory = async (req, res) => {
 
 exports.deleteCategory = async (req, res) => {
   const { id } = req.params;
+  const catId = parseInt(id, 10);
 
   try {
-    const category = await db.getAsync('SELECT * FROM categories WHERE id = ?', [id]);
+    const category = await db.getAsync('SELECT * FROM categories WHERE id = ?', [catId]);
     if (!category) {
       return res.status(404).json({ error_ar: 'التصنيف غير موجود', error_en: 'Category not found' });
     }
 
     // Check if there are any products in this category
-    const productsCount = await db.getAsync('SELECT COUNT(*) as count FROM products WHERE category_id = ?', [id]);
+    const productsCount = await db.getAsync('SELECT COUNT(*) as count FROM products WHERE category_id = ?', [catId]);
     if (productsCount && productsCount.count > 0) {
       return res.status(400).json({
         error_ar: 'لا يمكن حذف هذا التصنيف لأنه يحتوي على منتجات مسجلة تحته. يرجى نقل المنتجات إلى تصنيف آخر أولاً أو حذفها.',
@@ -139,10 +147,10 @@ exports.deleteCategory = async (req, res) => {
     }
 
     // Set parent_id to null for sub-categories first to prevent ON DELETE CASCADE from deleting them
-    await db.runAsync('UPDATE categories SET parent_id = NULL WHERE parent_id = ?', [id]);
+    await db.runAsync('UPDATE categories SET parent_id = NULL WHERE parent_id = ?', [catId]);
 
     // Now delete the category safely
-    await db.runAsync('DELETE FROM categories WHERE id = ?', [id]);
+    await db.runAsync('DELETE FROM categories WHERE id = ?', [catId]);
 
     res.json({ message_ar: 'تم حذف التصنيف بنجاح', message_en: 'Category deleted successfully' });
   } catch (err) {
@@ -179,6 +187,7 @@ exports.bulkUpdateParent = async (req, res) => {
   }
 
   const pid = parentId && parentId !== 'null' ? parseInt(parentId, 10) : null;
+  const parsedCategoryIds = categoryIds.map(id => parseInt(id, 10));
 
   try {
     if (pid) {
@@ -190,7 +199,7 @@ exports.bulkUpdateParent = async (req, res) => {
         });
       }
 
-      if (categoryIds.includes(pid)) {
+      if (parsedCategoryIds.includes(pid)) {
         return res.status(400).json({
           error_ar: 'لا يمكن نقل التصنيف ليكون ابناً لنفسه',
           error_en: 'Cannot move a category under itself'
@@ -198,10 +207,16 @@ exports.bulkUpdateParent = async (req, res) => {
       }
 
       // Check circular references for each category
-      for (const id of categoryIds) {
+      for (const id of parsedCategoryIds) {
         let currentParentId = pid;
+        const visited = new Set();
         while (currentParentId) {
-          if (currentParentId === parseInt(id, 10)) {
+          if (visited.has(currentParentId)) {
+            break;
+          }
+          visited.add(currentParentId);
+
+          if (currentParentId === id) {
             return res.status(400).json({
               error_ar: 'لا يمكن نقل التصنيفات المحددة لأنها ستسبب حلقة دائرية مغلقة',
               error_en: 'Cannot move these categories as it would create a circular dependency'
@@ -213,8 +228,8 @@ exports.bulkUpdateParent = async (req, res) => {
       }
     }
 
-    const placeholders = categoryIds.map(() => '?').join(',');
-    await db.runAsync(`UPDATE categories SET parent_id = ? WHERE id IN (${placeholders})`, [pid, ...categoryIds]);
+    const placeholders = parsedCategoryIds.map(() => '?').join(',');
+    await db.runAsync(`UPDATE categories SET parent_id = ? WHERE id IN (${placeholders})`, [pid, ...parsedCategoryIds]);
 
     res.json({
       message_ar: 'تم نقل التصنيفات بنجاح',
