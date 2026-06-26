@@ -45,21 +45,11 @@ export default function Hero() {
 
   if (slides.length === 0) return null;
 
-  const activeSlide = slides[currentSlide];
-  const imageSource = activeSlide.image.startsWith('http') || activeSlide.image.startsWith('data:') || activeSlide.image.startsWith('/')
-    ? activeSlide.image 
-    : `${apiHost}${activeSlide.image}`;
-
   const isRtl = lang === 'ar';
 
   return (
     <div 
       className="no-print animate-scale hero-slider-container" 
-      onClick={() => {
-        if (activeSlide?.link) {
-          window.location.href = activeSlide.link;
-        }
-      }}
       style={{
         position: 'relative',
         height: '420px',
@@ -69,94 +59,129 @@ export default function Hero() {
         borderRadius: '24px',
         margin: '20px 0',
         boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
-        border: '1px solid rgba(255,255,255,0.05)',
-        cursor: activeSlide?.link ? 'pointer' : 'default'
+        border: '1px solid rgba(255,255,255,0.05)'
       }}
     >
-      {/* Slide Image Background with overlay gradient */}
-      <div style={{
-        width: '100%',
-        height: '100%',
-        backgroundImage: `linear-gradient(to ${isRtl ? 'left' : 'right'}, rgba(7, 10, 19, 0.95) 30%, rgba(7, 10, 19, 0.4) 60%, rgba(7, 10, 19, 0.1) 100%), url(${imageSource})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        transition: 'background-image 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
-      }} />
+      {slides.map((slide, index) => {
+        const isActive = index === currentSlide;
+        const slideImageSource = slide.image.startsWith('http') || slide.image.startsWith('data:') || slide.image.startsWith('/')
+          ? slide.image 
+          : `${apiHost}${slide.image}`;
+          
+        return (
+          <div
+            key={index}
+            onClick={() => {
+              if (slide?.link) {
+                window.location.href = slide.link;
+              }
+            }}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              opacity: isActive ? 1 : 0,
+              visibility: isActive ? 'visible' : 'hidden',
+              transition: 'opacity 1s cubic-bezier(0.4, 0, 0.2, 1), visibility 1s',
+              cursor: slide?.link ? 'pointer' : 'default',
+              zIndex: isActive ? 1 : 0
+            }}
+          >
+            {/* Background Image with Ken Burns animation if active */}
+            <div 
+              style={{
+                width: '100%',
+                height: '100%',
+                backgroundImage: `linear-gradient(to ${isRtl ? 'left' : 'right'}, rgba(7, 10, 19, 0.95) 30%, rgba(7, 10, 19, 0.4) 60%, rgba(7, 10, 19, 0.1) 100%), url(${slideImageSource})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                transform: isActive ? 'scale(1.06)' : 'scale(1)',
+                transition: isActive ? 'transform 6s linear' : 'none'
+              }} 
+            />
 
-      {/* Slide Text Content Overlay - positioned on the right for Arabic, left for English */}
-      <div style={{
-        position: 'absolute',
-        top: '0',
-        bottom: '0',
-        left: isRtl ? 'auto' : '50px',
-        right: isRtl ? '50px' : 'auto',
-        width: '45%',
-        minWidth: '280px',
-        color: 'white',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'flex-start',
-        textAlign: isRtl ? 'right' : 'left',
-        gap: '16px',
-        zIndex: 5
-      }} className="animate-fade hero-slider-content">
-        <h1 className="hero-slider-title" style={{
-          fontSize: '2.6rem',
-          fontWeight: '900',
-          lineHeight: '1.25',
-          textShadow: '0 2px 8px rgba(0,0,0,0.5)',
-          fontFamily: 'system-ui, -apple-system, sans-serif'
-        }}>
-          {isRtl ? activeSlide.title_ar : activeSlide.title_en}
-        </h1>
-        
-        <p className="hero-slider-desc" style={{
-          fontSize: '1.05rem',
-          fontWeight: '500',
-          color: 'rgba(255, 255, 255, 0.8)',
-          textShadow: '0 1px 4px rgba(0,0,0,0.5)',
-          lineHeight: '1.6',
-          margin: 0
-        }}>
-          {isRtl ? activeSlide.desc_ar : activeSlide.desc_en}
-        </p>
+            {/* Slide Text Content Overlay - positioned on the right for Arabic, left for English */}
+            <div style={{
+              position: 'absolute',
+              top: '0',
+              bottom: '0',
+              left: isRtl ? 'auto' : '50px',
+              right: isRtl ? '50px' : 'auto',
+              width: '45%',
+              minWidth: '280px',
+              color: 'white',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'flex-start',
+              textAlign: isRtl ? 'right' : 'left',
+              gap: '16px',
+              zIndex: 5,
+              opacity: isActive ? 1 : 0,
+              transform: isActive ? 'translateY(0)' : 'translateY(20px)',
+              transition: 'opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s'
+            }} className="hero-slider-content">
+              <h1 className="hero-slider-title" style={{
+                fontSize: '2.6rem',
+                fontWeight: '900',
+                lineHeight: '1.25',
+                textShadow: '0 2px 8px rgba(0,0,0,0.5)',
+                fontFamily: 'system-ui, -apple-system, sans-serif'
+              }}>
+                {isRtl ? slide.title_ar : slide.title_en}
+              </h1>
+              
+              <p className="hero-slider-desc" style={{
+                fontSize: '1.05rem',
+                fontWeight: '500',
+                color: 'rgba(255, 255, 255, 0.8)',
+                textShadow: '0 1px 4px rgba(0,0,0,0.5)',
+                lineHeight: '1.6',
+                margin: 0
+              }}>
+                {isRtl ? slide.desc_ar : slide.desc_en}
+              </p>
 
-        {/* Green "Shop Now" Button with shopping bag icon */}
-        <button 
-          className="hero-slider-button"
-          style={{
-            backgroundColor: 'var(--accent-brand)',
-            color: 'white',
-            border: 'none',
-            padding: '12px 28px',
-            borderRadius: '12px',
-            fontWeight: '800',
-            fontSize: '0.95rem',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            boxShadow: '0 4px 14px var(--accent-brand-shadow-lg)',
-            transition: 'transform 0.2s, background-color 0.2s'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--accent-brand-hover)';
-            e.currentTarget.style.transform = 'scale(1.05)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--accent-brand)';
-            e.currentTarget.style.transform = 'scale(1)';
-          }}
-        >
-          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <path d="M16 10a4 4 0 0 1-8 0" />
-          </svg>
-          <span>{isRtl ? 'تسوق الآن' : 'Shop Now'}</span>
-        </button>
-      </div>
+              {/* Green "Shop Now" Button with shopping bag icon */}
+              <button 
+                className="hero-slider-button"
+                style={{
+                  backgroundColor: 'var(--accent-brand)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 28px',
+                  borderRadius: '12px',
+                  fontWeight: '800',
+                  fontSize: '0.95rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 14px var(--accent-brand-shadow-lg)',
+                  transition: 'transform 0.2s, background-color 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--accent-brand-hover)';
+                  e.currentTarget.style.transform = 'scale(1.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--accent-brand)';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              >
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <path d="M16 10a4 4 0 0 1-8 0" />
+                </svg>
+                <span>{isRtl ? 'تسوق الآن' : 'Shop Now'}</span>
+              </button>
+            </div>
+          </div>
+        );
+      })}
 
       {/* Navigation Arrows - Circular White Buttons */}
       {slides.length > 1 && (
@@ -181,7 +206,7 @@ export default function Hero() {
               color: '#0f172a',
               cursor: 'pointer',
               boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
-              transition: 'transform 0.2s, background-color 0.2s'
+              transition: 'transform 0.2s, background-color 0.2s',
             }}
             onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'}
             onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(-50%) scale(1)'}
@@ -208,7 +233,7 @@ export default function Hero() {
               color: '#0f172a',
               cursor: 'pointer',
               boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
-              transition: 'transform 0.2s, background-color 0.2s'
+              transition: 'transform 0.2s, background-color 0.2s',
             }}
             onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'}
             onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(-50%) scale(1)'}
