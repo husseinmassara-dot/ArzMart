@@ -47,6 +47,22 @@ export default function Hero() {
 
   const isRtl = lang === 'ar';
 
+  const getGlowColor = (slide, index) => {
+    const text = ((slide.title_ar || '') + (slide.title_en || '')).toLowerCase();
+    if (text.includes('kids') || text.includes('أطفال') || text.includes('مرح') || text.includes('fun')) {
+      return 'rgba(16, 185, 129, 0.22)'; // Emerald green glow
+    }
+    if (text.includes('discount') || text.includes('خصم') || text.includes('offer') || text.includes('عروض')) {
+      return 'rgba(239, 68, 68, 0.22)'; // Coral red/amber glow
+    }
+    const presets = [
+      'rgba(59, 130, 246, 0.22)',  // Blue
+      'rgba(168, 85, 247, 0.22)', // Purple
+      'rgba(236, 72, 153, 0.22)'  // Pink
+    ];
+    return presets[index % presets.length];
+  };
+
   return (
     <div 
       className="no-print animate-scale hero-slider-container" 
@@ -58,7 +74,7 @@ export default function Hero() {
         overflow: 'hidden',
         borderRadius: '24px',
         margin: '20px 0',
-        boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.35)',
         border: '1px solid rgba(255,255,255,0.05)'
       }}
     >
@@ -67,15 +83,12 @@ export default function Hero() {
         const slideImageSource = slide.image.startsWith('http') || slide.image.startsWith('data:') || slide.image.startsWith('/')
           ? slide.image 
           : `${apiHost}${slide.image}`;
+        
+        const glowColor = getGlowColor(slide, index);
           
         return (
           <div
             key={index}
-            onClick={() => {
-              if (slide?.link) {
-                window.location.href = slide.link;
-              }
-            }}
             style={{
               position: 'absolute',
               top: 0,
@@ -84,60 +97,98 @@ export default function Hero() {
               height: '100%',
               opacity: isActive ? 1 : 0,
               visibility: isActive ? 'visible' : 'hidden',
-              transition: 'opacity 1s cubic-bezier(0.4, 0, 0.2, 1), visibility 1s',
-              cursor: slide?.link ? 'pointer' : 'default',
+              transition: 'opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), visibility 1.2s',
               zIndex: isActive ? 1 : 0
             }}
           >
-            {/* Background Image with Ken Burns animation if active */}
+            {/* Background Image with Parallax Slide-Scale effect */}
             <div 
               style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
                 width: '100%',
                 height: '100%',
-                backgroundImage: `linear-gradient(to ${isRtl ? 'left' : 'right'}, rgba(7, 10, 19, 0.95) 30%, rgba(7, 10, 19, 0.4) 60%, rgba(7, 10, 19, 0.1) 100%), url(${slideImageSource})`,
+                backgroundImage: `linear-gradient(to ${isRtl ? 'left' : 'right'}, rgba(7, 10, 19, 0.8) 25%, rgba(7, 10, 19, 0.3) 60%, rgba(7, 10, 19, 0.1) 100%), url(${slideImageSource})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
-                transform: isActive ? 'scale(1.06)' : 'scale(1)',
-                transition: isActive ? 'transform 6s linear' : 'none'
+                transform: isActive 
+                  ? 'scale(1.03) translate(0, 0)' 
+                  : `scale(1.1) translate(${isRtl ? '-25px' : '25px'}, 0)`,
+                transition: 'transform 1.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 1.4s'
               }} 
             />
 
-            {/* Slide Text Content Overlay - positioned on the right for Arabic, left for English */}
+            {/* Dynamic Ambient Glow Behind Card */}
             <div style={{
               position: 'absolute',
-              top: '0',
-              bottom: '0',
-              left: isRtl ? 'auto' : '50px',
-              right: isRtl ? '50px' : 'auto',
-              width: '45%',
-              minWidth: '280px',
-              color: 'white',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'flex-start',
-              textAlign: isRtl ? 'right' : 'left',
-              gap: '16px',
-              zIndex: 5,
+              width: '400px',
+              height: '400px',
+              borderRadius: '50%',
+              background: `radial-gradient(circle, ${glowColor} 0%, rgba(0,0,0,0) 70%)`,
+              filter: 'blur(50px)',
+              top: '50%',
+              left: isRtl ? 'auto' : '80px',
+              right: isRtl ? '80px' : 'auto',
+              transform: 'translateY(-50%)',
+              pointerEvents: 'none',
+              zIndex: 2,
               opacity: isActive ? 1 : 0,
-              transform: isActive ? 'translateY(0)' : 'translateY(20px)',
-              transition: 'opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s'
-            }} className="hero-slider-content">
+              transition: 'opacity 1.2s ease-in-out'
+            }} />
+
+            {/* Floating Glassmorphic Text Card */}
+            <div 
+              onClick={() => {
+                if (slide?.link) {
+                  window.location.href = slide.link;
+                }
+              }}
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: isRtl ? 'auto' : '60px',
+                right: isRtl ? '60px' : 'auto',
+                transform: isActive ? 'translateY(-50%) scale(1)' : 'translateY(-40%) scale(0.92)',
+                width: '45%',
+                minWidth: '320px',
+                color: 'white',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'flex-start',
+                textAlign: isRtl ? 'right' : 'left',
+                gap: '20px',
+                zIndex: 5,
+                padding: '36px',
+                borderRadius: '24px',
+                backgroundColor: 'rgba(10, 15, 30, 0.55)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                boxShadow: '0 20px 50px rgba(0, 0, 0, 0.45)',
+                cursor: slide?.link ? 'pointer' : 'default',
+                opacity: isActive ? 1 : 0,
+                transition: 'opacity 1s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s, transform 1s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s'
+              }} 
+              className="hero-slider-content-card"
+            >
               <h1 className="hero-slider-title" style={{
-                fontSize: '2.6rem',
+                fontSize: '2.5rem',
                 fontWeight: '900',
                 lineHeight: '1.25',
-                textShadow: '0 2px 8px rgba(0,0,0,0.5)',
-                fontFamily: 'system-ui, -apple-system, sans-serif'
+                textShadow: '0 2px 8px rgba(0,0,0,0.4)',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                margin: 0
               }}>
                 {isRtl ? slide.title_ar : slide.title_en}
               </h1>
               
               <p className="hero-slider-desc" style={{
-                fontSize: '1.05rem',
+                fontSize: '1.02rem',
                 fontWeight: '500',
-                color: 'rgba(255, 255, 255, 0.8)',
-                textShadow: '0 1px 4px rgba(0,0,0,0.5)',
+                color: 'rgba(255, 255, 255, 0.82)',
+                textShadow: '0 1px 4px rgba(0,0,0,0.4)',
                 lineHeight: '1.6',
                 margin: 0
               }}>
@@ -160,7 +211,8 @@ export default function Hero() {
                   alignItems: 'center',
                   gap: '8px',
                   boxShadow: '0 4px 14px var(--accent-brand-shadow-lg)',
-                  transition: 'transform 0.2s, background-color 0.2s'
+                  transition: 'transform 0.2s, background-color 0.2s',
+                  alignSelf: 'flex-start'
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = 'var(--accent-brand-hover)';
