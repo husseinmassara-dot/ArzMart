@@ -25,7 +25,8 @@ app.use((req, res, next) => {
 });
 
 // Setup persistent uploads symlink
-const persistentDir = '/home/hussein/.gemini/antigravity/worktrees/arz_mart_data';
+const os = require('os');
+const persistentDir = path.join(os.homedir(), '.gemini', 'antigravity', 'worktrees', 'arz_mart_data');
 const persistentUploads = path.join(persistentDir, 'uploads');
 const localUploads = path.join(__dirname, '../uploads');
 
@@ -64,7 +65,7 @@ if (fs.existsSync(persistentDir)) {
       }
     }
     if (!fs.existsSync(localUploads)) {
-      fs.symlinkSync(persistentUploads, localUploads, 'dir');
+      fs.symlinkSync(persistentUploads, localUploads, process.platform === 'win32' ? 'junction' : 'dir');
       console.log('[Uploads] Symlinked local uploads to persistent directory.');
     }
   } catch (err) {
