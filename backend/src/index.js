@@ -15,8 +15,8 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
   console.log(`[HTTP] ${req.method} ${req.url}`);
-  // Disable caching for HTML files to prevent browser caching of SPA index.html
-  if (req.path === '/' || req.path.endsWith('.html') || !req.path.includes('.')) {
+  // Disable caching for API and HTML files to prevent browser caching of stale data
+  if (req.path.startsWith('/api') || req.path === '/' || req.path.endsWith('.html') || !req.path.includes('.')) {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
