@@ -49,18 +49,6 @@ export default function App() {
   const [maxPrice, setMaxPrice] = useState('');
   const [minRating, setMinRating] = useState('');
 
-  const [showCategories, setShowCategories] = useState(() => {
-    const saved = localStorage.getItem('show_categories');
-    return saved !== null ? saved === 'true' : true;
-  });
-
-  const toggleShowCategories = () => {
-    setShowCategories(prev => {
-      localStorage.setItem('show_categories', String(!prev));
-      return !prev;
-    });
-  };
-
   // Dropdown UI toggles
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
 
@@ -376,7 +364,7 @@ export default function App() {
     };
   }, [apiBase]);
 
-  // Register global goHome method for Android back button integration
+  // Register global methods and listeners for Android/admin integration
   useEffect(() => {
     window.goHome = () => {
       setCurrentView('store');
@@ -385,8 +373,15 @@ export default function App() {
       setShowCheckout(false);
       window.history.pushState(null, '', '/');
     };
+    
+    const handleReload = () => {
+      fetchCategories();
+    };
+    window.addEventListener('reload-categories', handleReload);
+
     return () => {
       delete window.goHome;
+      window.removeEventListener('reload-categories', handleReload);
     };
   }, []);
 
@@ -1458,43 +1453,6 @@ export default function App() {
                   </button>
                 )}
               </div>
-
-              {/* ON/OFF Categories display toggle */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-light)' }}>
-                  {lang === 'ar' ? 'عرض التصنيفات:' : 'Show Categories:'}
-                </span>
-                <button
-                  onClick={toggleShowCategories}
-                  style={{
-                    position: 'relative',
-                    width: '46px',
-                    height: '24px',
-                    borderRadius: '12px',
-                    backgroundColor: showCategories ? 'var(--accent-brand)' : '#e5e7eb',
-                    border: 'none',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.3s ease',
-                    padding: '0',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}
-                >
-                  <div style={{
-                    width: '18px',
-                    height: '18px',
-                    borderRadius: '50%',
-                    backgroundColor: 'white',
-                    position: 'absolute',
-                    left: showCategories ? '24px' : '4px',
-                    transition: 'left 0.3s ease',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
-                  }} />
-                </button>
-                <span style={{ fontSize: '0.85rem', fontWeight: '800', color: showCategories ? 'var(--accent-brand)' : 'var(--text-light)' }}>
-                  {showCategories ? (lang === 'ar' ? 'تشغيل' : 'ON') : (lang === 'ar' ? 'إيقاف' : 'OFF')}
-                </span>
-              </div>
             </div>
 
             {/* Dropdown Filters Form Overlay */}
@@ -1520,8 +1478,8 @@ export default function App() {
                   >
                     <option value="">{t('all_categories')}</option>
                     {(() => {
-                      const parents = categories.filter(c => !c.parent_id);
-                      const children = categories.filter(c => c.parent_id);
+                      const parents = categories.filter(c => !c.parent_id && c.active !== 0);
+                      const children = categories.filter(c => c.parent_id && c.active !== 0);
                       
                       const list = [];
                       parents.forEach(p => {
@@ -1536,7 +1494,7 @@ export default function App() {
                         });
                       });
                       
-                      categories.forEach(c => {
+                      categories.filter(c => c.active !== 0).forEach(c => {
                         if (!list.some(item => item.id === c.id)) {
                           list.push({ ...c, depth: 0 });
                         }
@@ -2045,15 +2003,14 @@ export default function App() {
                   </div>
 
                   {/* --- 3. DYNAMIC ICON-GRID NAVIGATION --- */}
-                  {showCategories && (
-                    <div className="icon-navigation-grid" style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-                      gap: '16px',
-                      margin: '20px 0'
-                    }}>
-                      {/* All Sections */}
-                      <button
+                  <div className="icon-navigation-grid" style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                    gap: '16px',
+                    margin: '20px 0'
+                  }}>
+                    {/* All Sections */}
+                    <button
                       onClick={() => {
                         setSelectedCategory('');
                         setSearchVal('');
@@ -2185,15 +2142,14 @@ export default function App() {
                         );
                       })
                     }
-                    </div>
-                  )}
+                  </div>
 
                   {/* --- 3b. SUBCATEGORIES ROW (shown when a parent with children is selected) --- */}
-                  {showCategories && (() => {
+                  {(() => {
                     // Find subcategories of the currently selected category
                     const selectedCatId = typeof selectedCategory === 'string' ? parseInt(selectedCategory) : selectedCategory;
                     const subcats = categories.filter(c =>
-                      c.parent_id && !isNaN(selectedCatId) && Number(c.parent_id) === selectedCatId
+                      c.parent_id && !isNaN(selectedCatId) && Number(c.parent_id) === selectedCatId && c.active !== 0
                     );
                     if (!subcats.length) return null;
                     const parentCat = categories.find(c => c.id === selectedCatId);
@@ -2258,7 +2214,6 @@ export default function App() {
                       </div>
                     );
                   })()}
-                  {/* End showCategories condition */}
 
 
                   <div className="bottom-promo-banner" style={{
@@ -2448,7 +2403,7 @@ export default function App() {
               (() => {
                 // Determine if selected category has children (is a parent/intermediate category)
                 const selectedCatIdNum = Number(selectedCategory);
-                const hasSubcategories = selectedCategory !== '' && !isNaN(selectedCatIdNum) && categories.some(c => c.parent_id !== null && c.parent_id !== undefined && Number(c.parent_id) === selectedCatIdNum);
+                const hasSubcategories = selectedCategory !== '' && !isNaN(selectedCatIdNum) && categories.some(c => c.parent_id !== null && c.parent_id !== undefined && Number(c.parent_id) === selectedCatIdNum && c.active !== 0);
 
                 return (
                   <div id="products-catalog-section" className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -2598,7 +2553,7 @@ export default function App() {
                     </div>
 
                     {/* Sub-categories cards — shown when current category has children */}
-                    {showCategories && hasSubcategories && (
+                    {hasSubcategories && (
                       <div style={{ margin: '8px 0 0 0' }} className="animate-fade">
                         <h3 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '16px', color: 'var(--text-primary)' }}>
                           {lang === 'ar' ? 'الأقسام الفرعية' : 'Subcategories'}
@@ -2686,9 +2641,9 @@ export default function App() {
                     )}
 
                     {/* Products Grid */}
-                    {(products.length > 0 || !hasSubcategories || !showCategories) && (
-                      <div style={{ marginTop: (hasSubcategories && showCategories) ? '30px' : '0' }}>
-                        {showCategories && hasSubcategories && products.length > 0 && (
+                    {(products.length > 0 || !hasSubcategories) && (
+                      <div style={{ marginTop: hasSubcategories ? '30px' : '0' }}>
+                        {hasSubcategories && products.length > 0 && (
                           <h3 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '16px', color: 'var(--text-primary)' }}>
                             {lang === 'ar' ? 'منتجات هذا القسم' : 'Products in this Category'}
                           </h3>

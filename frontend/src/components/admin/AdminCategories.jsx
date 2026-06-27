@@ -93,6 +93,7 @@ export default function AdminCategories() {
         const data = await res.json();
         setCategories(data);
         setOrderChanged(false);
+        window.dispatchEvent(new Event('reload-categories'));
       }
     } catch (err) {
       console.error(err);
@@ -140,6 +141,31 @@ export default function AdminCategories() {
   const handleDragEnd = () => {
     dragIndexRef.current = null;
     setDragOverIndex(null);
+  };
+
+  const handleToggleActive = async (cat) => {
+    try {
+      const newActive = cat.active === 0 ? 1 : 0;
+      const res = await fetch(`${apiBase}/categories/${cat.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          active: newActive
+        })
+      });
+      if (res.ok) {
+        fetchCategories();
+      } else {
+        const errData = await res.json();
+        alert(lang === 'ar' ? errData.error_ar || 'فشل تعديل الحالة' : errData.error_en || 'Failed to update status');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error updating category status');
+    }
   };
 
   const handleSaveOrder = async () => {
@@ -597,6 +623,7 @@ export default function AdminCategories() {
               <th style={{ padding: '10px', textAlign: 'start' }}>أيقونة</th>
               <th style={{ padding: '10px', textAlign: 'start' }}>التصنيف</th>
               <th style={{ padding: '10px', textAlign: 'start' }}>التصنيف الأب</th>
+              <th style={{ padding: '10px', textAlign: 'center' }}>الحالة</th>
               <th style={{ padding: '10px', textAlign: 'center' }}>العمليات</th>
             </tr>
           </thead>
@@ -664,6 +691,36 @@ export default function AdminCategories() {
                     {c.parent_id
                       ? (lang === 'ar' ? c.parent_name_ar : c.parent_name_en)
                       : (lang === 'ar' ? 'رئيسي' : 'Top Level')}
+                  </td>
+                  <td style={{ padding: '10px', textAlign: 'center' }}>
+                    <button
+                      onClick={() => handleToggleActive(c)}
+                      style={{
+                        position: 'relative',
+                        width: '42px',
+                        height: '22px',
+                        borderRadius: '11px',
+                        backgroundColor: c.active !== 0 ? 'var(--accent-brand)' : '#e5e7eb',
+                        border: 'none',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s ease',
+                        padding: '0',
+                        display: 'inline-flex',
+                        alignItems: 'center'
+                      }}
+                      title={c.active !== 0 ? (lang === 'ar' ? 'إيقاف عرض التصنيف' : 'Deactivate') : (lang === 'ar' ? 'عرض التصنيف' : 'Activate')}
+                    >
+                      <div style={{
+                        width: '14px',
+                        height: '14px',
+                        borderRadius: '50%',
+                        backgroundColor: 'white',
+                        position: 'absolute',
+                        left: c.active !== 0 ? '24px' : '4px',
+                        transition: 'left 0.2s ease',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+                      }} />
+                    </button>
                   </td>
                   <td style={{ padding: '10px', textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>

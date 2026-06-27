@@ -58,7 +58,7 @@ exports.createCategory = async (req, res) => {
 
 exports.updateCategory = async (req, res) => {
   const { id } = req.params;
-  const { name_ar, name_en, parent_id } = req.body;
+  const { name_ar, name_en, parent_id, active } = req.body;
   
   const catId = parseInt(id, 10);
   const pid = parent_id && parent_id !== 'null' ? parseInt(parent_id, 10) : null;
@@ -67,6 +67,19 @@ exports.updateCategory = async (req, res) => {
     const category = await db.getAsync('SELECT * FROM categories WHERE id = ?', [catId]);
     if (!category) {
       return res.status(404).json({ error_ar: 'التصنيف غير موجود', error_en: 'Category not found' });
+    }
+
+    if (active !== undefined) {
+      const activeVal = parseInt(active, 10);
+      await db.runAsync('UPDATE categories SET active = ? WHERE id = ?', [activeVal, catId]);
+      return res.json({
+        message_ar: 'تم تحديث حالة التصنيف بنجاح',
+        message_en: 'Category status updated successfully',
+        category: {
+          ...category,
+          active: activeVal
+        }
+      });
     }
 
     // Don't allow setting parent to itself
