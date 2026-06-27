@@ -195,4 +195,18 @@ class MainActivity : AppCompatActivity() {
         }
         webView.evaluateJavascript(script, null)
     }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        if (webView.canGoBack()) {
+            webView.goBack()
+        } else {
+            val currentUrl = webView.url ?: ""
+            if (currentUrl.contains("?")) {
+                webView.evaluateJavascript("javascript:if(window.goHome) { window.goHome(); }", null)
+            } else {
+                super.onBackPressed()
+            }
+        }
+    }
 }

@@ -49,6 +49,18 @@ export default function App() {
   const [maxPrice, setMaxPrice] = useState('');
   const [minRating, setMinRating] = useState('');
 
+  const [showCategories, setShowCategories] = useState(() => {
+    const saved = localStorage.getItem('show_categories');
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  const toggleShowCategories = () => {
+    setShowCategories(prev => {
+      localStorage.setItem('show_categories', String(!prev));
+      return !prev;
+    });
+  };
+
   // Dropdown UI toggles
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
 
@@ -363,6 +375,20 @@ export default function App() {
       window.removeEventListener('popstate', handlePopState);
     };
   }, [apiBase]);
+
+  // Register global goHome method for Android back button integration
+  useEffect(() => {
+    window.goHome = () => {
+      setCurrentView('store');
+      setSelectedCategory('');
+      setSelectedProduct(null);
+      setShowCheckout(false);
+      window.history.pushState(null, '', '/');
+    };
+    return () => {
+      delete window.goHome;
+    };
+  }, []);
 
   // Handle Biometric Login authentication
   const handleBiometricLogin = async () => {
@@ -1394,42 +1420,81 @@ export default function App() {
 
             {/* Dropdown filters and search toggle */}
             <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-              <button
-                onClick={toggleFilterDropdown}
-                className="input-field"
-                style={{
-                  width: 'auto',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  fontWeight: '700',
-                  padding: '8px 16px',
-                  backgroundColor: 'var(--bg-secondary)',
-                  cursor: 'pointer',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '20px'
-                }}
-              >
-                <span>{t('filters')}</span>
-                <ChevronDown size={14} style={{ transform: showFilterDropdown ? 'rotate(180deg)' : 'none' }} />
-              </button>
-
-              {/* Reset filters button if active */}
-              {(selectedCategory || minPrice || maxPrice || minRating) && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <button
-                  onClick={clearFilters}
+                  onClick={toggleFilterDropdown}
+                  className="input-field"
                   style={{
-                    border: 'none',
-                    backgroundColor: 'transparent',
-                    color: '#ef4444',
+                    width: 'auto',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
                     fontWeight: '700',
+                    padding: '8px 16px',
+                    backgroundColor: 'var(--bg-secondary)',
                     cursor: 'pointer',
-                    fontSize: '0.85rem'
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '20px'
                   }}
                 >
-                  إعادة تعيين (Clear Filters)
+                  <span>{t('filters')}</span>
+                  <ChevronDown size={14} style={{ transform: showFilterDropdown ? 'rotate(180deg)' : 'none' }} />
                 </button>
-              )}
+
+                {/* Reset filters button if active */}
+                {(selectedCategory || minPrice || maxPrice || minRating) && (
+                  <button
+                    onClick={clearFilters}
+                    style={{
+                      border: 'none',
+                      backgroundColor: 'transparent',
+                      color: '#ef4444',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    إعادة تعيين (Clear Filters)
+                  </button>
+                )}
+              </div>
+
+              {/* ON/OFF Categories display toggle */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-light)' }}>
+                  {lang === 'ar' ? 'عرض التصنيفات:' : 'Show Categories:'}
+                </span>
+                <button
+                  onClick={toggleShowCategories}
+                  style={{
+                    position: 'relative',
+                    width: '46px',
+                    height: '24px',
+                    borderRadius: '12px',
+                    backgroundColor: showCategories ? 'var(--accent-brand)' : '#e5e7eb',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.3s ease',
+                    padding: '0',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                >
+                  <div style={{
+                    width: '18px',
+                    height: '18px',
+                    borderRadius: '50%',
+                    backgroundColor: 'white',
+                    position: 'absolute',
+                    left: showCategories ? '24px' : '4px',
+                    transition: 'left 0.3s ease',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+                  }} />
+                </button>
+                <span style={{ fontSize: '0.85rem', fontWeight: '800', color: showCategories ? 'var(--accent-brand)' : 'var(--text-light)' }}>
+                  {showCategories ? (lang === 'ar' ? 'تشغيل' : 'ON') : (lang === 'ar' ? 'إيقاف' : 'OFF')}
+                </span>
+              </div>
             </div>
 
             {/* Dropdown Filters Form Overlay */}
@@ -1980,14 +2045,15 @@ export default function App() {
                   </div>
 
                   {/* --- 3. DYNAMIC ICON-GRID NAVIGATION --- */}
-                  <div className="icon-navigation-grid" style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-                    gap: '16px',
-                    margin: '20px 0'
-                  }}>
-                    {/* All Sections */}
-                    <button
+                  {showCategories && (
+                    <div className="icon-navigation-grid" style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                      gap: '16px',
+                      margin: '20px 0'
+                    }}>
+                      {/* All Sections */}
+                      <button
                       onClick={() => {
                         setSelectedCategory('');
                         setSearchVal('');
@@ -2119,10 +2185,11 @@ export default function App() {
                         );
                       })
                     }
-                  </div>
+                    </div>
+                  )}
 
                   {/* --- 3b. SUBCATEGORIES ROW (shown when a parent with children is selected) --- */}
-                  {(() => {
+                  {showCategories && (() => {
                     // Find subcategories of the currently selected category
                     const selectedCatId = typeof selectedCategory === 'string' ? parseInt(selectedCategory) : selectedCategory;
                     const subcats = categories.filter(c =>
@@ -2191,6 +2258,7 @@ export default function App() {
                       </div>
                     );
                   })()}
+                  {/* End showCategories condition */}
 
 
                   <div className="bottom-promo-banner" style={{
@@ -2530,7 +2598,7 @@ export default function App() {
                     </div>
 
                     {/* Sub-categories cards — shown when current category has children */}
-                    {hasSubcategories && (
+                    {showCategories && hasSubcategories && (
                       <div style={{ margin: '8px 0 0 0' }} className="animate-fade">
                         <h3 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '16px', color: 'var(--text-primary)' }}>
                           {lang === 'ar' ? 'الأقسام الفرعية' : 'Subcategories'}
@@ -2618,9 +2686,9 @@ export default function App() {
                     )}
 
                     {/* Products Grid */}
-                    {(products.length > 0 || !hasSubcategories) && (
-                      <div style={{ marginTop: hasSubcategories ? '30px' : '0' }}>
-                        {hasSubcategories && products.length > 0 && (
+                    {(products.length > 0 || !hasSubcategories || !showCategories) && (
+                      <div style={{ marginTop: (hasSubcategories && showCategories) ? '30px' : '0' }}>
+                        {showCategories && hasSubcategories && products.length > 0 && (
                           <h3 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '16px', color: 'var(--text-primary)' }}>
                             {lang === 'ar' ? 'منتجات هذا القسم' : 'Products in this Category'}
                           </h3>
