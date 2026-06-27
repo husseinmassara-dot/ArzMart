@@ -4,7 +4,7 @@ import { useCart, getOptionPrice, getOptionName } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { X, CheckCircle } from 'lucide-react';
 
-export default function Checkout({ onClose }) {
+export default function Checkout({ onClose, categories = [] }) {
   const { lang, formatPrice, settings, t, apiBase } = useApp();
   const { token, user } = useAuth();
   const { cartItems, subtotal, deliveryFee, total, clearCart } = useCart();
@@ -146,9 +146,12 @@ export default function Checkout({ onClose }) {
 
   const discountableSubtotal = cartItems.reduce((sum, item) => {
     if (!item || !item.product) return sum;
+    const catId = item.product.category_id;
     const catAr = item.product.category_name_ar || '';
     const catEn = item.product.category_name_en || '';
-    const isPhone = (
+    
+    // 1. Direct name check
+    const matchesPhone = (
       (catAr.includes('هاتف') || catAr.includes('هواتف') || catAr.includes('موبايل') || catAr.includes('جوال')) &&
       !(catAr.includes('إكسسوار') || catAr.includes('اكسسوار') || catAr.includes('شاحن') || catAr.includes('شواحن') || 
         catAr.includes('سماعة') || catAr.includes('سماعات') || catAr.includes('كفر') || catAr.includes('كفرات') || 
@@ -162,8 +165,58 @@ export default function Checkout({ onClose }) {
         catEn.toLowerCase().includes('holder') || catEn.toLowerCase().includes('stand') || catEn.toLowerCase().includes('powerbank') || 
         catEn.toLowerCase().includes('power bank'))
     );
-    
-    if (isPhone && discountPercent === 10) {
+
+    const matchesLaptop = (
+      catAr.includes('لابتوب') || catAr.includes('كمبيوتر')
+    ) || (
+      catEn.toLowerCase().includes('laptop') || catEn.toLowerCase().includes('computer')
+    );
+
+    let isExcluded = matchesPhone || matchesLaptop;
+
+    // 2. Ancestor check using categories list
+    if (!isExcluded && categories && categories.length > 0 && catId) {
+      let currentId = Number(catId);
+      const visited = new Set();
+      while (currentId && !visited.has(currentId)) {
+        visited.add(currentId);
+        const parentCat = categories.find(c => Number(c.id) === currentId);
+        if (!parentCat) break;
+        
+        const parentNameAr = parentCat.name_ar || '';
+        const parentNameEn = parentCat.name_en || '';
+        
+        const parentMatchesPhone = (
+          (parentNameAr.includes('هاتف') || parentNameAr.includes('هواتف') || parentNameAr.includes('موبايل') || parentNameAr.includes('جوال')) &&
+          !(parentNameAr.includes('إكسسوار') || parentNameAr.includes('اكسسوار') || parentNameAr.includes('شاحن') || parentNameAr.includes('شواحن') || 
+            parentNameAr.includes('سماعة') || parentNameAr.includes('سماعات') || parentNameAr.includes('كفر') || parentNameAr.includes('كفرات') || 
+            parentNameAr.includes('جراب') || parentNameAr.includes('جرابات') || parentNameAr.includes('سلك') || parentNameAr.includes('أسلاك') || 
+            parentNameAr.includes('حماية') || parentNameAr.includes('لاصق'))
+        ) || (
+          (parentNameEn.toLowerCase().includes('phone') || parentNameEn.toLowerCase().includes('mobile') || parentNameEn.toLowerCase().includes('smartphone')) &&
+          !(parentNameEn.toLowerCase().includes('access') || parentNameEn.toLowerCase().includes('case') || parentNameEn.toLowerCase().includes('cover') || 
+            parentNameEn.toLowerCase().includes('charger') || parentNameEn.toLowerCase().includes('headphone') || parentNameEn.toLowerCase().includes('earphone') || 
+            parentNameEn.toLowerCase().includes('cable') || parentNameEn.toLowerCase().includes('screen') || parentNameEn.toLowerCase().includes('glass') || 
+            parentNameEn.toLowerCase().includes('holder') || parentNameEn.toLowerCase().includes('stand') || parentNameEn.toLowerCase().includes('powerbank') || 
+            parentNameEn.toLowerCase().includes('power bank'))
+        );
+        
+        const parentMatchesLaptop = (
+          parentNameAr.includes('لابتوب') || parentNameAr.includes('كمبيوتر')
+        ) || (
+          parentNameEn.toLowerCase().includes('laptop') || parentNameEn.toLowerCase().includes('computer')
+        );
+
+        if (parentMatchesPhone || parentMatchesLaptop) {
+          isExcluded = true;
+          break;
+        }
+        
+        currentId = parentCat.parent_id ? Number(parentCat.parent_id) : null;
+      }
+    }
+
+    if (isExcluded && discountPercent === 10) {
       return sum;
     }
     const itemPrice = getOptionPrice(item.selectedSize, item.product.price_usd || 0);

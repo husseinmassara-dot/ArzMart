@@ -19,6 +19,7 @@ exports.createOrder = async (req, res) => {
     let discountableSubtotalUsd = 0;
     let totalCostUsd = 0; // Cumulative cost price for the order
     const orderItemsDetails = [];
+    const categoriesList = (await db.allAsync('SELECT id, name_ar, name_en, parent_id FROM categories')) || [];
 
     for (const item of items) {
       const product = await db.getAsync(`
@@ -93,25 +94,79 @@ exports.createOrder = async (req, res) => {
       subtotalUsd += itemCost;
       totalCostUsd += itemCostPrice;
 
-      const category = await db.getAsync('SELECT name_ar, name_en FROM categories WHERE id = ?', [product.category_id]);
+      const category = categoriesList.find(c => Number(c.id) === Number(product.category_id));
       const catAr = category ? (category.name_ar || '') : '';
       const catEn = category ? (category.name_en || '') : '';
-      const isPhone = (
-        (catAr.includes('هاتف') || catAr.includes('هواتف') || catAr.includes('موبايل') || catAr.includes('جوال')) &&
-        !(catAr.includes('إكسسوار') || catAr.includes('اكسسوار') || catAr.includes('شاحن') || catAr.includes('شواحن') || 
-          catAr.includes('سماعة') || catAr.includes('سماعات') || catAr.includes('كفر') || catAr.includes('كفرات') || 
-          catAr.includes('جراب') || catAr.includes('جرابات') || catAr.includes('سلك') || catAr.includes('أسلاك') || 
-          catAr.includes('حماية') || catAr.includes('لاصق'))
-      ) || (
-        (catEn.toLowerCase().includes('phone') || catEn.toLowerCase().includes('mobile') || catEn.toLowerCase().includes('smartphone')) &&
-        !(catEn.toLowerCase().includes('access') || catEn.toLowerCase().includes('case') || catEn.toLowerCase().includes('cover') || 
-          catEn.toLowerCase().includes('charger') || catEn.toLowerCase().includes('headphone') || catEn.toLowerCase().includes('earphone') || 
-          catEn.toLowerCase().includes('cable') || catEn.toLowerCase().includes('screen') || catEn.toLowerCase().includes('glass') || 
-          catEn.toLowerCase().includes('holder') || catEn.toLowerCase().includes('stand') || catEn.toLowerCase().includes('powerbank') || 
-          catEn.toLowerCase().includes('power bank'))
-      );
 
-      if (!isPhone) {
+      const isExcluded = (catId, directAr, directEn, list) => {
+        let currentId = Number(catId);
+        const visited = new Set();
+        
+        // 1. Direct name check
+        const directMatchesPhone = (
+          (directAr.includes('هاتف') || directAr.includes('هواتف') || directAr.includes('موبايل') || directAr.includes('جوال')) &&
+          !(directAr.includes('إكسسوار') || directAr.includes('اكسسوار') || directAr.includes('شاحن') || directAr.includes('شواحن') || 
+            directAr.includes('سماعة') || directAr.includes('سماعات') || directAr.includes('كفر') || directAr.includes('كفرات') || 
+            directAr.includes('جراب') || directAr.includes('جرابات') || directAr.includes('سلك') || directAr.includes('أسلاك') || 
+            directAr.includes('حماية') || directAr.includes('لاصق'))
+        ) || (
+          (directEn.toLowerCase().includes('phone') || directEn.toLowerCase().includes('mobile') || directEn.toLowerCase().includes('smartphone')) &&
+          !(directEn.toLowerCase().includes('access') || directEn.toLowerCase().includes('case') || directEn.toLowerCase().includes('cover') || 
+            directEn.toLowerCase().includes('charger') || directEn.toLowerCase().includes('headphone') || directEn.toLowerCase().includes('earphone') || 
+            directEn.toLowerCase().includes('cable') || directEn.toLowerCase().includes('screen') || directEn.toLowerCase().includes('glass') || 
+            directEn.toLowerCase().includes('holder') || directEn.toLowerCase().includes('stand') || directEn.toLowerCase().includes('powerbank') || 
+            directEn.toLowerCase().includes('power bank'))
+        );
+
+        const directMatchesLaptop = (
+          directAr.includes('لابتوب') || directAr.includes('كمبيوتر')
+        ) || (
+          directEn.toLowerCase().includes('laptop') || directEn.toLowerCase().includes('computer')
+        );
+
+        if (directMatchesPhone || directMatchesLaptop) {
+          return true;
+        }
+
+        // 2. Ancestor check
+        while (currentId && !visited.has(currentId)) {
+          visited.add(currentId);
+          const cat = list.find(c => Number(c.id) === currentId);
+          if (!cat) break;
+          
+          const nameAr = cat.name_ar || '';
+          const nameEn = cat.name_en || '';
+          
+          const matchesPhone = (
+            (nameAr.includes('هاتف') || nameAr.includes('هواتف') || nameAr.includes('موبايل') || nameAr.includes('جوال')) &&
+            !(nameAr.includes('إكسسوار') || nameAr.includes('اكسسوار') || nameAr.includes('شاحن') || nameAr.includes('شواحن') || 
+              nameAr.includes('سماعة') || nameAr.includes('سماعات') || nameAr.includes('كفر') || nameAr.includes('كفرات') || 
+              nameAr.includes('جراب') || nameAr.includes('جرابات') || nameAr.includes('سلك') || nameAr.includes('أسلاك') || 
+              nameAr.includes('حماية') || nameAr.includes('لاصق'))
+          ) || (
+            (nameEn.toLowerCase().includes('phone') || nameEn.toLowerCase().includes('mobile') || nameEn.toLowerCase().includes('smartphone')) &&
+            !(nameEn.toLowerCase().includes('access') || nameEn.toLowerCase().includes('case') || nameEn.toLowerCase().includes('cover') || 
+              nameEn.toLowerCase().includes('charger') || nameEn.toLowerCase().includes('headphone') || nameEn.toLowerCase().includes('earphone') || 
+              nameEn.toLowerCase().includes('cable') || nameEn.toLowerCase().includes('screen') || nameEn.toLowerCase().includes('glass') || 
+              nameEn.toLowerCase().includes('holder') || nameEn.toLowerCase().includes('stand') || nameEn.toLowerCase().includes('powerbank') || 
+              nameEn.toLowerCase().includes('power bank'))
+          );
+
+          const matchesLaptop = (
+            nameAr.includes('لابتوب') || nameAr.includes('كمبيوتر')
+          ) || (
+            nameEn.toLowerCase().includes('laptop') || nameEn.toLowerCase().includes('computer')
+          );
+
+          if (matchesPhone || matchesLaptop) {
+            return true;
+          }
+          currentId = cat.parent_id ? Number(cat.parent_id) : null;
+        }
+        return false;
+      };
+
+      if (!isExcluded(product.category_id, catAr, catEn, categoriesList)) {
         discountableSubtotalUsd += itemCost;
       }
 

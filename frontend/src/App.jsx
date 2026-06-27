@@ -2455,6 +2455,77 @@ export default function App() {
                             lang === 'ar' ? 'نتائج البحث' : 'Search Results'
                           )}
                         </h2>
+                        {selectedCategory !== '' && (() => {
+                          const currentCat = categories.find(c => Number(c.id) === selectedCatIdNum);
+                          if (currentCat) {
+                            let isExcluded = false;
+                            let currentId = Number(selectedCatIdNum);
+                            const visited = new Set();
+                            
+                            while (currentId && !visited.has(currentId)) {
+                              visited.add(currentId);
+                              const cat = categories.find(c => Number(c.id) === currentId);
+                              if (!cat) break;
+                              
+                              const nameAr = cat.name_ar || '';
+                              const nameEn = cat.name_en || '';
+                              
+                              const matchesPhone = (
+                                (nameAr.includes('هاتف') || nameAr.includes('هواتف') || nameAr.includes('موبايل') || nameAr.includes('جوال')) &&
+                                !(nameAr.includes('إكسسوار') || nameAr.includes('اكسسوار') || nameAr.includes('شاحن') || nameAr.includes('شواحن') || 
+                                  nameAr.includes('سماعة') || nameAr.includes('سماعات') || nameAr.includes('كفر') || nameAr.includes('كفرات') || 
+                                  nameAr.includes('جراب') || nameAr.includes('جرابات') || nameAr.includes('سلك') || nameAr.includes('أسلاك') || 
+                                  nameAr.includes('حماية') || nameAr.includes('لاصق'))
+                              ) || (
+                                (nameEn.toLowerCase().includes('phone') || nameEn.toLowerCase().includes('mobile') || nameEn.toLowerCase().includes('smartphone')) &&
+                                !(nameEn.toLowerCase().includes('access') || nameEn.toLowerCase().includes('case') || nameEn.toLowerCase().includes('cover') || 
+                                  nameEn.toLowerCase().includes('charger') || nameEn.toLowerCase().includes('headphone') || nameEn.toLowerCase().includes('earphone') || 
+                                  nameEn.toLowerCase().includes('cable') || nameEn.toLowerCase().includes('screen') || nameEn.toLowerCase().includes('glass') || 
+                                  nameEn.toLowerCase().includes('holder') || nameEn.toLowerCase().includes('stand') || nameEn.toLowerCase().includes('powerbank') || 
+                                  nameEn.toLowerCase().includes('power bank'))
+                              );
+
+                              const matchesLaptop = (
+                                nameAr.includes('لابتوب') || nameAr.includes('كمبيوتر')
+                              ) || (
+                                nameEn.toLowerCase().includes('laptop') || nameEn.toLowerCase().includes('computer')
+                              );
+
+                              if (matchesPhone || matchesLaptop) {
+                                isExcluded = true;
+                                break;
+                              }
+                              
+                              currentId = cat.parent_id ? Number(cat.parent_id) : null;
+                            }
+                            
+                            if (isExcluded) {
+                              return (
+                                <div style={{
+                                  marginTop: '8px',
+                                  padding: '10px 14px',
+                                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                  border: '1px solid rgba(239, 68, 68, 0.2)',
+                                  borderRadius: '12px',
+                                  color: '#ef4444',
+                                  fontSize: '0.85rem',
+                                  fontWeight: '600',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '8px'
+                                }}>
+                                  <span>⚠️</span>
+                                  <span>
+                                    {lang === 'ar' 
+                                      ? 'تنويه: الخصم الترحيبي بقيمة 10% لا يشمل المنتجات في هذا القسم.' 
+                                      : 'Notice: The 10% welcome discount does not apply to products in this category.'}
+                                  </span>
+                                </div>
+                              );
+                            }
+                          }
+                          return null;
+                        })()}
                       </div>
                     </div>
 
@@ -2657,7 +2728,7 @@ export default function App() {
 
       {/* 6. Checkout Modal dialog */}
       {showCheckout && (
-        <Checkout onClose={() => setShowCheckout(false)} />
+        <Checkout onClose={() => setShowCheckout(false)} categories={categories} />
       )}
 
       {/* 7. Live Customer Chat Panel */}
