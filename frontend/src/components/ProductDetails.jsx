@@ -217,16 +217,20 @@ export default function ProductDetails({ product, onClose, onRefresh, setCurrent
                   <span style={{ fontSize: '0.8rem' }}>{lang === 'ar' ? 'جارٍ تحميل الصور...' : 'Loading images...'}</span>
                 </div>
               ) : (
-                <img 
-                  src={activeImageUrl} 
-                  alt={name} 
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '260px',
-                    objectFit: 'contain',
-                    transition: 'opacity 0.2s'
-                  }}
-                />
+                <>
+                  <img 
+                    src={activeImageUrl} 
+                    alt={name} 
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '260px',
+                      objectFit: 'contain',
+                      transition: 'opacity 0.2s'
+                    }}
+                  />
+                  {/* Transparent overlay to block browser Visual Search button */}
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1, backgroundColor: 'transparent' }} />
+                </>
               )}
               {/* Prev & Next Arrows */}
               {imagesList.length > 1 && (
