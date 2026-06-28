@@ -15,7 +15,7 @@ import PwaInstallBanner from './components/PwaInstallBanner';
 // Admin panel imports
 import AdminDashboard from './components/admin/AdminDashboard';
 
-import { Key, User, FileText, ChevronDown, Check, Star, RefreshCw, Fingerprint, Smartphone, Globe, Settings, Moon, Sun } from 'lucide-react';
+import { Key, User, FileText, ChevronDown, Check, Star, RefreshCw, Fingerprint, Smartphone, Globe, Settings, Moon, Sun, Percent } from 'lucide-react';
 
 export default function App() {
   const { lang, setLang, theme, setTheme, formatPrice, t, apiBase, settings, currency, apiHost } = useApp();
@@ -1799,6 +1799,214 @@ export default function App() {
                         );
                       })}
                   </div>
+
+                  {/* --- 3. LATEST OFFERS / DEALS SECTION --- */}
+                  {(() => {
+                    const discountedProducts = products.filter(
+                      p => p.old_price_usd && Number(p.old_price_usd) > Number(p.price_usd)
+                    );
+                    if (discountedProducts.length === 0) return null;
+
+                    return (
+                      <div className="animate-fade" style={{ marginTop: '30px', marginBottom: '20px' }}>
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '16px',
+                          borderBottom: '1px solid var(--border-color)',
+                          paddingBottom: '12px'
+                        }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', textAlign: isRtl ? 'right' : 'left' }}>
+                            <h2 style={{
+                              fontSize: '1.4rem',
+                              fontWeight: '900',
+                              margin: 0,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: isRtl ? 'flex-end' : 'flex-start',
+                              gap: '8px',
+                              color: 'var(--text-primary)'
+                            }}>
+                              <span style={{
+                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                padding: '6px',
+                                borderRadius: '50%',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}>
+                                <Percent size={20} color="#ef4444" />
+                              </span>
+                              {lang === 'ar' ? 'أحدث العروض والخصومات' : 'Latest Offers & Discounts'}
+                            </h2>
+                            <span style={{ fontSize: '0.82rem', color: 'var(--text-light)', fontWeight: '600' }}>
+                              {lang === 'ar' ? 'وفر أكثر مع عروضنا الحصرية اليومية' : 'Save more with our exclusive daily deals'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Horizontal Scrollable container */}
+                        <div style={{
+                          display: 'flex',
+                          gap: '16px',
+                          overflowX: 'auto',
+                          padding: '10px 4px 20px 4px',
+                          scrollSnapType: 'x mandatory',
+                          WebkitOverflowScrolling: 'touch',
+                          scrollbarWidth: 'none',
+                          msOverflowStyle: 'none'
+                        }} className="hide-scrollbar">
+                          <style dangerouslySetInnerHTML={{__html: `
+                            .hide-scrollbar::-webkit-scrollbar {
+                              display: none;
+                            }
+                          `}} />
+                          {discountedProducts.map(product => {
+                            const pName = lang === 'ar' ? product.name_ar : product.name_en;
+                            const pImg = product.image_url
+                              ? (product.image_url.startsWith('http') || product.image_url.startsWith('data:') ? product.image_url : `${apiHost}${product.image_url}`)
+                              : 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=300&q=80';
+                            
+                            const discountPercent = Math.round(
+                              ((Number(product.old_price_usd) - Number(product.price_usd)) / Number(product.old_price_usd)) * 100
+                            );
+
+                            return (
+                              <div
+                                key={product.id}
+                                className="dashboard-card"
+                                onClick={() => setSelectedProduct(product)}
+                                style={{
+                                  flex: '0 0 190px',
+                                  scrollSnapAlign: 'start',
+                                  padding: '0',
+                                  overflow: 'hidden',
+                                  cursor: 'pointer',
+                                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                                  border: '1px solid var(--border-color)',
+                                  borderRadius: '20px',
+                                  position: 'relative',
+                                  backgroundColor: 'var(--bg-secondary)'
+                                }}
+                                onMouseEnter={e => {
+                                  e.currentTarget.style.transform = 'translateY(-6px)';
+                                  e.currentTarget.style.boxShadow = '0 10px 20px var(--accent-brand-shadow)';
+                                }}
+                                onMouseLeave={e => {
+                                  e.currentTarget.style.transform = 'none';
+                                  e.currentTarget.style.boxShadow = '';
+                                }}
+                              >
+                                {/* Discount Badge */}
+                                <div style={{
+                                  position: 'absolute',
+                                  top: '12px',
+                                  left: isRtl ? '12px' : 'auto',
+                                  right: isRtl ? 'auto' : '12px',
+                                  backgroundColor: '#ef4444',
+                                  color: 'white',
+                                  padding: '4px 10px',
+                                  borderRadius: '12px',
+                                  fontSize: '0.78rem',
+                                  fontWeight: '800',
+                                  zIndex: 2,
+                                  boxShadow: '0 4px 8px rgba(239, 68, 68, 0.3)'
+                                }}>
+                                  {discountPercent}%-
+                                </div>
+
+                                {/* Image Wrapper */}
+                                <div style={{ 
+                                  width: '100%', 
+                                  aspectRatio: '1.05', 
+                                  overflow: 'hidden', 
+                                  backgroundColor: 'white',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  padding: '8px',
+                                  boxSizing: 'border-box',
+                                  position: 'relative'
+                                }}>
+                                  <img 
+                                    src={pImg} 
+                                    alt={pName} 
+                                    style={{ 
+                                      maxWidth: '100%', 
+                                      maxHeight: '100%', 
+                                      objectFit: 'contain',
+                                      transition: 'transform 0.5s ease'
+                                    }} 
+                                  />
+                                  {/* Transparent overlay to block Edge Visual Search */}
+                                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }} />
+                                </div>
+
+                                {/* Text/Price Content */}
+                                <div style={{ padding: '12px 14px' }}>
+                                  <p style={{ 
+                                    fontSize: '0.82rem', 
+                                    fontWeight: '800', 
+                                    color: 'var(--text-primary)', 
+                                    margin: '0 0 8px 0', 
+                                    lineHeight: '1.3', 
+                                    height: '34px',
+                                    overflow: 'hidden', 
+                                    display: '-webkit-box', 
+                                    WebkitLineClamp: 2, 
+                                    WebkitBoxOrient: 'vertical',
+                                    textAlign: isRtl ? 'right' : 'left'
+                                  }}>
+                                    {pName}
+                                  </p>
+
+                                  <div style={{ 
+                                    display: 'flex', 
+                                    flexDirection: 'column',
+                                    gap: '4px',
+                                    textAlign: isRtl ? 'right' : 'left'
+                                  }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: isRtl ? 'flex-end' : 'flex-start', flexWrap: 'wrap' }}>
+                                      <span style={{ fontSize: '1.05rem', fontWeight: '950', color: 'var(--accent-red-gold)' }}>
+                                        {formatPrice(product.price_usd)}
+                                      </span>
+                                      <span style={{ fontSize: '0.8rem', textDecoration: 'line-through', color: 'var(--text-light)', fontWeight: '600' }}>
+                                        {formatPrice(product.old_price_usd)}
+                                      </span>
+                                    </div>
+                                    
+                                    <button
+                                      onClick={e => { e.stopPropagation(); addToCart(product); }}
+                                      style={{
+                                        backgroundColor: 'var(--accent-brand)',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '24px',
+                                        padding: '6px 14px',
+                                        fontSize: '0.78rem',
+                                        fontWeight: '800',
+                                        cursor: 'pointer',
+                                        marginTop: '6px',
+                                        width: '100%',
+                                        transition: 'transform 0.2s',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '6px'
+                                      }}
+                                    >
+                                      {lang === 'ar' ? 'إضافة للسلة' : 'Add to Cart'}
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                 </div>
               );
