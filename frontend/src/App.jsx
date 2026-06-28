@@ -1705,695 +1705,99 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* --- 2. 4 FEATURED CATEGORY CARDS --- */}
+                  {/* --- 2. DYNAMIC CATEGORY CARDS --- */}
                   <div className="featured-categories-grid" style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
                     gap: '20px',
                     margin: '10px 0'
                   }}>
-                    {/* Glasses Card */}
-                    <div
-                      onClick={() => handleCategoryClick('glasses', 'نظارات')}
-                      className="category-promo-card"
-                      style={{
-                        height: '300px',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        borderRadius: '20px',
-                        cursor: 'pointer',
-                        border: '1px solid var(--border-color)',
-                        boxShadow: 'var(--shadow-md)',
-                        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                        backgroundColor: 'var(--bg-secondary)'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-6px)';
-                        e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                      }}
-                    >
-                      <div style={{
-                        width: '100%',
-                        height: '100%',
-                        backgroundImage: `url(/glasses_category.png)`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                      }} />
-                      
-                      {/* Gradient & Text Overlay */}
-                      <div className="category-card-overlay" style={{
-                        position: 'absolute',
-                        bottom: '0',
-                        left: '0',
-                        right: '0',
-                        padding: '20px',
-                        background: 'linear-gradient(to top, var(--bg-secondary) 25%, transparent 100%)',
-                        display: 'flex',
-                        flexDirection: isRtl ? 'row-reverse' : 'row',
-                        justifyContent: 'space-between',
-                        alignItems: 'flex-end',
-                        gap: '12px'
-                      }}>
-                        <div style={{ textAlign: isRtl ? 'right' : 'left' }}>
-                          <h3 className="category-card-title" style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-primary)', margin: '0 0 2px 0' }}>
-                            {lang === 'ar' ? 'نظارات' : 'Glasses'}
-                          </h3>
-                          <span className="category-card-shop-text" style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '700' }}>
-                            {lang === 'ar' ? 'تسوق الآن' : 'Shop Now'}
-                          </span>
-                        </div>
-                        <div className="category-card-arrow" style={{
-                          width: '28px',
-                          height: '28px',
-                          borderRadius: '50%',
-                          backgroundColor: 'var(--accent-brand)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'white',
-                          flexShrink: 0
-                        }}>
-                          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isRtl ? 'rotate(180deg)' : 'none' }}>
-                            <line x1="5" y1="12" x2="19" y2="12" />
-                            <polyline points="12 5 19 12 12 19" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Beauty Card */}
-                    <div
-                      onClick={() => handleCategoryClick('beauty', 'تجميل')}
-                      className="category-promo-card"
-                      style={{
-                        height: '300px',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        borderRadius: '20px',
-                        cursor: 'pointer',
-                        border: '1px solid var(--border-color)',
-                        boxShadow: 'var(--shadow-md)',
-                        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                        backgroundColor: 'var(--bg-secondary)'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-6px)';
-                        e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                      }}
-                    >
-                      <div style={{
-                        width: '100%',
-                        height: '100%',
-                        backgroundImage: `url(/beauty_category.png)`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                      }} />
-                      
-                      <div className="category-card-overlay" style={{
-                        position: 'absolute',
-                        bottom: '0',
-                        left: '0',
-                        right: '0',
-                        padding: '20px',
-                        background: 'linear-gradient(to top, var(--bg-secondary) 25%, transparent 100%)',
-                        display: 'flex',
-                        flexDirection: isRtl ? 'row-reverse' : 'row',
-                        justifyContent: 'space-between',
-                        alignItems: 'flex-end',
-                        gap: '12px'
-                      }}>
-                        <div style={{ textAlign: isRtl ? 'right' : 'left' }}>
-                          <h3 className="category-card-title" style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-primary)', margin: '0 0 2px 0' }}>
-                            {lang === 'ar' ? 'أدوات تجميل' : 'Beauty Products'}
-                          </h3>
-                          <span className="category-card-shop-text" style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '700' }}>
-                            {lang === 'ar' ? 'تسوق الآن' : 'Shop Now'}
-                          </span>
-                        </div>
-                        <div className="category-card-arrow" style={{
-                          width: '28px',
-                          height: '28px',
-                          borderRadius: '50%',
-                          backgroundColor: 'var(--accent-brand)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'white',
-                          flexShrink: 0
-                        }}>
-                          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isRtl ? 'rotate(180deg)' : 'none' }}>
-                            <line x1="5" y1="12" x2="19" y2="12" />
-                            <polyline points="12 5 19 12 12 19" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Phones Card */}
-                    <div
-                      onClick={() => handleCategoryClick('phone', 'هواتف')}
-                      className="category-promo-card"
-                      style={{
-                        height: '300px',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        borderRadius: '20px',
-                        cursor: 'pointer',
-                        border: '1px solid var(--border-color)',
-                        boxShadow: 'var(--shadow-md)',
-                        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                        backgroundColor: 'var(--bg-secondary)'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-6px)';
-                        e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                      }}
-                    >
-                      <div style={{
-                        width: '100%',
-                        height: '100%',
-                        backgroundImage: `url(/phones_category.png)`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                      }} />
-                      
-                      <div className="category-card-overlay" style={{
-                        position: 'absolute',
-                        bottom: '0',
-                        left: '0',
-                        right: '0',
-                        padding: '20px',
-                        background: 'linear-gradient(to top, var(--bg-secondary) 25%, transparent 100%)',
-                        display: 'flex',
-                        flexDirection: isRtl ? 'row-reverse' : 'row',
-                        justifyContent: 'space-between',
-                        alignItems: 'flex-end',
-                        gap: '12px'
-                      }}>
-                        <div style={{ textAlign: isRtl ? 'right' : 'left' }}>
-                          <h3 className="category-card-title" style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-primary)', margin: '0 0 2px 0' }}>
-                            {lang === 'ar' ? 'هواتف' : 'Phones'}
-                          </h3>
-                          <span className="category-card-shop-text" style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '700' }}>
-                            {lang === 'ar' ? 'تسوق الآن' : 'Shop Now'}
-                          </span>
-                        </div>
-                        <div className="category-card-arrow" style={{
-                          width: '28px',
-                          height: '28px',
-                          borderRadius: '50%',
-                          backgroundColor: 'var(--accent-brand)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'white',
-                          flexShrink: 0
-                        }}>
-                          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isRtl ? 'rotate(180deg)' : 'none' }}>
-                            <line x1="5" y1="12" x2="19" y2="12" />
-                            <polyline points="12 5 19 12 12 19" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Accessories Card */}
-                    <div
-                      onClick={() => handleCategoryClick('accessories', 'إكسسوار')}
-                      className="category-promo-card"
-                      style={{
-                        height: '300px',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        borderRadius: '20px',
-                        cursor: 'pointer',
-                        border: '1px solid var(--border-color)',
-                        boxShadow: 'var(--shadow-md)',
-                        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                        backgroundColor: 'var(--bg-secondary)'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-6px)';
-                        e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                      }}
-                    >
-                      <div style={{
-                        width: '100%',
-                        height: '100%',
-                        backgroundImage: `url(/accessories_cat.png)`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                      }} />
-                      
-                      <div className="category-card-overlay" style={{
-                        position: 'absolute',
-                        bottom: '0',
-                        left: '0',
-                        right: '0',
-                        padding: '20px',
-                        background: 'linear-gradient(to top, var(--bg-secondary) 25%, transparent 100%)',
-                        display: 'flex',
-                        flexDirection: isRtl ? 'row-reverse' : 'row',
-                        justifyContent: 'space-between',
-                        alignItems: 'flex-end',
-                        gap: '12px'
-                      }}>
-                        <div style={{ textAlign: isRtl ? 'right' : 'left' }}>
-                          <h3 className="category-card-title" style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-primary)', margin: '0 0 2px 0' }}>
-                            {lang === 'ar' ? 'إكسسوارات' : 'Accessories'}
-                          </h3>
-                          <span className="category-card-shop-text" style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '700' }}>
-                            {lang === 'ar' ? 'تسوق الآن' : 'Shop Now'}
-                          </span>
-                        </div>
-                        <div className="category-card-arrow" style={{
-                          width: '28px',
-                          height: '28px',
-                          borderRadius: '50%',
-                          backgroundColor: 'var(--accent-brand)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'white',
-                          flexShrink: 0
-                        }}>
-                          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isRtl ? 'rotate(180deg)' : 'none' }}>
-                            <line x1="5" y1="12" x2="19" y2="12" />
-                            <polyline points="12 5 19 12 12 19" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* --- 3. DYNAMIC ICON-GRID NAVIGATION --- */}
-                  <div className="icon-navigation-grid" style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-                    gap: '16px',
-                    margin: '20px 0'
-                  }}>
-                    {/* All Sections */}
-                    <button
-                      onClick={() => {
-                        setSelectedCategory('');
-                        setSearchVal('');
-                      }}
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        padding: '16px',
-                        backgroundColor: 'var(--bg-secondary)',
-                        border: selectedCategory === '' ? '2px solid var(--accent-brand)' : '1px solid var(--border-color)',
-                        borderRadius: '16px',
-                        cursor: 'pointer',
-                        boxShadow: selectedCategory === '' ? '0 0 12px var(--accent-brand-shadow)' : 'var(--shadow-sm)',
-                        transition: 'transform 0.2s, background-color 0.2s, border-color 0.2s',
-                        transform: selectedCategory === '' ? 'scale(1.03)' : 'none'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-4px) scale(1.03)';
-                        e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = selectedCategory === '' ? 'translateY(0) scale(1.03)' : 'translateY(0)';
-                        e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
-                      }}
-                    >
-                      <div style={{
-                        width: '48px',
-                        height: '48px',
-                        borderRadius: '50%',
-                        backgroundColor: 'var(--accent-brand-rgba)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'var(--accent-brand)',
-                        flexShrink: 0
-                      }}>
-                        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2.5" fill="none">
-                          <rect x="3" y="3" width="7" height="7" rx="1" />
-                          <rect x="14" y="3" width="7" height="7" rx="1" />
-                          <rect x="14" y="14" width="7" height="7" rx="1" />
-                          <rect x="3" y="14" width="7" height="7" rx="1" />
-                        </svg>
-                      </div>
-                      <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-primary)' }}>
-                        {lang === 'ar' ? 'كل الأقسام' : 'All Sections'}
-                      </span>
-                    </button>
-
-                    {/* Dynamic Database Categories — top-level parents only */}
                     {categories
-                      .filter(cat => {
-                        const nameEn = (cat.name_en || '').toLowerCase();
-                        const nameAr = (cat.name_ar || '');
-                        if (nameEn.includes('test') || nameAr.includes('تجريبي')) return false;
-                        if (nameEn === 'apple' && !cat.image_url) return false;
-                        // Show only TOP-LEVEL (parent) categories in the main grid
-                        if (cat.parent_id) return false;
-                        return true;
-                      })
+                      .filter(cat => !cat.parent_id && cat.active !== 0)
                       .map(cat => {
-                        const isSelected = selectedCategory === cat.id;
-                        // Check if any subcategory of this parent is selected
-                        const hasSelectedChild = categories.some(
-                          c => c.parent_id === cat.id && selectedCategory === c.id
-                        );
-                        const isActiveParent = isSelected || hasSelectedChild;
                         const catImg = cat.image_url 
                           ? (cat.image_url.startsWith('http') || cat.image_url.startsWith('data:') ? cat.image_url : `${apiHost}${cat.image_url}`)
                           : 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=300&q=80';
                         const catName = lang === 'ar' ? cat.name_ar : cat.name_en;
 
                         return (
-                          <button
+                          <div
                             key={cat.id}
                             onClick={() => {
                               setSelectedCategory(cat.id);
                               setSearchVal('');
                             }}
+                            className="category-promo-card"
                             style={{
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '8px',
-                              padding: '16px',
-                              backgroundColor: 'var(--bg-secondary)',
-                              border: isActiveParent ? '2px solid var(--accent-brand)' : '1px solid var(--border-color)',
-                              borderRadius: '16px',
+                              height: '300px',
+                              position: 'relative',
+                              overflow: 'hidden',
+                              borderRadius: '20px',
                               cursor: 'pointer',
-                              boxShadow: isActiveParent ? '0 0 12px var(--accent-brand-shadow)' : 'var(--shadow-sm)',
-                              transition: 'transform 0.2s, background-color 0.2s, border-color 0.2s',
-                              transform: isActiveParent ? 'scale(1.03)' : 'none'
+                              border: '1px solid var(--border-color)',
+                              boxShadow: 'var(--shadow-md)',
+                              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                              backgroundColor: 'var(--bg-secondary)'
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.transform = 'translateY(-4px) scale(1.03)';
-                              e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                              e.currentTarget.style.transform = 'translateY(-6px)';
+                              e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
                             }}
                             onMouseLeave={(e) => {
-                              e.currentTarget.style.transform = isActiveParent ? 'translateY(0) scale(1.03)' : 'translateY(0)';
-                              e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+                              e.currentTarget.style.transform = 'translateY(0)';
+                              e.currentTarget.style.boxShadow = 'var(--shadow-md)';
                             }}
                           >
                             <div style={{
-                              width: '48px',
-                              height: '48px',
-                              borderRadius: '50%',
-                              overflow: 'hidden',
+                              width: '100%',
+                              height: '100%',
+                              backgroundImage: `url(${catImg})`,
+                              backgroundSize: 'cover',
+                              backgroundPosition: 'center',
+                              transition: 'transform 0.5s ease'
+                            }} />
+                            
+                            <div className="category-card-overlay" style={{
+                              position: 'absolute',
+                              bottom: '0',
+                              left: '0',
+                              right: '0',
+                              padding: '20px',
+                              background: 'linear-gradient(to top, var(--bg-secondary) 25%, transparent 100%)',
                               display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              backgroundColor: 'var(--bg-tertiary)',
-                              border: isActiveParent ? '2px solid var(--accent-brand)' : '2px solid var(--border-color)',
-                              flexShrink: 0,
-                              boxSizing: 'border-box'
+                              flexDirection: isRtl ? 'row-reverse' : 'row',
+                              justifyContent: 'space-between',
+                              alignItems: 'flex-end',
+                              gap: '12px'
                             }}>
-                              <img 
-                                src={catImg} 
-                                alt={catName} 
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                              />
+                              <div style={{ textAlign: isRtl ? 'right' : 'left' }}>
+                                <h3 className="category-card-title" style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-primary)', margin: '0 0 2px 0' }}>
+                                  {catName}
+                                </h3>
+                                <span className="category-card-shop-text" style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '700' }}>
+                                  {lang === 'ar' ? 'تسوق الآن' : 'Shop Now'}
+                                </span>
+                              </div>
+                              <div className="category-card-arrow" style={{
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '50%',
+                                backgroundColor: 'var(--accent-brand)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'white',
+                                flexShrink: 0
+                              }}>
+                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isRtl ? 'rotate(180deg)' : 'none' }}>
+                                  <line x1="5" y1="12" x2="19" y2="12" />
+                                  <polyline points="12 5 19 12 12 19" />
+                                </svg>
+                              </div>
                             </div>
-                            <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-primary)', textAlign: 'center' }}>
-                              {catName}
-                            </span>
-                          </button>
+                          </div>
                         );
-                      })
-                    }
-                  </div>
-
-                  {/* --- 3b. SUBCATEGORIES ROW (shown when a parent with children is selected) --- */}
-                  {(() => {
-                    // Find subcategories of the currently selected category
-                    const selectedCatId = typeof selectedCategory === 'string' ? parseInt(selectedCategory) : selectedCategory;
-                    const subcats = categories.filter(c =>
-                      c.parent_id && !isNaN(selectedCatId) && Number(c.parent_id) === selectedCatId && c.active !== 0
-                    );
-                    if (!subcats.length) return null;
-                    const parentCat = categories.find(c => c.id === selectedCatId);
-                    return (
-                      <div className="animate-fade" style={{ marginTop: '-8px' }}>
-                        <p style={{
-                          fontSize: '0.78rem',
-                          fontWeight: '700',
-                          color: 'var(--text-light)',
-                          marginBottom: '10px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px'
-                        }}>
-                          <span style={{ color: 'var(--accent-brand)', fontSize: '1rem' }}>↳</span>
-                          {lang === 'ar'
-                            ? `أقسام ${parentCat ? parentCat.name_ar : ''}`
-                            : `${parentCat ? parentCat.name_en : ''} Subcategories`}
-                        </p>
-                        <div style={{
-                          display: 'flex',
-                          flexWrap: 'wrap',
-                          gap: '10px'
-                        }}>
-                          {subcats.map(sub => {
-                            const isSubSelected = selectedCategory === sub.id;
-                            const subImg = sub.image_url
-                              ? (sub.image_url.startsWith('http') || sub.image_url.startsWith('data:') ? sub.image_url : `${apiHost}${sub.image_url}`)
-                              : 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=300&q=80';
-                            const subName = lang === 'ar' ? sub.name_ar : sub.name_en;
-                            return (
-                              <button
-                                key={sub.id}
-                                onClick={() => { setSelectedCategory(sub.id); setSearchVal(''); }}
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '8px',
-                                  padding: '8px 14px',
-                                  backgroundColor: isSubSelected ? 'var(--accent-brand-rgba)' : 'var(--bg-secondary)',
-                                  border: isSubSelected ? '2px solid var(--accent-brand)' : '1px solid var(--border-color)',
-                                  borderRadius: '24px',
-                                  cursor: 'pointer',
-                                  transition: 'all 0.2s',
-                                  fontWeight: '700',
-                                  fontSize: '0.82rem',
-                                  color: isSubSelected ? 'var(--accent-brand)' : 'var(--text-primary)'
-                                }}
-                                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                                onMouseLeave={e => { e.currentTarget.style.transform = 'none'; }}
-                              >
-                                <img
-                                  src={subImg}
-                                  alt={subName}
-                                  style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border-color)' }}
-                                />
-                                {subName}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })()}
-
-
-                  <div className="bottom-promo-banner" style={{
-                    height: '160px',
-                    borderRadius: '24px',
-                    overflow: 'hidden',
-                    position: 'relative',
-                    backgroundImage: 'url(/promo_banner_bg.png)',
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    display: 'flex',
-                    flexDirection: isRtl ? 'row-reverse' : 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0 40px',
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
-                    border: '1px solid rgba(255,255,255,0.05)',
-                    margin: '10px 0 20px 0'
-                  }}>
-                    {/* Content Left (RTL flips layout) */}
-                    <div style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '8px',
-                      alignItems: isRtl ? 'flex-end' : 'flex-start',
-                      textAlign: isRtl ? 'right' : 'left'
-                    }}>
-                      <div style={{
-                        display: 'inline-flex',
-                        backgroundColor: 'rgba(251,191,36,0.15)',
-                        border: '1px solid #fbbf24',
-                        color: '#fbbf24',
-                        padding: '4px 12px',
-                        borderRadius: '20px',
-                        fontSize: '0.78rem',
-                        fontWeight: '800'
-                      }}>
-                        {lang === 'ar' ? 'لفترة محدودة!' : 'For a limited time!'}
-                      </div>
-                      <h2 style={{
-                        fontSize: '1.9rem',
-                        fontWeight: '900',
-                        color: '#fbbf24',
-                        textShadow: '0 2px 4px rgba(0,0,0,0.5)',
-                        margin: 0,
-                        lineHeight: '1.2'
-                      }}>
-                        {lang === 'ar' ? 'خصومات كبيرة' : 'Big Discounts'}
-                      </h2>
-                      <p style={{
-                        fontSize: '1.05rem',
-                        fontWeight: '700',
-                        color: 'white',
-                        textShadow: '0 1px 3px rgba(0,0,0,0.5)',
-                        margin: 0
-                      }}>
-                        {lang === 'ar' ? 'على مجموعة مختارة من المنتجات' : 'On a selected group of products'}
-                      </p>
-                    </div>
-
-                    {/* Shop Button Right (RTL flips layout) */}
-                    <button
-                      onClick={() => {
-                        const el = document.getElementById('products-catalog-section');
-                        if (el) {
-                          el.scrollIntoView({ behavior: 'smooth' });
-                        } else {
-                          setSelectedCategory('');
-                          setSearchVal('');
-                          setTimeout(() => {
-                            const el2 = document.getElementById('products-catalog-section');
-                            if (el2) el2.scrollIntoView({ behavior: 'smooth' });
-                          }, 100);
-                        }
-                      }}
-                      style={{
-                        backgroundColor: 'transparent',
-                        border: '2px solid white',
-                        color: 'white',
-                        padding: '10px 26px',
-                        borderRadius: '30px',
-                        fontWeight: '800',
-                        fontSize: '0.92rem',
-                        cursor: 'pointer',
-                        boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
-                        transition: 'all 0.2s',
-                        flexShrink: 0
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'white';
-                        e.currentTarget.style.color = '#0f172a';
-                        e.currentTarget.style.transform = 'scale(1.05)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent';
-                        e.currentTarget.style.color = 'white';
-                        e.currentTarget.style.transform = 'scale(1)';
-                      }}
-                    >
-                      {lang === 'ar' ? 'تسوق الآن' : 'Shop Now'}
-                    </button>
-                  </div>
-
-                  {/* --- 5. LATEST PRODUCTS SECTION --- */}
-                  <div id="products-catalog-section" style={{ marginTop: '8px' }}>
-                    <h2 style={{ fontSize: '1.35rem', fontWeight: '900', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ color: 'var(--accent-brand)' }}>★</span>
-                      {lang === 'ar' ? 'أحدث المنتجات' : 'Latest Products'}
-                    </h2>
-                    {loadingProducts ? (
-                      <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-light)', fontSize: '0.95rem' }}>
-                        {lang === 'ar' ? 'جاري تحميل المنتجات...' : 'Loading products...'}
-                      </div>
-                    ) : products.length === 0 ? (
-                      <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-light)', fontSize: '0.95rem' }}>
-                        {selectedCategory !== '' ? (
-                          lang === 'ar' ? 'لا توجد منتجات في هذا القسم حالياً' : 'No products found in this category'
-                        ) : debouncedSearchVal ? (
-                          lang === 'ar' ? 'لا توجد نتائج بحث مطابقة' : 'No matching results found'
-                        ) : (
-                          lang === 'ar' ? 'خانة أحدث المنتجات فارغة حالياً' : 'Featured products section is currently empty'
-                        )}
-                      </div>
-                    ) : (
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))',
-                        gap: '16px'
-                      }}>
-                        {products.map(product => {
-                          const pName = lang === 'ar' ? product.name_ar : product.name_en;
-                          const pImg = product.image_url
-                            ? (product.image_url.startsWith('http') || product.image_url.startsWith('data:') ? product.image_url : `${apiHost}${product.image_url}`)
-                            : 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=300&q=80';
-                          return (
-                            <div
-                              key={product.id}
-                              className="dashboard-card"
-                              onClick={() => setSelectedProduct(product)}
-                              style={{
-                                padding: '0',
-                                overflow: 'hidden',
-                                cursor: 'pointer',
-                                transition: 'transform 0.2s, box-shadow 0.2s',
-                                border: '1px solid var(--border-color)',
-                                borderRadius: '16px'
-                              }}
-                              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = 'var(--shadow-lg)'; }}
-                              onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = ''; }}
-                            >
-                              <div style={{ width: '100%', aspectRatio: '1', overflow: 'hidden', backgroundColor: 'var(--bg-tertiary)' }}>
-                                <img src={pImg} alt={pName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                              </div>
-                              <div style={{ padding: '10px 12px' }}>
-                                <p style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-primary)', margin: '0 0 6px 0', lineHeight: '1.3', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{pName}</p>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                                  <span style={{ fontSize: '1rem', fontWeight: '900', color: 'var(--accent-red-gold)' }}>{formatPrice(product.price_usd)}</span>
-                                  <button
-                                    onClick={e => { e.stopPropagation(); addToCart(product); }}
-                                    style={{
-                                      backgroundColor: 'var(--accent-brand)',
-                                      color: 'white',
-                                      border: 'none',
-                                      borderRadius: '20px',
-                                      padding: '5px 12px',
-                                      fontSize: '0.75rem',
-                                      fontWeight: '800',
-                                      cursor: 'pointer',
-                                      whiteSpace: 'nowrap'
-                                    }}
-                                  >
-                                    {lang === 'ar' ? '+ سلة' : '+ Cart'}
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                      })}
                   </div>
 
                 </div>
