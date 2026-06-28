@@ -26,6 +26,10 @@ export default function ProductDetails({ product, onClose, onRefresh, setCurrent
   const [selectedColor, setSelectedColor] = useState(() => {
     return (product && product.colors && product.colors.length > 0) ? product.colors[0] : null;
   });
+  const [colorImageUrl, setColorImageUrl] = useState(() => {
+    const firstColor = (product && product.colors && product.colors.length > 0) ? product.colors[0] : null;
+    return (firstColor && typeof firstColor === 'object') ? (firstColor.image || null) : null;
+  });
   const [selectedSize, setSelectedSize] = useState(() => {
     let initialSizes = [];
     if (product && product.sizes) {
@@ -113,7 +117,7 @@ export default function ProductDetails({ product, onClose, onRefresh, setCurrent
   };
 
   const safeIndex = Math.min(activeImageIndex, Math.max(0, imagesList.length - 1));
-  const activeImageUrl = getFullImageUrl(imagesList[safeIndex]);
+  const activeImageUrl = colorImageUrl ? getFullImageUrl(colorImageUrl) : getFullImageUrl(imagesList[safeIndex]);
 
   const handleRatingSubmit = async () => {
     try {
@@ -229,7 +233,10 @@ export default function ProductDetails({ product, onClose, onRefresh, setCurrent
                 <>
                   <button
                     type="button"
-                    onClick={() => setActiveImageIndex(prev => (prev === 0 ? imagesList.length - 1 : prev - 1))}
+                    onClick={() => {
+                      setActiveImageIndex(prev => (prev === 0 ? imagesList.length - 1 : prev - 1));
+                      setColorImageUrl(null);
+                    }}
                     style={{
                       position: 'absolute',
                       left: '8px',
@@ -254,7 +261,10 @@ export default function ProductDetails({ product, onClose, onRefresh, setCurrent
                   </button>
                   <button
                     type="button"
-                    onClick={() => setActiveImageIndex(prev => (prev === imagesList.length - 1 ? 0 : prev + 1))}
+                    onClick={() => {
+                      setActiveImageIndex(prev => (prev === imagesList.length - 1 ? 0 : prev + 1));
+                      setColorImageUrl(null);
+                    }}
                     style={{
                       position: 'absolute',
                       right: '8px',
@@ -294,7 +304,10 @@ export default function ProductDetails({ product, onClose, onRefresh, setCurrent
                   <button
                     key={idx}
                     type="button"
-                    onClick={() => setActiveImageIndex(idx)}
+                    onClick={() => {
+                      setActiveImageIndex(idx);
+                      setColorImageUrl(null);
+                    }}
                     style={{
                       border: activeImageIndex === idx ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)',
                       borderRadius: '6px',
@@ -386,26 +399,49 @@ export default function ProductDetails({ product, onClose, onRefresh, setCurrent
                   {lang === 'ar' ? 'اللون المتاح:' : 'Available Color:'}
                 </span>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {displayProduct.colors.map(color => (
-                    <button
-                      key={color}
-                      type="button"
-                      onClick={() => setSelectedColor(color)}
-                      style={{
-                        padding: '6px 16px',
-                        borderRadius: '20px',
-                        border: selectedColor === color ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)',
-                        backgroundColor: selectedColor === color ? 'var(--accent-blue)' : 'var(--bg-secondary)',
-                        color: selectedColor === color ? 'white' : 'var(--text-primary)',
-                        fontSize: '0.85rem',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      {color}
-                    </button>
-                  ))}
+                  {displayProduct.colors.map((color, idx) => {
+                    const colorName = typeof color === 'object' && color !== null ? (color.name || '') : String(color);
+                    const colorImage = typeof color === 'object' && color !== null ? (color.image || null) : null;
+                    const isSelected = selectedColor === color;
+                    
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setSelectedColor(color);
+                          if (colorImage) {
+                            setColorImageUrl(colorImage);
+                          } else {
+                            setColorImageUrl(null);
+                          }
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: colorImage ? '4px 12px 4px 6px' : '6px 16px',
+                          borderRadius: '20px',
+                          border: isSelected ? '2px solid var(--accent-brand)' : '1px solid var(--border-color)',
+                          backgroundColor: isSelected ? 'var(--accent-brand)' : 'var(--bg-secondary)',
+                          color: isSelected ? 'white' : 'var(--text-primary)',
+                          fontSize: '0.85rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        {colorImage && (
+                          <img 
+                            src={colorImage} 
+                            alt="" 
+                            style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover', border: isSelected ? '1px solid white' : '1px solid var(--border-color)', backgroundColor: 'white' }} 
+                          />
+                        )}
+                        <span>{colorName}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -482,7 +518,8 @@ export default function ProductDetails({ product, onClose, onRefresh, setCurrent
                       setCurrentView('login');
                       onClose();
                     } else {
-                      addToCart(displayProduct, qty, selectedColor, selectedSize);
+                      const finalColor = typeof selectedColor === 'object' && selectedColor !== null ? selectedColor.name : selectedColor;
+                      addToCart(displayProduct, qty, finalColor, selectedSize);
                       onClose();
                     }
                   }}

@@ -181,7 +181,9 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
   const [stock, setStock] = useState('10');
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
-  const [colorsInput, setColorsInput] = useState('');
+  const [productColors, setProductColors] = useState([]);
+  const [newColorName, setNewColorName] = useState('');
+  const [newColorImage, setNewColorImage] = useState('');
   const [sizesList, setSizesList] = useState([{ name: '', price: '', cost: '', stock: '10', type: 'relative' }]);
 
   const [formError, setFormError] = useState('');
@@ -376,7 +378,6 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
       formData.append('existing_images', JSON.stringify([]));
     }
 
-    const colorsArray = colorsInput ? colorsInput.split(',').map(c => c.trim()).filter(Boolean) : [];
     const sizesArray = sizesList.map(opt => {
       if (!opt.name) return null;
       const priceVal = opt.price || '0';
@@ -387,7 +388,7 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
       if (opt.type === 'fixed') return `${opt.name} (${priceVal}${costPart})${stockPart}`;
       return `${opt.name} (+${priceVal}${costPart})${stockPart}`;
     }).filter(Boolean);
-    formData.append('colors', JSON.stringify(colorsArray));
+    formData.append('colors', JSON.stringify(productColors));
     formData.append('sizes', JSON.stringify(sizesArray));
 
     const url = isEditing
@@ -436,7 +437,14 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     setStock(product.stock);
     setExistingImages(product.images || (product.image_url ? [product.image_url] : []));
     setSelectedFiles([]);
-    setColorsInput((product.colors || []).join(', '));
+    // Set colors list
+    const parsedColors = (product.colors || []).map(c => {
+      if (typeof c === 'object' && c !== null) {
+        return { name: c.name || '', image: c.image || '' };
+      }
+      return { name: String(c), image: '' };
+    });
+    setProductColors(parsedColors);
     let parsedSizes = [];
     if (product.sizes && Array.isArray(product.sizes)) {
       parsedSizes = product.sizes.map(s => {
@@ -608,7 +616,9 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
     setStock('10');
     setSelectedFiles([]);
     setExistingImages([]);
-    setColorsInput('');
+    setProductColors([]);
+    setNewColorName('');
+    setNewColorImage('');
     setSizesList([{ name: '', price: '', cost: '', stock: '10', type: 'relative' }]);
   };
 
@@ -766,9 +776,133 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
             <label className="input-label">المخزون المتوفر (Stock)</label>
             <input type="number" required className="input-field" value={stock} onChange={(e) => setStock(e.target.value)} />
           </div>
-          <div>
-            <label className="input-label">{lang === 'ar' ? 'الألوان المتاحة (مفصولة بفاصلة)' : 'Available Colors (comma-separated)'}</label>
-            <input type="text" className="input-field" placeholder={lang === 'ar' ? 'مثال: أحمر, أزرق, أسود' : 'e.g. Red, Blue, Black'} value={colorsInput} onChange={(e) => setColorsInput(e.target.value)} />
+          <div style={{ gridColumn: '1 / -1', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '16px', backgroundColor: 'var(--bg-secondary)', marginTop: '8px' }}>
+            <span className="input-label" style={{ display: 'block', fontWeight: '700', fontSize: '0.95rem', marginBottom: '12px', color: 'var(--text-primary)' }}>
+              {lang === 'ar' ? 'خيارات الألوان مع الصور (Colors & Color Images)' : 'Color Options & Color Images'}
+            </span>
+
+            {/* Form to add a new color with image */}
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '16px' }}>
+              <div style={{ flex: '1', minWidth: '180px' }}>
+                <label className="input-label" style={{ fontSize: '0.8rem' }}>{lang === 'ar' ? 'اسم اللون' : 'Color Name'}</label>
+                <input 
+                  type="text" 
+                  className="input-field" 
+                  placeholder={lang === 'ar' ? 'مثال: أحمر (Red)' : 'e.g. Red'} 
+                  value={newColorName} 
+                  onChange={(e) => setNewColorName(e.target.value)} 
+                />
+              </div>
+              <div style={{ flex: '1', minWidth: '220px' }}>
+                <label className="input-label" style={{ fontSize: '0.8rem' }}>{lang === 'ar' ? 'صورة اللون' : 'Color Image'}</label>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="input-field" 
+                  id="color-image-upload-input"
+                  style={{ padding: '4px' }}
+                  onChange={async (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      const compressed = await compressImage(file, 400, 400, 0.7);
+                      const reader = new FileReader();
+                      reader.onload = (event) => {
+                        setNewColorImage(event.target.result);
+                      };
+                      reader.readAsDataURL(compressed);
+                    }
+                  }} 
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!newColorName.trim()) return;
+                  if (productColors.some(c => c.name.toLowerCase() === newColorName.trim().toLowerCase())) {
+                    alert(lang === 'ar' ? 'هذا اللون مضاف بالفعل!' : 'This color is already added!');
+                    return;
+                  }
+                  setProductColors(prev => [...prev, { name: newColorName.trim(), image: newColorImage }]);
+                  setNewColorName('');
+                  setNewColorImage('');
+                  const fileInput = document.getElementById('color-image-upload-input');
+                  if (fileInput) fileInput.value = '';
+                }}
+                className="input-field"
+                style={{
+                  width: 'auto',
+                  padding: '10px 20px',
+                  backgroundColor: 'var(--accent-brand)',
+                  color: 'white',
+                  border: 'none',
+                  fontWeight: '700',
+                  cursor: 'pointer'
+                }}
+              >
+                {lang === 'ar' ? 'إضافة لون' : 'Add Color'}
+              </button>
+            </div>
+
+            {/* List of currently added colors with image previews */}
+            {productColors.length > 0 ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '10px', marginTop: '12px' }}>
+                {productColors.map((colorItem, idx) => (
+                  <div 
+                    key={idx} 
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '8px', 
+                      padding: '8px', 
+                      backgroundColor: 'var(--bg-primary)', 
+                      border: '1px solid var(--border-color)', 
+                      borderRadius: '8px' 
+                    }}
+                  >
+                    {colorItem.image ? (
+                      <img 
+                        src={colorItem.image} 
+                        alt={colorItem.name} 
+                        style={{ width: '40px', height: '40px', objectFit: 'contain', borderRadius: '4px', border: '1px solid var(--border-color)', backgroundColor: 'white' }} 
+                      />
+                    ) : (
+                      <div 
+                        style={{ 
+                          width: '40px', 
+                          height: '40px', 
+                          borderRadius: '4px', 
+                          border: '1px dashed var(--border-color)', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          fontSize: '0.65rem', 
+                          color: 'var(--text-light)',
+                          backgroundColor: 'var(--bg-secondary)'
+                        }}
+                      >
+                        {lang === 'ar' ? 'بلا صورة' : 'No image'}
+                      </div>
+                    )}
+                    <div style={{ flex: '1', display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {colorItem.name}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setProductColors(prev => prev.filter((_, i) => i !== idx))}
+                      style={{ border: 'none', backgroundColor: 'transparent', color: '#ef4444', cursor: 'pointer', padding: '4px' }}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <span style={{ fontSize: '0.85rem', fontStyle: 'italic', color: 'var(--text-light)' }}>
+                {lang === 'ar' ? 'لم يتم إضافة خيارات ألوان بعد.' : 'No color options added yet.'}
+              </span>
+            )}
           </div>
           <div style={{ gridColumn: '1 / -1', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '16px', backgroundColor: 'var(--bg-secondary)', marginTop: '8px' }}>
             <span className="input-label" style={{ display: 'block', fontWeight: '700', fontSize: '0.95rem', marginBottom: '12px', color: 'var(--text-primary)' }}>
@@ -1601,7 +1735,7 @@ export default function AdminProducts({ filterOutOfStock = false, onClearFilter 
                     {p.merchant_name || '-'}
                   </td>
                   <td style={{ padding: '10px', color: 'var(--text-light)', fontSize: '0.8rem' }}>
-                    {p.colors && p.colors.length > 0 ? p.colors.join(', ') : '-'}
+                    {p.colors && p.colors.length > 0 ? p.colors.map(c => typeof c === 'object' && c !== null ? (c.name || '') : String(c)).join(', ') : '-'}
                   </td>
                   <td style={{ padding: '10px', color: 'var(--text-light)', fontSize: '0.8rem' }}>
                     {p.sizes && p.sizes.length > 0 ? p.sizes.join(', ') : '-'}
