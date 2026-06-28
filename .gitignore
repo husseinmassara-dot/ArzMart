@@ -5,7 +5,8 @@ web_env/
 node-env/
 
 # Build outputs
-dist/
+/dist/
+!frontend/dist/
 build/
 app/build/
 .gradle/
