@@ -493,6 +493,12 @@ exports.getReports = async (req, res) => {
     const employeeStats = await db.getAsync("SELECT COUNT(*) as count FROM users WHERE role = 'employee' OR role = 'admin'");
     const totalEmployees = employeeStats ? employeeStats.count : 0;
 
+    const totalUsersStats = await db.getAsync("SELECT COUNT(*) as count FROM users WHERE role = 'user'");
+    const totalUsers = totalUsersStats ? totalUsersStats.count : 0;
+
+    const activeUsersStats = await db.getAsync("SELECT COUNT(DISTINCT user_id) as count FROM orders WHERE user_id IS NOT NULL");
+    const activeUsers = activeUsersStats ? activeUsersStats.count : 0;
+
     const exchangeRateRow = await db.getAsync('SELECT exchange_rate FROM settings ORDER BY id DESC LIMIT 1');
     const exchangeRate = exchangeRateRow ? exchangeRateRow.exchange_rate : 89500;
 
@@ -583,7 +589,9 @@ exports.getReports = async (req, res) => {
         total_views: totalViews,
         unique_visitors: uniqueVisitors,
         out_of_stock: inventory.out_of_stock || 0,
-        total_employees: totalEmployees
+        total_employees: totalEmployees,
+        total_users: totalUsers,
+        active_users: activeUsers
       },
       dailySales,
       monthlySales,

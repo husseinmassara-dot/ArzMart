@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useChat } from '../../context/ChatContext';
 import { 
-  Package, Folder, ShoppingBag, Users, BarChart3, Settings, Tag, ShieldAlert,
+  Package, Folder, ShoppingBag, Users, UserCheck, BarChart3, Settings, Tag, ShieldAlert,
   DollarSign, TrendingUp, AlertTriangle, ArrowRight, MessageSquare, Send, Store,
   ExternalLink, Database, Upload, X, Truck, Menu, Undo2, ClipboardList
 } from 'lucide-react';
@@ -826,6 +826,88 @@ export default function AdminDashboard({ setCurrentView }) {
                   </div>
                   <div style={{ backgroundColor: 'rgba(59,130,246,0.1)', padding: '10px', borderRadius: '50%' }}>
                     <Users size={22} color="#3b82f6" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Total Users Card */}
+            {(currentUser?.role === 'admin' || hasPermission('users')) && (
+              <div 
+                className="dashboard-card" 
+                style={{ 
+                  borderLeft: '4px solid #10b981',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+                }}
+                onClick={() => {
+                  if (openInNewTab) {
+                    window.open('/?view=admin&tab=users', '_blank');
+                  } else {
+                    setActiveTab('users');
+                  }
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '600' }}>
+                      {lang === 'ar' ? 'إجمالي الزبائن المسجلين' : 'Total Registered Customers'}
+                    </span>
+                    <h3 style={{ fontSize: '1.5rem', fontWeight: '800', margin: '4px 0', color: '#10b981' }}>
+                      {stats.total_users || 0}
+                    </h3>
+                  </div>
+                  <div style={{ backgroundColor: 'rgba(16,185,129,0.1)', padding: '10px', borderRadius: '50%' }}>
+                    <Users size={22} color="#10b981" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Active Users Card */}
+            {(currentUser?.role === 'admin' || hasPermission('users')) && (
+              <div 
+                className="dashboard-card" 
+                style={{ 
+                  borderLeft: '4px solid #8b5cf6',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+                }}
+                onClick={() => {
+                  if (openInNewTab) {
+                    window.open('/?view=admin&tab=users', '_blank');
+                  } else {
+                    setActiveTab('users');
+                  }
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '600' }}>
+                      {lang === 'ar' ? 'الزبائن النشطين (طلبوا مسبقاً)' : 'Active Customers (With Orders)'}
+                    </span>
+                    <h3 style={{ fontSize: '1.5rem', fontWeight: '800', margin: '4px 0', color: '#8b5cf6' }}>
+                      {stats.active_users || 0}
+                    </h3>
+                  </div>
+                  <div style={{ backgroundColor: 'rgba(139,92,246,0.1)', padding: '10px', borderRadius: '50%' }}>
+                    <UserCheck size={22} color="#8b5cf6" />
                   </div>
                 </div>
               </div>
