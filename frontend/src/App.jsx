@@ -2264,6 +2264,100 @@ export default function App() {
                       </div>
                     )}
 
+                    {/* Grouped Products by Subcategory — shown when parent category has children */}
+                    {hasSubcategories && (
+                      <div style={{ marginTop: '30px', display: 'flex', flexDirection: 'column', gap: '30px' }}>
+                        {categories
+                          .filter(c => c.parent_id !== null && c.parent_id !== undefined && Number(c.parent_id) === selectedCatIdNum && c.active !== 0)
+                          .map((sub) => {
+                            const subProducts = products.filter(p => Number(p.category_id) === Number(sub.id));
+                            if (subProducts.length === 0) return null;
+
+                            return (
+                              <div key={sub.id} className="animate-fade" style={{
+                                borderTop: '1px solid var(--border-color)',
+                                paddingTop: '20px'
+                              }}>
+                                <h3 style={{ 
+                                  fontSize: '1.2rem', 
+                                  fontWeight: '900', 
+                                  marginBottom: '16px', 
+                                  color: 'var(--text-primary)',
+                                  textAlign: isRtl ? 'right' : 'left',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '8px'
+                                }}>
+                                  <span style={{
+                                    width: '4px',
+                                    height: '18px',
+                                    backgroundColor: 'var(--accent-brand)',
+                                    borderRadius: '2px',
+                                    display: 'inline-block'
+                                  }} />
+                                  {lang === 'ar' ? sub.name_ar : sub.name_en}
+                                </h3>
+                                
+                                <div className="categories-grid">
+                                  {subProducts.map((p) => (
+                                    <ProductCard 
+                                      key={p.id} 
+                                      product={p} 
+                                      onDetailsClick={setSelectedProduct} 
+                                      setCurrentView={setCurrentView}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
+
+                        {/* Direct Parent Products (if any) */}
+                        {(() => {
+                          const directProds = products.filter(p => Number(p.category_id) === selectedCatIdNum);
+                          if (directProds.length === 0) return null;
+
+                          return (
+                            <div className="animate-fade" style={{
+                              borderTop: '1px solid var(--border-color)',
+                              paddingTop: '20px'
+                            }}>
+                              <h3 style={{ 
+                                fontSize: '1.2rem', 
+                                fontWeight: '900', 
+                                marginBottom: '16px', 
+                                color: 'var(--text-primary)',
+                                textAlign: isRtl ? 'right' : 'left',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px'
+                              }}>
+                                <span style={{
+                                  width: '4px',
+                                  height: '18px',
+                                  backgroundColor: 'var(--accent-brand)',
+                                  borderRadius: '2px',
+                                  display: 'inline-block'
+                                }} />
+                                {lang === 'ar' ? 'منتجات عامة' : 'General Products'}
+                              </h3>
+                              
+                              <div className="categories-grid">
+                                {directProds.map((p) => (
+                                  <ProductCard 
+                                    key={p.id} 
+                                    product={p} 
+                                    onDetailsClick={setSelectedProduct} 
+                                    setCurrentView={setCurrentView}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+
                     {/* Products Grid */}
                     {!hasSubcategories && (
                       <div>
