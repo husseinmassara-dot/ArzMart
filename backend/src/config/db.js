@@ -991,6 +991,17 @@ async function seedDemoData() {
       await db.runAsync("UPDATE products SET category_id = 247 WHERE id IN (141, 144, 146) AND category_id = 285");
       await db.runAsync("UPDATE products SET category_id = 326 WHERE id IN (160, 260, 265, 267, 268, 269) AND category_id = 285");
       await db.runAsync("UPDATE products SET category_id = 268 WHERE id IN (140, 142) AND category_id = 269");
+      
+      // Fix 9 orphan products with category_id = 0 or NULL
+      await db.runAsync("UPDATE products SET category_id = 281 WHERE id = 167 AND (category_id IS NULL OR category_id = 0)");
+      await db.runAsync("UPDATE products SET category_id = 252 WHERE id = 180 AND (category_id IS NULL OR category_id = 0)");
+      await db.runAsync("UPDATE products SET category_id = 280 WHERE id = 229 AND (category_id IS NULL OR category_id = 0)");
+      await db.runAsync("UPDATE products SET category_id = 291 WHERE id = 321 AND (category_id IS NULL OR category_id = 0)");
+      await db.runAsync("UPDATE products SET category_id = 288 WHERE id = 414 AND (category_id IS NULL OR category_id = 0)");
+      await db.runAsync("UPDATE products SET category_id = 329 WHERE id = 415 AND (category_id IS NULL OR category_id = 0)");
+      await db.runAsync("UPDATE products SET category_id = 271 WHERE id = 484 AND (category_id IS NULL OR category_id = 0)");
+      await db.runAsync("UPDATE products SET category_id = 316 WHERE id = 510 AND (category_id IS NULL OR category_id = 0)");
+      await db.runAsync("UPDATE products SET category_id = 319 WHERE id = 529 AND (category_id IS NULL OR category_id = 0)");
       console.log('[Database] Catalog correction migrations completed successfully.');
     } catch (e) {
       console.error('[Database] Failed to run catalog correction migrations:', e.message);
