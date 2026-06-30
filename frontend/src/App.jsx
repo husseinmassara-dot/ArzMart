@@ -22,6 +22,7 @@ export default function App() {
   const { user, login, register, token, logout } = useAuth();
   const { setIsCartOpen, cartItems } = useCart();
   const { isChatOpen, setIsChatOpen } = useChat();
+  const isRtl = lang === 'ar';
 
   const [currentView, setCurrentView] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -1553,7 +1554,6 @@ export default function App() {
 
             {/* Conditional Storefront Renderer */}
             {selectedCategory === '' && !searchVal ? (() => {
-              const isRtl = lang === 'ar';
               const findCategoryIdByName = (nameEn, nameAr) => {
                 const found = categories.find(c => {
                   const cNameEn = (c.name_en || '').toLowerCase();
