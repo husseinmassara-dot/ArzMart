@@ -931,65 +931,7 @@ function initializeDatabase() {
   });
 }
 
-      colors: '[]',
-      sizes: '[]'
-    },
-    {
-      name_ar: 'إبريق زجاجي مقاوم للحرارة ١.٥ ليتر',
-      name_en: '1.5L Heat-resistant Glass Pitcher',
-      description_ar: 'إبريق زجاجي سميك مع غطاء من الفولاذ المقاوم للصدأ للشاي والماء البارد.',
-      description_en: 'Thick borosilicate glass pitcher with stainless steel lid for iced tea or water.',
-      price_usd: 9.50,
-      cost_price_usd: 5.00,
-      old_price_usd: 14.50,
-      image_url: 'https://images.unsplash.com/photo-1527018601619-a508a2be00cd?auto=format&fit=crop&w=300&q=80',
-      stock: 20,
-      colors: '[]',
-      sizes: '[]'
-    }
-  ],
-  'Shoes': [
-    {
-      name_ar: 'حذاء رياضي مريح للجري والمشي',
-      name_en: 'Comfortable Running Sports Shoes',
-      description_ar: 'حذاء رياضي مبطن وخفيف الوزن مع نعل مرن مقاوم للانزلاق.',
-      description_en: 'Lightweight, cushioned athletic shoes with flexible non-slip sole.',
-      price_usd: 24.99,
-      cost_price_usd: 13.00,
-      old_price_usd: 39.99,
-      image_url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=300&q=80',
-      stock: 35,
-      colors: '["أحمر (Red)", "أسود (Black)", "أزرق (Blue)"]',
-      sizes: '["40", "41", "42", "43", "44"]'
-    },
-    {
-      name_ar: 'حذاء كلاسيكي جلدي للرجال',
-      name_en: 'Men\'s Classic Leather Dress Shoes',
-      description_ar: 'حذاء جلدي رسمي فاخر ومثالي للمناسبات والاجتماعات والعمل.',
-      description_en: 'Premium leather formal dress shoes, perfect for business and special events.',
-      price_usd: 32.00,
-      cost_price_usd: 18.00,
-      old_price_usd: 48.00,
-      image_url: 'https://images.unsplash.com/photo-1533867617858-e7b97e060509?auto=format&fit=crop&w=300&q=80',
-      stock: 20,
-      colors: '["أسود (Black)", "بني (Brown)"]',
-      sizes: '["41", "42", "43", "44"]'
-    },
-    {
-      name_ar: 'حذاء صيفي نسائي مسطح ومريح',
-      name_en: 'Women\'s Comfortable Flat Sandals',
-      description_ar: 'صندل صيفي خفيف الوزن مع وسادة قدم ناعمة وتصميم عصري.',
-      description_en: 'Lightweight summer sandals featuring a soft footbed and trendy design.',
-      price_usd: 14.50,
-      cost_price_usd: 7.00,
-      old_price_usd: null,
-      image_url: 'https://images.unsplash.com/photo-1562273138-f46be4ebdf33?auto=format&fit=crop&w=300&q=80',
-      stock: 30,
-      colors: '["بيج (Beige)", "أسود (Black)"]',
-      sizes: '["37", "38", "39", "40"]'
-    }
-  ]
-};
+const additionalCategories = [];
 
 async function seedDemoData() {
   console.log('[Database] Checking additional demo categories...');
