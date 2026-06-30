@@ -44,6 +44,7 @@ export default function ProductCard({ product, onDetailsClick, setCurrentView })
     >
       {/* Product Image Wrapper */}
       <div 
+        className="product-card-img-wrapper"
         style={{
           width: '100%',
           height: 'var(--card-img-height, 200px)',
@@ -58,12 +59,11 @@ export default function ProductCard({ product, onDetailsClick, setCurrentView })
           style={{
             width: '100%',
             height: '100%',
-            objectFit: 'contain',
-            transition: 'transform 0.3s ease'
+            objectFit: 'contain'
           }}
-          onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
-          onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
         />
+        {/* Transparent overlay to block browser Visual Search button */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1, backgroundColor: 'transparent' }} />
         {/* Discount Badge */}
         {hasDiscount && (
           <span style={{

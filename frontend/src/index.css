@@ -702,3 +702,10 @@ button.input-field {
   box-shadow: none;
 }
 
+/* Custom zoom effect for product card images */
+.product-card-img-wrapper img {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.product-card-img-wrapper:hover img {
+  transform: scale(1.06) !important;
+}

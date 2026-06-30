@@ -33,9 +33,16 @@ exports.getProducts = async (req, res) => {
   if (search) {
     const isPostgres = process.env.DB_TYPE === 'postgres' || !!process.env.DATABASE_URL;
     const likeOperator = isPostgres ? 'ILIKE' : 'LIKE';
-    query += ` AND (p.name_ar ${likeOperator} ? OR p.name_en ${likeOperator} ?)`;
+    query += ` AND (
+      p.name_ar ${likeOperator} ? OR 
+      p.name_en ${likeOperator} ? OR 
+      p.description_ar ${likeOperator} ? OR 
+      p.description_en ${likeOperator} ? OR 
+      c.name_ar ${likeOperator} ? OR 
+      c.name_en ${likeOperator} ?
+    )`;
     const searchParam = `%${search}%`;
-    params.push(searchParam, searchParam);
+    params.push(searchParam, searchParam, searchParam, searchParam, searchParam, searchParam);
 
     // Log the search query in database asynchronously
     const cleanSearch = String(search).trim();
@@ -66,7 +73,17 @@ exports.getProducts = async (req, res) => {
       let parsedColors = [];
       let parsedSizes = [];
       let parsedImages = [];
-      try { parsedColors = JSON.parse(p.colors || '[]'); } catch (e) { parsedColors = []; }
+      try {
+        if (p.colors && p.colors.trim().startsWith('[')) {
+          parsedColors = JSON.parse(p.colors);
+        } else if (p.colors && p.colors.trim().length > 0) {
+          parsedColors = p.colors.split(',').map(c => c.trim()).filter(Boolean);
+        } else {
+          parsedColors = [];
+        }
+      } catch (e) {
+        parsedColors = [];
+      }
       try { parsedSizes = JSON.parse(p.sizes || '[]'); } catch (e) { parsedSizes = []; }
       try {
         if (p.image_url && p.image_url.startsWith('[')) {
@@ -120,7 +137,17 @@ exports.getProductById = async (req, res) => {
     let parsedColors = [];
     let parsedSizes = [];
     let parsedImages = [];
-    try { parsedColors = JSON.parse(product.colors || '[]'); } catch (e) { parsedColors = []; }
+    try {
+      if (product.colors && product.colors.trim().startsWith('[')) {
+        parsedColors = JSON.parse(product.colors);
+      } else if (product.colors && product.colors.trim().length > 0) {
+        parsedColors = product.colors.split(',').map(c => c.trim()).filter(Boolean);
+      } else {
+        parsedColors = [];
+      }
+    } catch (e) {
+      parsedColors = [];
+    }
     try { parsedSizes = JSON.parse(product.sizes || '[]'); } catch (e) { parsedSizes = []; }
     try {
       if (product.image_url && product.image_url.startsWith('[')) {

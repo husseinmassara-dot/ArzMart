@@ -1808,39 +1808,40 @@ export default function App() {
                     if (discountedProducts.length === 0) return null;
 
                     return (
-                      <div className="animate-fade" style={{ marginTop: '30px', marginBottom: '20px' }}>
+                      <div className="animate-fade" style={{ marginTop: '35px', marginBottom: '25px' }}>
                         <div style={{
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
-                          marginBottom: '16px',
-                          borderBottom: '1px solid var(--border-color)',
-                          paddingBottom: '12px'
+                          marginBottom: '20px',
+                          borderBottom: '2px solid var(--border-color)',
+                          paddingBottom: '14px'
                         }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', textAlign: isRtl ? 'right' : 'left' }}>
                             <h2 style={{
-                              fontSize: '1.4rem',
+                              fontSize: '1.45rem',
                               fontWeight: '900',
                               margin: 0,
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: isRtl ? 'flex-end' : 'flex-start',
-                              gap: '8px',
+                              gap: '10px',
                               color: 'var(--text-primary)'
                             }}>
                               <span style={{
-                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                                padding: '6px',
+                                background: 'linear-gradient(135deg, #ef4444, #f59e0b)',
+                                padding: '8px',
                                 borderRadius: '50%',
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                justifyContent: 'center'
+                                justifyContent: 'center',
+                                boxShadow: '0 4px 10px rgba(239, 68, 68, 0.3)'
                               }}>
-                                <Percent size={20} color="#ef4444" />
+                                <Percent size={18} color="white" />
                               </span>
                               {lang === 'ar' ? 'أحدث العروض والخصومات' : 'Latest Offers & Discounts'}
                             </h2>
-                            <span style={{ fontSize: '0.82rem', color: 'var(--text-light)', fontWeight: '600' }}>
+                            <span style={{ fontSize: '0.85rem', color: 'var(--text-light)', fontWeight: '700', marginInlineStart: '44px' }}>
                               {lang === 'ar' ? 'وفر أكثر مع عروضنا الحصرية اليومية' : 'Save more with our exclusive daily deals'}
                             </span>
                           </div>
@@ -1878,24 +1879,31 @@ export default function App() {
                                 className="dashboard-card"
                                 onClick={() => setSelectedProduct(product)}
                                 style={{
-                                  flex: '0 0 190px',
+                                  flex: '0 0 200px',
                                   scrollSnapAlign: 'start',
                                   padding: '0',
                                   overflow: 'hidden',
                                   cursor: 'pointer',
-                                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                                  transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                                   border: '1px solid var(--border-color)',
                                   borderRadius: '20px',
                                   position: 'relative',
-                                  backgroundColor: 'var(--bg-secondary)'
+                                  backgroundColor: 'var(--bg-secondary)',
+                                  boxShadow: 'var(--shadow-sm)'
                                 }}
                                 onMouseEnter={e => {
                                   e.currentTarget.style.transform = 'translateY(-6px)';
-                                  e.currentTarget.style.boxShadow = '0 10px 20px var(--accent-brand-shadow)';
+                                  e.currentTarget.style.boxShadow = '0 12px 24px var(--accent-brand-shadow-md)';
+                                  e.currentTarget.style.borderColor = 'var(--accent-brand)';
+                                  const img = e.currentTarget.querySelector('.offers-card-img');
+                                  if (img) img.style.transform = 'scale(1.08)';
                                 }}
                                 onMouseLeave={e => {
                                   e.currentTarget.style.transform = 'none';
-                                  e.currentTarget.style.boxShadow = '';
+                                  e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                                  e.currentTarget.style.borderColor = 'var(--border-color)';
+                                  const img = e.currentTarget.querySelector('.offers-card-img');
+                                  if (img) img.style.transform = 'scale(1)';
                                 }}
                               >
                                 {/* Discount Badge */}
@@ -1904,14 +1912,15 @@ export default function App() {
                                   top: '12px',
                                   left: isRtl ? '12px' : 'auto',
                                   right: isRtl ? 'auto' : '12px',
-                                  backgroundColor: '#ef4444',
+                                  background: 'linear-gradient(135deg, #ef4444, #b91c1c)',
                                   color: 'white',
-                                  padding: '4px 10px',
-                                  borderRadius: '12px',
-                                  fontSize: '0.78rem',
-                                  fontWeight: '800',
+                                  padding: '3px 9px',
+                                  borderRadius: '20px',
+                                  fontSize: '0.72rem',
+                                  fontWeight: '900',
                                   zIndex: 2,
-                                  boxShadow: '0 4px 8px rgba(239, 68, 68, 0.3)'
+                                  boxShadow: '0 4px 8px rgba(239, 68, 68, 0.35)',
+                                  letterSpacing: '0.5px'
                                 }}>
                                   {discountPercent}%-
                                 </div>
@@ -1925,31 +1934,32 @@ export default function App() {
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
-                                  padding: '8px',
+                                  padding: '10px',
                                   boxSizing: 'border-box',
                                   position: 'relative'
                                 }}>
                                   <img 
+                                    className="offers-card-img"
                                     src={pImg} 
                                     alt={pName} 
                                     style={{ 
                                       maxWidth: '100%', 
                                       maxHeight: '100%', 
                                       objectFit: 'contain',
-                                      transition: 'transform 0.5s ease'
+                                      transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
                                     }} 
                                   />
-                                  {/* Transparent overlay to block Edge Visual Search */}
-                                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }} />
+                                  {/* Transparent overlay to block browser Visual Search button */}
+                                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1, backgroundColor: 'transparent' }} />
                                 </div>
 
                                 {/* Text/Price Content */}
-                                <div style={{ padding: '12px 14px' }}>
+                                <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
                                   <p style={{ 
-                                    fontSize: '0.82rem', 
+                                    fontSize: '0.85rem', 
                                     fontWeight: '800', 
                                     color: 'var(--text-primary)', 
-                                    margin: '0 0 8px 0', 
+                                    margin: '0', 
                                     lineHeight: '1.3', 
                                     height: '34px',
                                     overflow: 'hidden', 
@@ -1964,11 +1974,12 @@ export default function App() {
                                   <div style={{ 
                                     display: 'flex', 
                                     flexDirection: 'column',
-                                    gap: '4px',
+                                    gap: '6px',
+                                    marginTop: 'auto',
                                     textAlign: isRtl ? 'right' : 'left'
                                   }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: isRtl ? 'flex-end' : 'flex-start', flexWrap: 'wrap' }}>
-                                      <span style={{ fontSize: '1.05rem', fontWeight: '950', color: 'var(--accent-red-gold)' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: isRtl ? 'flex-end' : 'flex-start', flexWrap: 'wrap' }}>
+                                      <span style={{ fontSize: '1.1rem', fontWeight: '950', color: 'var(--accent-red-gold)' }}>
                                         {formatPrice(product.price_usd)}
                                       </span>
                                       <span style={{ fontSize: '0.8rem', textDecoration: 'line-through', color: 'var(--text-light)', fontWeight: '600' }}>
@@ -1978,22 +1989,23 @@ export default function App() {
                                     
                                     <button
                                       onClick={e => { e.stopPropagation(); addToCart(product); }}
+                                      className="product-card-add-btn"
                                       style={{
                                         backgroundColor: 'var(--accent-brand)',
                                         color: 'white',
                                         border: 'none',
                                         borderRadius: '24px',
-                                        padding: '6px 14px',
-                                        fontSize: '0.78rem',
+                                        padding: '7px 14px',
+                                        fontSize: '0.8rem',
                                         fontWeight: '800',
                                         cursor: 'pointer',
-                                        marginTop: '6px',
+                                        marginTop: '4px',
                                         width: '100%',
-                                        transition: 'transform 0.2s',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        gap: '6px'
+                                        gap: '6px',
+                                        boxShadow: '0 2px 6px var(--accent-brand-shadow)'
                                       }}
                                     >
                                       {lang === 'ar' ? 'إضافة للسلة' : 'Add to Cart'}
@@ -2171,7 +2183,7 @@ export default function App() {
                           {lang === 'ar' ? 'الأقسام الفرعية' : 'Subcategories'}
                         </h3>
                         <div className="categories-grid">
-                          {categories.filter(c => c.parent_id !== null && c.parent_id !== undefined && Number(c.parent_id) === selectedCatIdNum).map((sub) => {
+                          {categories.filter(c => c.parent_id !== null && c.parent_id !== undefined && Number(c.parent_id) === selectedCatIdNum && c.active !== 0).map((sub) => {
                             const subName = lang === 'ar' ? sub.name_ar : sub.name_en;
                             
                             let bgImg = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=500&q=80';
@@ -2253,13 +2265,8 @@ export default function App() {
                     )}
 
                     {/* Products Grid */}
-                    {(products.length > 0 || !hasSubcategories) && (
-                      <div style={{ marginTop: hasSubcategories ? '30px' : '0' }}>
-                        {hasSubcategories && products.length > 0 && (
-                          <h3 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '16px', color: 'var(--text-primary)' }}>
-                            {lang === 'ar' ? 'منتجات هذا القسم' : 'Products in this Category'}
-                          </h3>
-                        )}
+                    {!hasSubcategories && (
+                      <div>
                         
                         {products.length > 0 ? (
                           <div className="categories-grid">
