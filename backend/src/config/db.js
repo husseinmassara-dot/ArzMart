@@ -983,6 +983,19 @@ async function seedDemoData() {
     }
     console.log('[Database] Category hierarchy enforced successfully.');
 
+    // Perform database migrations to fix products in wrong categories
+    console.log('[Database] Running catalog correction migrations...');
+    try {
+      await db.runAsync("UPDATE products SET category_id = 329 WHERE id = 416 AND (category_id IS NULL OR category_id = 0)");
+      await db.runAsync("UPDATE products SET category_id = 331 WHERE id = 115 AND category_id = 285");
+      await db.runAsync("UPDATE products SET category_id = 247 WHERE id IN (141, 144, 146) AND category_id = 285");
+      await db.runAsync("UPDATE products SET category_id = 326 WHERE id IN (160, 260, 265, 267, 268, 269) AND category_id = 285");
+      await db.runAsync("UPDATE products SET category_id = 268 WHERE id IN (140, 142) AND category_id = 269");
+      console.log('[Database] Catalog correction migrations completed successfully.');
+    } catch (e) {
+      console.error('[Database] Failed to run catalog correction migrations:', e.message);
+    }
+
     // Update Settings Hero Banners to include tech/cosmetics/clothing banners
     const settings = await db.getAsync('SELECT id, hero_banners FROM settings LIMIT 1');
     if (settings) {
