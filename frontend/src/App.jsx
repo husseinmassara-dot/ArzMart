@@ -129,6 +129,7 @@ export default function App() {
 
   const fetchProducts = async () => {
     setLoadingProducts(true);
+    setProducts([]); // Clear stale products immediately to avoid cross-category rendering leaks
     try {
       let url = `${apiBase}/products?`;
 
@@ -225,7 +226,7 @@ export default function App() {
         console.error('Error saving recent search:', err);
       }
     }
-  }, [selectedCategory, debouncedSearchVal, minPrice, maxPrice, minRating]);
+  }, [selectedCategory, debouncedSearchVal, minPrice, maxPrice, minRating, categories]);
 
   // Analytics: Track visitor page views
   useEffect(() => {
