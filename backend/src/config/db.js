@@ -1002,6 +1002,16 @@ async function seedDemoData() {
       await db.runAsync("UPDATE products SET category_id = 271 WHERE id = 484 AND (category_id IS NULL OR category_id = 0)");
       await db.runAsync("UPDATE products SET category_id = 316 WHERE id = 510 AND (category_id IS NULL OR category_id = 0)");
       await db.runAsync("UPDATE products SET category_id = 319 WHERE id = 529 AND (category_id IS NULL OR category_id = 0)");
+
+      // Additional catalog corrections for misplaced items
+      await db.runAsync("UPDATE products SET category_id = 326 WHERE id = 149 AND category_id = 277");
+      await db.runAsync("UPDATE products SET category_id = 268 WHERE id = 429 AND category_id = 250");
+      await db.runAsync("UPDATE products SET category_id = 316 WHERE id = 513 AND category_id = 271");
+      await db.runAsync("UPDATE products SET category_id = 271 WHERE id IN (179, 204) AND category_id = 278");
+      await db.runAsync("UPDATE products SET category_id = 284 WHERE id = 203 AND category_id = 278");
+      await db.runAsync("UPDATE products SET category_id = 247 WHERE id = 145 AND category_id = 281");
+      await db.runAsync("UPDATE products SET category_id = 292 WHERE id IN (329, 332, 333, 334, 336) AND category_id = 291");
+      
       console.log('[Database] Catalog correction migrations completed successfully.');
     } catch (e) {
       console.error('[Database] Failed to run catalog correction migrations:', e.message);
